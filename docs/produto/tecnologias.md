@@ -8,6 +8,7 @@ Este documento estabelece a base tecnológica para o desenvolvimento do Totem In
 * **Python:** Linguagem principal do servidor, escolhida por sua vasta biblioteca para processamento de dados e IA.
 * **FastAPI:** Framework web assíncrono de alta performance. Essencial para não bloquear o servidor enquanto aguarda as respostas das APIs de trânsito e de processamento de linguagem natural.
 * **Pytest:** Framework utilizado para a criação de rotinas de testes automatizados, garantindo a confiabilidade dos endpoints e regras de negócio.
+* **SQLite:** Banco de dados relacional leve e embutido. Será utilizado para armazenar localmente as configurações de inicialização do totem (como o ID do ponto de ônibus onde ele está instalado) e logs de uso diário sem exigir infraestrutura de banco em nuvem.
 
 ### Frontend
 * **React / Javascript:** Biblioteca principal para a construção da interface de usuário do totem, permitindo uma atualização reativa dos componentes (como a contagem regressiva dos ônibus) sem recarregar a página.
