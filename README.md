@@ -7,6 +7,7 @@ Documentação principal:
 - [Enunciado do trabalho em Markdown](docs/enunciado/enunciado-trabalho.md)
 - [Enunciado original em DOCX](docs/enunciado/enunciado-trabalho.docx)
 - [Entrega 1: definição do problema, API e planejamento inicial](docs/entregas/entrega-1.md)
+- [Entrega 2: especificação de requisitos e prototipação](docs/entregas/entrega-2.md)
 - [Proposta resumida do projeto](docs/produto/projeto.md)
 - [Backlog inicial de funcionalidades](docs/produto/backlog.md)
 - [Histórias de Usuário (User Stories)](docs/produto/user-stories/README.md)
