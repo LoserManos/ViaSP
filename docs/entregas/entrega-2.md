@@ -14,6 +14,7 @@ Esta entrega reúne os materiais de especificação e prototipação solicitados
 | Protótipo de média e/ou alta fidelidade | [Protótipo da interface no Figma](https://www.figma.com/make/WtNvsx4issZQuN7pLBnpF7/Identidade-visual-do-totem?p=f&fullscreen=1) |
 | Definição das tecnologias | [Linguagens, banco de dados, frameworks e APIs](../produto/tecnologias.md) |
 | Arquitetura inicial | [Componentes e fluxo de dados](../produto/arquitetura.md) |
+| Diagrama de classes | [Modelo do fluxo principal de consulta](../produto/diagrama-de-classes.md) |
 | Link do repositório | [LoserManos/ViaSP](https://github.com/LoserManos/ViaSP) |
 
 ## Detalhamento das histórias
@@ -29,4 +30,5 @@ Esta entrega reúne os materiais de especificação e prototipação solicitados
 - [x] Protótipo de média e/ou alta fidelidade.
 - [x] Definição das tecnologias.
 - [x] Definição da arquitetura inicial.
+- [x] Diagrama de classes.
 - [x] Link do repositório.

@@ -41,3 +41,7 @@ sequenceDiagram
     Note right of B: Processamento em Background
     B-)DB: Registra log completo de uso e métricas de latência
 ```
+
+## 3. Diagrama de classes
+
+O [diagrama de classes](diagrama-de-classes.md) apresenta os dados, as responsabilidades e as relações do fluxo principal de consulta.
