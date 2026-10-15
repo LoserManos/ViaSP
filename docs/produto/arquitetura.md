@@ -40,3 +40,4 @@ sequenceDiagram
     
     Note right of B: Processamento em Background
     B-)DB: Registra log completo de uso e métricas de latência
+```

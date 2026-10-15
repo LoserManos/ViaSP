@@ -23,7 +23,7 @@ As funcionalidades que dependem de dados do mundo real serão alimentadas pelas 
 
 * **API de Transporte - Olho Vivo (SPTrans):**
   * **Função:** Fonte de dados oficial e gratuita da cidade de São Paulo.
-  * **Uso:** Fornece o mapeamento de rotas, os pontos de parada e a posição via GPS da frota de ônibus em tempo real (endpoint de Previsão), garantindo a informação exata de quantos minutos faltam para a chegada do veículo.
+  * **Uso:** Fornece o mapeamento de rotas, os pontos de parada e a posição via GPS da frota de ônibus em tempo real (endpoint de Previsão), fornecendo estimativas de chegada, sujeitas à disponibilidade e à atualização dos dados.
 
 * **APIs de Interação por Voz (Speech-to-Text e LLM):**
   * **Função:** Compreensão de linguagem natural. Esta feature é uma pretensão do grupo, sem garantias de implementação no MVP.

@@ -11,7 +11,8 @@
   * Exibicao continua dessa informacao.
 * **Prioridade:** Must Have.
 
-## US06: Exibir a previsão de chegada dos próximos ônibus* **Personagem:** Fatima
+## US06: Exibir a previsão de chegada dos próximos ônibus
+* **Personagem:** Fatima
 * **Declaração:** Gostaria de saber o horario em que os proximos onibus irao chegar no ponto.
 * **Contexto de uso:** O sistema opera em um totem público físico, uma informacao tao demandada como esta deve ser transmitida com clareza e acertividade.
 * **Critérios de Aceitação:** 
