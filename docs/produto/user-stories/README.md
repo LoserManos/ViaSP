@@ -35,7 +35,7 @@ Todas as histórias de usuário deste projeto seguem o modelo padrão ágil:
 | **US02** | EP01 | Busca e seleção de linha | Arthur | **Must Have** | [ep01-interface.md](./ep01-interface.md) |
 | **US03** | EP01 | Detalhes do itinerário e pontos principais | Arthur, Turistas | **Must Have** | [ep01-interface.md](./ep01-interface.md) |
 | **US04** | EP01 | Retorno automático por inatividade (Timeout) | Sistema / Todos | **Should Have** | [ep01-interface.md](./ep01-interface.md) |
-| **US05** | EP02 | Autenticação e integração com a API SPTrans | Sistema | **Must Have** | [ep02-previsao.md](./ep02-previsao.md) |
+| **US05** | EP02 | Visualização da localização do ponto no mapa | Arthur | **Must Have** | [ep02-previsao.md](./ep02-previsao.md) |
 | **US06** | EP02 | Exibição da previsão de chegada dos veículos | Arthur, Fátima | **Must Have** | [ep02-previsao.md](./ep02-previsao.md) |
 | **US07** | EP02 | Indicador de última atualização da previsão | Arthur | **Must Have** | [ep02-previsao.md](./ep02-previsao.md) |
 | **US08** | EP02 | Notificação de falhas e indisponibilidade de dados | Arthur, Fátima | **Must Have** | [ep02-previsao.md](./ep02-previsao.md) |
