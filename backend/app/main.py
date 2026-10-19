@@ -1,0 +1,66 @@
+from contextlib import asynccontextmanager
+
+from fastapi import FastAPI, Request
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
+
+from app.api.rotas import router
+from app.config import get_settings
+from app.dominio import Parada, Totem
+from app.excecoes import ErroAutenticacaoSPTrans, ErroSPTrans, SPTransIndisponivel
+from app.persistencia import inicializar_banco
+from app.servicos import ClienteSPTrans, ServicoConsulta
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    settings = get_settings()
+    inicializar_banco(settings.banco_caminho)
+
+    cliente = ClienteSPTrans(
+        token=settings.sptrans_token,
+        base_url=settings.sptrans_base_url,
+        timeout=settings.sptrans_timeout_segundos,
+    )
+    app.state.servico_consulta = ServicoConsulta(cliente)
+    app.state.totem = Totem(
+        identificador=settings.totem_identificador,
+        parada=Parada(codigo=settings.parada_codigo),
+    )
+    yield
+    await cliente.fechar()
+
+
+def criar_app() -> FastAPI:
+    settings = get_settings()
+    app = FastAPI(title="ViaSP - Backend do Totem", lifespan=lifespan)
+
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=settings.cors_origens,
+        allow_methods=["GET"],
+        allow_headers=["*"],
+    )
+    app.include_router(router)
+
+    # Mensagens claras de erro para o totem (US08)
+    @app.exception_handler(NotImplementedError)
+    async def _nao_implementado(_: Request, __: NotImplementedError):
+        return JSONResponse(status_code=501, content={"detalhe": "Funcionalidade ainda não implementada."})
+
+    @app.exception_handler(ErroAutenticacaoSPTrans)
+    async def _erro_auth(_: Request, __: ErroAutenticacaoSPTrans):
+        return JSONResponse(status_code=502, content={"detalhe": "Falha de autenticação com a SPTrans."})
+
+    @app.exception_handler(SPTransIndisponivel)
+    async def _indisponivel(_: Request, __: SPTransIndisponivel):
+        return JSONResponse(status_code=503, content={"detalhe": "SPTrans indisponível no momento. Tente novamente."})
+
+    @app.exception_handler(ErroSPTrans)
+    async def _erro_sptrans(_: Request, __: ErroSPTrans):
+        return JSONResponse(status_code=502, content={"detalhe": "Erro ao consultar a SPTrans."})
+
+    return app
+
+
+app = criar_app()
