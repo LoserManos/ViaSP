@@ -9,7 +9,7 @@ describe('Design Tokens & Ergonomia (ISS-14.4)', () => {
   })
 
   it('possui paleta de alto contraste com cor primária do Figma', () => {
-    expect(TOKENS.cores.primaria).toBe('#E5223A')
+    expect(TOKENS.cores.primaria).toBe('#E5273F')
     expect(TOKENS.cores.textoPrincipal).toBe('#0F172A')
     expect(TOKENS.cores.textoInvertido).toBe('#FFFFFF')
   })

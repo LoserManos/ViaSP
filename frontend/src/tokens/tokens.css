@@ -3,12 +3,12 @@
   --alvo-toque-minimo: 64px;
 
   /* Identidade Visual do Protótipo Figma (ViaSP) */
-  --cor-marca: #e5223a; /* Vermelho principal ViaSP */
+  --cor-marca: #e5273f; /* Vermelho oficial do SVG do Figma */
   --cor-marca-hover: #cc1f34;
   --cor-marca-ativo: #b31a2e;
   --cor-marca-fundo: #fef2f2;
 
-  --cor-primaria: #e5223a; /* Alinhado à identidade visual do totem */
+  --cor-primaria: #e5273f; /* Alinhado à identidade visual do totem */
   --cor-primaria-hover: #cc1f34;
   --cor-primaria-ativo: #b31a2e;
 

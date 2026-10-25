@@ -4,8 +4,8 @@
 export const TOKENS = {
   alvoToqueMinimoPx: 64,
   cores: {
-    marca: '#E5223A',
-    primaria: '#E5223A',
+    marca: '#E5273F',
+    primaria: '#E5273F',
     primariaHover: '#CC1F34',
     secundaria: '#2563EB',
     fundo: '#F3F5F7',

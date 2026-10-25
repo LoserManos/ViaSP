@@ -1,5 +1,6 @@
 import './VisualizacaoFigma.css'
 import { Botao, Cartao, TextoGrande } from '../base'
+import { LogoViaSP } from '../comuns/LogoViaSP'
 
 /**
  * Componente que recria fielmente a tela inicial do protótipo Figma.
@@ -39,53 +40,10 @@ export function VisualizacaoFigma({ onSelecionarLinha }) {
     <div className="viasp-figma-container">
       {/* 1. Barra Superior / Header do Totem */}
       <header className="viasp-figma-header">
-        <div className="viasp-figma-header__logo-area">
-          <div className="viasp-figma-header__logo-badge">
-            <svg
-              width="24"
-              height="24"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2.5"
-            >
-              <rect x="3" y="4" width="18" height="15" rx="3" />
-              <circle cx="7" cy="15" r="1.5" />
-              <circle cx="17" cy="15" r="1.5" />
-              <path d="M7 8h10" />
-            </svg>
-          </div>
-          <span className="viasp-figma-header__logo-texto">
-            via<strong>SP</strong>
-          </span>
-          <span className="viasp-figma-header__subtitulo">
-            Totem Interativo de Transporte
-          </span>
-        </div>
-
-        <div className="viasp-figma-header__acoes">
-          <button
-            type="button"
-            className="viasp-figma-header__botao-util"
-            aria-label="Ativar alto contraste"
-          >
-            <svg
-              width="20"
-              height="20"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-            >
-              <circle cx="12" cy="12" r="10" />
-              <path d="M12 2a10 10 0 0 1 0 20z" fill="currentColor" />
-            </svg>
-            <span>Alto contraste</span>
-          </button>
-          <div className="viasp-figma-header__idioma">
-            <span>🇧🇷 PT-BR</span>
-          </div>
-        </div>
+        <LogoViaSP
+          mostrarSubtitulo
+          subtituloPersonalizado="Totem Interativo de Transporte"
+        />
       </header>
 
       {/* 2. Área de Chamada Principal */}
