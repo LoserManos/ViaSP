@@ -1,0 +1,72 @@
+.viasp-demonstracao {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: var(--espacamento-md);
+  display: flex;
+  flex-direction: column;
+  gap: var(--espacamento-lg);
+}
+
+.viasp-demonstracao__topo {
+  display: flex;
+  align-items: center;
+  gap: var(--espacamento-md);
+  padding-bottom: var(--espacamento-md);
+  border-bottom: 2px solid var(--cor-borda);
+}
+
+.viasp-demonstracao__secao {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espacamento-sm);
+}
+
+.viasp-demonstracao__regua-toque {
+  display: flex;
+  align-items: center;
+  gap: var(--espacamento-md);
+}
+
+.viasp-demonstracao__caixa-toque {
+  width: 64px;
+  height: 64px;
+  background-color: var(--cor-primaria);
+  color: var(--cor-texto-invertido);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--raio-borda-md);
+  font-weight: var(--peso-bold);
+  font-size: var(--tamanho-texto-pequeno);
+  flex-shrink: 0;
+}
+
+.viasp-demonstracao__grade-botoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--espacamento-sm);
+}
+
+.viasp-demonstracao__grade-cartoes {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: var(--espacamento-md);
+}
+
+.viasp-demonstracao__amostras-texto {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espacamento-md);
+}
+
+.viasp-demonstracao__cores-texto {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--espacamento-md);
+  padding-top: var(--espacamento-sm);
+  border-top: 1px dashed var(--cor-borda);
+}
+
+.viasp-demonstracao__aviso {
+  padding-top: var(--espacamento-xs);
+}

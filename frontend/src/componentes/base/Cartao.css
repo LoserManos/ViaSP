@@ -1,0 +1,36 @@
+.viasp-cartao {
+  background-color: var(--cor-superficie);
+  border: 2px solid var(--cor-borda);
+  border-radius: var(--raio-borda-lg);
+  padding: var(--espacamento-md);
+  box-shadow: var(--sombra-card);
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease,
+    transform 0.05s ease;
+}
+
+.viasp-cartao--destaque {
+  border-color: var(--cor-primaria);
+  background-color: var(--cor-superficie-destaque);
+}
+
+.viasp-cartao--clicavel {
+  cursor: pointer;
+  min-height: var(--alvo-toque-minimo, 64px);
+  touch-action: manipulation;
+}
+
+.viasp-cartao--clicavel:hover {
+  border-color: var(--cor-primaria);
+  box-shadow: var(--sombra-elevada);
+}
+
+.viasp-cartao--clicavel:active {
+  transform: scale(0.99);
+}
+
+.viasp-cartao--clicavel:focus-visible {
+  outline: 4px solid var(--cor-foco);
+  outline-offset: 3px;
+}
