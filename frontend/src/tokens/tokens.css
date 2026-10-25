@@ -1,0 +1,104 @@
+:root {
+  /* Alvo de toque mínimo ergonômico para totem público (WCAG / ISS-14.4) */
+  --alvo-toque-minimo: 64px;
+
+  /* Identidade Visual do Protótipo Figma (ViaSP) */
+  --cor-marca: #e5273f; /* Vermelho oficial do SVG do Figma */
+  --cor-marca-hover: #cc1f34;
+  --cor-marca-ativo: #b31a2e;
+  --cor-marca-fundo: #fef2f2;
+
+  --cor-primaria: #e5273f; /* Alinhado à identidade visual do totem */
+  --cor-primaria-hover: #cc1f34;
+  --cor-primaria-ativo: #b31a2e;
+
+  /* Cores das Linhas de Ônibus (Áreas Operacionais SPTrans) */
+  --cor-linha-vermelha: #e5223a;
+  --cor-linha-azul: #2563eb;
+  --cor-linha-verde: #059669;
+  --cor-linha-laranja: #d97706;
+
+  /* Fundo e Superfícies */
+  --cor-fundo: #f3f5f7;
+  --cor-superficie: #ffffff;
+  --cor-superficie-destaque: #f8fafc;
+  --cor-superficie-hover: #f1f5f9;
+
+  /* Textos de Alto Contraste (WCAG AA/AAA) */
+  --cor-texto-principal: #0f172a; /* Contraste 15.8:1 no branco */
+  --cor-texto-secundario: #64748b; /* Contraste 4.6:1 no branco */
+  --cor-texto-invertido: #ffffff; /* Contraste no vermelho e azul >= 4.5:1 */
+  --cor-texto-muted: #94a3b8;
+
+  /* Bordas e Sombras */
+  --cor-borda: #e2e8f0;
+  --cor-borda-forte: #cbd5e1;
+  --cor-foco: #2563eb;
+
+  /* Cores de Status e Badges */
+  --cor-sucesso: #059669;
+  --cor-sucesso-fundo: #dcfce7;
+  --cor-sucesso-texto: #166534;
+
+  --cor-alerta: #d97706;
+  --cor-alerta-fundo: #fef3c7;
+  --cor-alerta-texto: #92400e;
+
+  --cor-erro: #dc2626;
+  --cor-erro-fundo: #fee2e2;
+  --cor-erro-texto: #991b1b;
+
+  /* Tipografia para Totem (Leitura clara a 1-2 metros de distância) */
+  --fonte-padrao:
+    system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica,
+    Arial, sans-serif;
+  --tamanho-texto-display: 2.75rem; /* 44px */
+  --tamanho-texto-titulo: 2rem; /* 32px */
+  --tamanho-texto-subtitulo: 1.5rem; /* 24px */
+  --tamanho-texto-destaque: 1.25rem; /* 20px */
+  --tamanho-texto-corpo: 1.125rem; /* 18px (tamanho mínimo para leitura confortável) */
+  --tamanho-texto-pequeno: 1rem; /* 16px */
+
+  --peso-regular: 400;
+  --peso-medio: 500;
+  --peso-semibold: 600;
+  --peso-bold: 700;
+
+  /* Espaçamentos */
+  --espacamento-xs: 8px;
+  --espacamento-sm: 16px;
+  --espacamento-md: 24px;
+  --espacamento-lg: 32px;
+  --espacamento-xl: 48px;
+
+  /* Raios de Borda */
+  --raio-borda-sm: 8px;
+  --raio-borda-md: 12px;
+  --raio-borda-lg: 18px;
+  --raio-borda-card: 20px;
+  --raio-borda-full: 9999px;
+
+  /* Sombras */
+  --sombra-card: 0 1px 3px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.03);
+  --sombra-elevada:
+    0 10px 25px -5px rgba(0, 0, 0, 0.08), 0 8px 10px -6px rgba(0, 0, 0, 0.04);
+}
+
+/* Reset Global Adequado para Totem Touchscreen */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+}
+
+body {
+  font-family: var(--fonte-padrao);
+  font-size: var(--tamanho-texto-corpo);
+  color: var(--cor-texto-principal);
+  background-color: var(--cor-fundo);
+  min-height: 100vh;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}

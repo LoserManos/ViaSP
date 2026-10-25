@@ -1,0 +1,392 @@
+.viasp-figma-container {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: var(--espacamento-md);
+  display: flex;
+  flex-direction: column;
+  gap: var(--espacamento-md);
+}
+
+/* Header Superior */
+.viasp-figma-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: var(--espacamento-sm);
+  border-bottom: 1px solid var(--cor-borda);
+}
+
+.viasp-figma-header__logo-area {
+  display: flex;
+  align-items: center;
+  gap: var(--espacamento-xs);
+}
+
+.viasp-figma-header__logo-badge {
+  width: 40px;
+  height: 40px;
+  background-color: var(--cor-marca);
+  color: var(--cor-texto-invertido);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--raio-borda-md);
+}
+
+.viasp-figma-header__logo-texto {
+  font-size: 1.5rem;
+  color: var(--cor-texto-principal);
+  letter-spacing: -0.03em;
+}
+
+.viasp-figma-header__logo-texto strong {
+  color: var(--cor-marca);
+}
+
+.viasp-figma-header__subtitulo {
+  color: var(--cor-texto-secundario);
+  font-size: var(--tamanho-texto-pequeno);
+  margin-left: var(--espacamento-sm);
+  padding-left: var(--espacamento-sm);
+  border-left: 1px solid var(--cor-borda-forte);
+}
+
+.viasp-figma-header__acoes {
+  display: flex;
+  align-items: center;
+  gap: var(--espacamento-sm);
+}
+
+.viasp-figma-header__botao-util {
+  background: transparent;
+  border: 1px solid var(--cor-borda);
+  border-radius: var(--raio-borda-full);
+  padding: 8px 16px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.95rem;
+  font-weight: var(--peso-medio);
+  color: var(--cor-texto-principal);
+  cursor: pointer;
+  min-height: 44px;
+}
+
+.viasp-figma-header__idioma {
+  background-color: #1e293b;
+  color: #ffffff;
+  border-radius: var(--raio-borda-full);
+  padding: 8px 16px;
+  font-size: 0.95rem;
+  font-weight: var(--peso-bold);
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+}
+
+/* Hero */
+.viasp-figma-hero {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: var(--espacamento-sm) 0;
+}
+
+.viasp-figma-hero__tag {
+  color: var(--cor-marca);
+  font-size: 0.85rem;
+  font-weight: var(--peso-bold);
+  letter-spacing: 0.08em;
+}
+
+/* Barra de Busca e Botão de Voz */
+.viasp-figma-busca-row {
+  display: flex;
+  align-items: center;
+  gap: var(--espacamento-sm);
+}
+
+.viasp-figma-busca-input {
+  flex: 1;
+  background-color: var(--cor-superficie);
+  border: 2px solid var(--cor-borda);
+  border-radius: var(--raio-borda-full);
+  padding: 0 var(--espacamento-md);
+  height: 64px;
+  display: flex;
+  align-items: center;
+  gap: var(--espacamento-sm);
+  box-shadow: var(--sombra-card);
+}
+
+.viasp-figma-busca-icon {
+  color: var(--cor-texto-muted);
+}
+
+.viasp-figma-busca-campo {
+  flex: 1;
+  border: none;
+  outline: none;
+  font-size: var(--tamanho-texto-destaque);
+  color: var(--cor-texto-principal);
+  background: transparent;
+  font-family: var(--fonte-padrao);
+}
+
+.viasp-figma-busca-campo::placeholder {
+  color: var(--cor-texto-muted);
+}
+
+.viasp-figma-busca-btn {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background-color: #0f172a;
+  color: #ffffff;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.viasp-figma-btn-voz {
+  border-radius: var(--raio-borda-lg) !important;
+  box-shadow: 0 4px 14px rgba(229, 34, 58, 0.35);
+  font-size: var(--tamanho-texto-destaque) !important;
+}
+
+/* Banner Ver Mapa */
+.viasp-figma-mapa-banner {
+  background-color: var(--cor-superficie);
+  border: 1px solid var(--cor-borda);
+  border-radius: var(--raio-borda-lg);
+  padding: var(--espacamento-sm) var(--espacamento-md);
+  display: flex;
+  align-items: center;
+  gap: var(--espacamento-sm);
+  cursor: pointer;
+  box-shadow: var(--sombra-card);
+  transition:
+    transform 0.1s ease,
+    border-color 0.15s ease;
+}
+
+.viasp-figma-mapa-banner:hover {
+  border-color: #2563eb;
+  transform: translateY(-1px);
+}
+
+.viasp-figma-mapa-banner__icone {
+  width: 48px;
+  height: 48px;
+  border-radius: var(--raio-borda-md);
+  background-color: #eff6ff;
+  color: #2563eb;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.viasp-figma-mapa-banner__texto {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.viasp-figma-mapa-banner__texto strong {
+  font-size: var(--tamanho-texto-destaque);
+  color: var(--cor-texto-principal);
+}
+
+.viasp-figma-mapa-banner__texto span {
+  font-size: var(--tamanho-texto-pequeno);
+  color: var(--cor-texto-secundario);
+}
+
+.viasp-figma-mapa-banner__seta {
+  font-size: 1.75rem;
+  color: var(--cor-texto-muted);
+}
+
+/* Cartão do Ponto */
+.viasp-figma-ponto-card {
+  border-radius: var(--raio-borda-card) !important;
+  padding: var(--espacamento-lg) !important;
+  display: flex;
+  flex-direction: column;
+  gap: var(--espacamento-md);
+}
+
+.viasp-figma-ponto-card__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding-bottom: var(--espacamento-sm);
+  border-bottom: 1px solid var(--cor-borda);
+}
+
+.viasp-figma-ponto-card__tag {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.85rem;
+  font-weight: var(--peso-bold);
+  color: var(--cor-marca);
+  letter-spacing: 0.05em;
+  margin-bottom: 4px;
+}
+
+.viasp-figma-ponto-card__dot {
+  width: 8px;
+  height: 8px;
+  background-color: var(--cor-marca);
+  border-radius: 50%;
+}
+
+.viasp-figma-ponto-card__status {
+  background-color: var(--cor-sucesso-fundo);
+  color: var(--cor-sucesso-texto);
+  font-size: 0.9rem;
+  font-weight: var(--peso-bold);
+  padding: 6px 14px;
+  border-radius: var(--raio-borda-full);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.viasp-figma-ponto-card__status-dot {
+  width: 8px;
+  height: 8px;
+  background-color: var(--cor-sucesso);
+  border-radius: 50%;
+}
+
+/* Tabela de Linhas */
+.viasp-figma-tabela-topo {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.85rem;
+  font-weight: var(--peso-bold);
+  color: var(--cor-texto-muted);
+  letter-spacing: 0.05em;
+  padding: 0 var(--espacamento-xs);
+}
+
+.viasp-figma-linhas-lista {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espacamento-xs);
+}
+
+.viasp-figma-linha-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--espacamento-sm);
+  border-radius: var(--raio-borda-md);
+  border: 1px solid var(--cor-borda);
+  background-color: var(--cor-superficie);
+  cursor: pointer;
+  min-height: 72px;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease,
+    transform 0.05s ease;
+}
+
+.viasp-figma-linha-item:hover {
+  background-color: var(--cor-superficie-hover);
+  border-color: var(--cor-borda-forte);
+}
+
+.viasp-figma-linha-item:active {
+  transform: scale(0.99);
+}
+
+.viasp-figma-linha-item__esquerda {
+  display: flex;
+  align-items: center;
+  gap: var(--espacamento-sm);
+}
+
+.viasp-figma-badge {
+  padding: 8px 16px;
+  border-radius: var(--raio-borda-md);
+  color: #ffffff;
+  font-weight: var(--peso-bold);
+  font-size: var(--tamanho-texto-destaque);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 130px;
+  justify-content: center;
+}
+
+.viasp-figma-badge--vermelha {
+  background-color: var(--cor-linha-vermelha);
+}
+
+.viasp-figma-badge--azul {
+  background-color: var(--cor-linha-azul);
+}
+
+.viasp-figma-badge--verde {
+  background-color: var(--cor-linha-verde);
+}
+
+.viasp-figma-linha-item__direita {
+  display: flex;
+  align-items: center;
+  gap: var(--espacamento-md);
+}
+
+.viasp-figma-linha-item__tempo-box {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.viasp-figma-linha-item__status {
+  font-size: 0.8rem;
+  color: var(--cor-texto-secundario);
+  font-weight: var(--peso-medio);
+}
+
+.viasp-figma-linha-item__status--alerta {
+  color: var(--cor-marca);
+  font-weight: var(--peso-bold);
+}
+
+.viasp-figma-linha-item__tempo {
+  font-size: var(--tamanho-texto-subtitulo);
+  font-weight: var(--peso-bold);
+  color: var(--cor-texto-principal);
+}
+
+.viasp-figma-linha-item__tempo--destaque {
+  color: var(--cor-marca);
+}
+
+.viasp-figma-linha-item__seta {
+  font-size: 1.75rem;
+  color: var(--cor-texto-muted);
+}
+
+.viasp-figma-ver-todas {
+  background: transparent;
+  border: none;
+  color: var(--cor-marca);
+  font-size: var(--tamanho-texto-destaque);
+  font-weight: var(--peso-bold);
+  cursor: pointer;
+  padding: var(--espacamento-sm) 0;
+  text-align: center;
+  border-top: 1px solid var(--cor-borda);
+  margin-top: var(--espacamento-xs);
+}
+
+.viasp-figma-ver-todas:hover {
+  text-decoration: underline;
+}

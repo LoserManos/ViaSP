@@ -1,0 +1,80 @@
+.viasp-texto {
+  font-family: var(--fonte-padrao);
+  line-height: 1.3;
+  margin: 0;
+}
+
+/* Variantes de Tamanho */
+.viasp-texto--display {
+  font-size: var(--tamanho-texto-display);
+  font-weight: var(--peso-bold);
+  letter-spacing: -0.02em;
+}
+
+.viasp-texto--titulo {
+  font-size: var(--tamanho-texto-titulo);
+  font-weight: var(--peso-bold);
+}
+
+.viasp-texto--subtitulo {
+  font-size: var(--tamanho-texto-subtitulo);
+  font-weight: var(--peso-semibold);
+}
+
+.viasp-texto--destaque {
+  font-size: var(--tamanho-texto-destaque);
+  font-weight: var(--peso-medio);
+}
+
+.viasp-texto--corpo {
+  font-size: var(--tamanho-texto-corpo);
+  font-weight: var(--peso-regular);
+}
+
+.viasp-texto--pequeno {
+  font-size: var(--tamanho-texto-pequeno);
+  font-weight: var(--peso-regular);
+}
+
+/* Pesos Opcionais */
+.viasp-texto--peso-regular {
+  font-weight: var(--peso-regular);
+}
+.viasp-texto--peso-medio {
+  font-weight: var(--peso-medio);
+}
+.viasp-texto--peso-semibold {
+  font-weight: var(--peso-semibold);
+}
+.viasp-texto--peso-bold {
+  font-weight: var(--peso-bold);
+}
+
+/* Cores de Alto Contraste */
+.viasp-texto--cor-padrao {
+  color: var(--cor-texto-principal);
+}
+
+.viasp-texto--cor-secundario {
+  color: var(--cor-texto-secundario);
+}
+
+.viasp-texto--cor-invertido {
+  color: var(--cor-texto-invertido);
+}
+
+.viasp-texto--cor-primaria {
+  color: var(--cor-primaria);
+}
+
+.viasp-texto--cor-sucesso {
+  color: var(--cor-sucesso);
+}
+
+.viasp-texto--cor-alerta {
+  color: var(--cor-alerta);
+}
+
+.viasp-texto--cor-erro {
+  color: var(--cor-erro);
+}

@@ -1,4 +1,4 @@
-name: Backend CI
+name: CI
 
 on:
   push:
@@ -7,8 +7,8 @@ on:
     branches: [main]
 
 jobs:
-  lint-and-test:
-    name: Ruff & Pytest
+  backend-lint-and-test:
+    name: Backend (Ruff & Pytest)
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -37,4 +37,38 @@ jobs:
 
       - name: Executar suíte de testes com Pytest
         run: pytest
+
+  frontend-lint-and-test:
+    name: Frontend (ESLint, Prettier & Vitest)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+
+    steps:
+      - name: Checkout do repositório
+        uses: actions/checkout@v4
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: "npm"
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Instalar dependências
+        run: npm ci
+
+      - name: Verificar lint com ESLint
+        run: npm run lint
+
+      - name: Verificar formatação com Prettier
+        run: npm run format:check
+
+      - name: Executar testes com Vitest
+        run: npm test
+
+      - name: Build de produção
+        run: npm run build
+
 

@@ -1,0 +1,71 @@
+.viasp-logo {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--espacamento-xs);
+  text-decoration: none;
+}
+
+.viasp-logo__badge {
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.viasp-logo--grande .viasp-logo__badge {
+  width: 44px;
+  height: 44px;
+}
+
+.viasp-logo--pequeno .viasp-logo__badge {
+  width: 28px;
+  height: 28px;
+}
+
+.viasp-logo__texto-area {
+  display: flex;
+  align-items: center;
+  gap: var(--espacamento-xs);
+}
+
+.viasp-logo__nome {
+  font-family: var(--fonte-padrao);
+  font-size: 1.625rem;
+  font-weight: var(--peso-bold);
+  color: #0f172a;
+  letter-spacing: -0.04em;
+  line-height: 1;
+}
+
+.viasp-logo__sp {
+  color: var(--cor-marca, #e5223a);
+  font-weight: 800;
+  margin-left: 1px;
+}
+
+.viasp-logo--grande .viasp-logo__nome {
+  font-size: 2rem;
+}
+
+.viasp-logo--pequeno .viasp-logo__nome {
+  font-size: 1.25rem;
+}
+
+.viasp-logo__subtitulo {
+  font-family: var(--fonte-padrao);
+  font-size: 0.95rem;
+  color: var(--cor-texto-secundario, #64748b);
+  font-weight: var(--peso-regular);
+  margin-left: var(--espacamento-sm);
+  padding-left: var(--espacamento-sm);
+  border-left: 1px solid var(--cor-borda-forte, #cbd5e1);
+  line-height: 1.2;
+}
+
+@media (max-width: 640px) {
+  .viasp-logo__subtitulo {
+    display: none;
+  }
+}

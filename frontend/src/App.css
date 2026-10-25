@@ -1,0 +1,11 @@
+.viasp-app {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.viasp-app__conteudo {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}

@@ -1,0 +1,98 @@
+.viasp-cabecalho-totem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--espacamento-sm) var(--espacamento-md);
+  background-color: var(--cor-superficie);
+  border-bottom: 2px solid var(--cor-borda);
+  box-shadow: var(--sombra-card);
+  min-height: 76px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.viasp-cabecalho-totem__esquerda {
+  display: flex;
+  align-items: center;
+  gap: var(--espacamento-md);
+}
+
+.viasp-cabecalho-totem__logo {
+  display: flex;
+  align-items: center;
+  gap: var(--espacamento-xs);
+}
+
+.viasp-cabecalho-totem__logo-icone {
+  font-size: 1.75rem;
+  line-height: 1;
+}
+
+.viasp-cabecalho-totem__logo-textos {
+  display: flex;
+  flex-direction: column;
+}
+
+.viasp-cabecalho-totem__logo-nome {
+  font-size: 1.5rem;
+  font-weight: var(--peso-bold);
+  color: var(--cor-texto-principal);
+  line-height: 1;
+}
+
+.viasp-cabecalho-totem__logo-nome strong {
+  color: var(--cor-marca);
+}
+
+.viasp-cabecalho-totem__ponto-nome {
+  font-size: 0.9rem;
+  color: var(--cor-texto-secundario);
+  margin-top: 2px;
+}
+
+.viasp-cabecalho-totem__titulo-tela {
+  border-left: 2px solid var(--cor-borda);
+  padding-left: var(--espacamento-md);
+}
+
+.viasp-cabecalho-totem__direita {
+  display: flex;
+  align-items: center;
+  gap: var(--espacamento-sm);
+}
+
+.viasp-cabecalho-totem__btn-util {
+  min-height: 52px;
+  padding: 0 var(--espacamento-md);
+  border-radius: var(--raio-borda-full);
+  border: 1px solid var(--cor-borda-forte);
+  background-color: var(--cor-fundo);
+  color: var(--cor-texto-principal);
+  font-family: var(--fonte-padrao);
+  font-size: var(--tamanho-texto-pequeno);
+  font-weight: var(--peso-semibold);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--espacamento-xs);
+  cursor: pointer;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease;
+}
+
+.viasp-cabecalho-totem__btn-util:hover {
+  background-color: var(--cor-superficie);
+  border-color: var(--cor-marca);
+}
+
+.viasp-cabecalho-totem__btn-util--ativo {
+  background-color: #0f172a;
+  color: #ffffff;
+  border-color: #0f172a;
+}
+
+.viasp-cabecalho-totem__btn-voltar {
+  min-height: 56px !important;
+  font-size: 1.125rem !important;
+}

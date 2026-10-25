@@ -1,0 +1,237 @@
+.viasp-tela-inicio {
+  max-width: 900px;
+  width: 100%;
+  margin: 0 auto;
+  padding: var(--espacamento-md);
+  display: flex;
+  flex-direction: column;
+  gap: var(--espacamento-md);
+}
+
+.viasp-tela-inicio__hero {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-top: var(--espacamento-xs);
+}
+
+.viasp-tela-inicio__tag {
+  color: var(--cor-marca);
+  font-size: 0.85rem;
+  font-weight: var(--peso-bold);
+  letter-spacing: 0.08em;
+}
+
+/* Barra de Busca */
+.viasp-tela-inicio__busca-box {
+  width: 100%;
+}
+
+.viasp-tela-inicio__busca-campo-wrapper {
+  background-color: var(--cor-superficie);
+  border: 2px solid var(--cor-borda);
+  border-radius: var(--raio-borda-full);
+  padding: 0 var(--espacamento-md);
+  height: 64px;
+  display: flex;
+  align-items: center;
+  gap: var(--espacamento-sm);
+  box-shadow: var(--sombra-card);
+  transition: border-color 0.15s ease;
+}
+
+.viasp-tela-inicio__busca-campo-wrapper:focus-within {
+  border-color: var(--cor-marca);
+  outline: 4px solid rgba(229, 34, 58, 0.2);
+}
+
+.viasp-tela-inicio__busca-icone {
+  font-size: 1.25rem;
+  line-height: 1;
+}
+
+.viasp-tela-inicio__busca-input {
+  flex: 1;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-family: var(--fonte-padrao);
+  font-size: var(--tamanho-texto-destaque);
+  color: var(--cor-texto-principal);
+}
+
+.viasp-tela-inicio__busca-limpar {
+  background: transparent;
+  border: none;
+  font-size: 1.25rem;
+  color: var(--cor-texto-secundario);
+  cursor: pointer;
+  padding: 8px;
+  min-width: 44px;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Cartão da Parada */
+.viasp-tela-inicio__card-parada {
+  border-radius: var(--raio-borda-card) !important;
+  background-color: var(--cor-superficie) !important;
+}
+
+.viasp-tela-inicio__card-topo {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--espacamento-md);
+}
+
+.viasp-tela-inicio__tag-local {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.85rem;
+  font-weight: var(--peso-bold);
+  color: var(--cor-marca);
+  letter-spacing: 0.05em;
+  margin-bottom: 4px;
+}
+
+.viasp-tela-inicio__dot-local {
+  width: 8px;
+  height: 8px;
+  background-color: var(--cor-marca);
+  border-radius: 50%;
+}
+
+.viasp-tela-inicio__badge-status {
+  background-color: var(--cor-sucesso-fundo);
+  color: var(--cor-sucesso-texto);
+  font-size: 0.9rem;
+  font-weight: var(--peso-bold);
+  padding: 6px 14px;
+  border-radius: var(--raio-borda-full);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.viasp-tela-inicio__dot-verde {
+  width: 8px;
+  height: 8px;
+  background-color: var(--cor-sucesso);
+  border-radius: 50%;
+}
+
+/* Lista de Linhas */
+.viasp-tela-inicio__secao-linhas {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espacamento-sm);
+}
+
+.viasp-tela-inicio__cabecalho-lista {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 0 var(--espacamento-xs);
+}
+
+.viasp-tela-inicio__grade-linhas {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espacamento-xs);
+}
+
+.viasp-tela-inicio__item-linha {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--espacamento-md) !important;
+  min-height: 80px;
+}
+
+.viasp-tela-inicio__linha-esquerda {
+  display: flex;
+  align-items: center;
+  gap: var(--espacamento-md);
+}
+
+.viasp-tela-inicio__badge-numero {
+  padding: 10px 16px;
+  border-radius: var(--raio-borda-md);
+  color: #ffffff;
+  font-weight: var(--peso-bold);
+  font-size: var(--tamanho-texto-destaque);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 140px;
+  justify-content: center;
+}
+
+.viasp-tela-inicio__badge-numero--vermelha {
+  background-color: var(--cor-linha-vermelha);
+}
+
+.viasp-tela-inicio__badge-numero--azul {
+  background-color: var(--cor-linha-azul);
+}
+
+.viasp-tela-inicio__badge-numero--verde {
+  background-color: var(--cor-linha-verde);
+}
+
+.viasp-tela-inicio__badge-numero--laranja {
+  background-color: var(--cor-linha-laranja);
+}
+
+.viasp-tela-inicio__linha-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.viasp-tela-inicio__linha-direita {
+  display: flex;
+  align-items: center;
+}
+
+.viasp-tela-inicio__seta-acao {
+  font-size: 2rem;
+  color: var(--cor-texto-muted);
+  line-height: 1;
+}
+
+/* Spinner e Carregando */
+.viasp-tela-inicio__carregando {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--espacamento-xl);
+  gap: var(--espacamento-md);
+}
+
+.viasp-tela-inicio__spinner {
+  width: 48px;
+  height: 48px;
+  border: 4px solid var(--cor-borda);
+  border-top-color: var(--cor-marca);
+  border-radius: 50%;
+  animation: viasp-girar 0.8s linear infinite;
+}
+
+@keyframes viasp-girar {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.viasp-tela-inicio__rodape {
+  display: flex;
+  justify-content: center;
+  padding-top: var(--espacamento-md);
+}

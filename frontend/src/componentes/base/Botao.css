@@ -1,0 +1,108 @@
+.viasp-botao {
+  /* Alvo de toque mínimo obrigatório de 64px */
+  min-height: var(--alvo-toque-minimo, 64px);
+  min-width: var(--alvo-toque-minimo, 64px);
+  padding: 0 var(--espacamento-md);
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--espacamento-xs);
+
+  font-family: var(--fonte-padrao);
+  font-size: var(--tamanho-texto-destaque);
+  font-weight: var(--peso-bold);
+  line-height: 1.2;
+  text-decoration: none;
+
+  border-radius: var(--raio-borda-md);
+  border: 2px solid transparent;
+  cursor: pointer;
+  touch-action: manipulation;
+  transition:
+    background-color 0.15s ease,
+    transform 0.05s ease,
+    border-color 0.15s ease;
+}
+
+.viasp-botao:focus-visible {
+  outline: 4px solid var(--cor-foco);
+  outline-offset: 3px;
+}
+
+.viasp-botao:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+.viasp-botao:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Variante Primária (Azul SPTrans) */
+.viasp-botao--primario {
+  background-color: var(--cor-primaria);
+  color: var(--cor-texto-invertido);
+  border-color: var(--cor-primaria);
+}
+
+.viasp-botao--primario:hover:not(:disabled) {
+  background-color: var(--cor-primaria-hover);
+  border-color: var(--cor-primaria-hover);
+}
+
+.viasp-botao--primario:active:not(:disabled) {
+  background-color: var(--cor-primaria-ativo);
+}
+
+/* Variante Secundária (Amarelo / Neutro) */
+.viasp-botao--secundario {
+  background-color: var(--cor-secundaria);
+  color: var(--cor-texto-principal);
+  border-color: var(--cor-secundaria-hover);
+}
+
+.viasp-botao--secundario:hover:not(:disabled) {
+  background-color: var(--cor-secundaria-hover);
+}
+
+.viasp-botao--secundario:active:not(:disabled) {
+  background-color: var(--cor-secundaria-ativo);
+}
+
+/* Variante Voltar (Botão com contraste e destaque para o quiosque) */
+.viasp-botao--voltar {
+  background-color: var(--cor-superficie);
+  color: var(--cor-texto-principal);
+  border-color: var(--cor-borda-forte);
+  box-shadow: var(--sombra-card);
+}
+
+.viasp-botao--voltar:hover:not(:disabled) {
+  background-color: var(--cor-fundo);
+  border-color: var(--cor-primaria);
+}
+
+.viasp-botao__icone {
+  font-size: 1.5rem;
+  line-height: 1;
+}
+
+/* Variante Perigo */
+.viasp-botao--perigo {
+  background-color: var(--cor-erro);
+  color: var(--cor-texto-invertido);
+  border-color: var(--cor-erro);
+}
+
+.viasp-botao--perigo:hover:not(:disabled) {
+  background-color: #991b1b;
+}
+
+/* Tamanho Grande (para ações principais do totem) */
+.viasp-botao--grande {
+  min-height: 72px;
+  padding: 0 var(--espacamento-lg);
+  font-size: var(--tamanho-texto-subtitulo);
+}

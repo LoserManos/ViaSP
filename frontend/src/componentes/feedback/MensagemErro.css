@@ -1,0 +1,20 @@
+.viasp-mensagem-erro {
+  border-color: var(--cor-erro) !important;
+  background-color: var(--cor-erro-fundo) !important;
+  display: flex;
+  align-items: center;
+  gap: var(--espacamento-md);
+  padding: var(--espacamento-md);
+}
+
+.viasp-mensagem-erro__icone {
+  font-size: 2rem;
+  line-height: 1;
+}
+
+.viasp-mensagem-erro__conteudo {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
