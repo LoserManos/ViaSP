@@ -1,6 +1,5 @@
 from dataclasses import dataclass
 
-from .linha import Linha
 from .parada import Parada
 
 
@@ -8,19 +7,10 @@ from .parada import Parada
 class Totem:
     """Totem instalado em uma parada.
 
-    No diagrama de classes, as operações abaixo representam a interação do
-    passageiro (hoje vivem no frontend). No backend o Totem guarda,
-    sobretudo, a configuração (identificador + parada).
+    Representa no backend a configuração física do terminal (identificador e
+    parada associada). As interações de navegação do passageiro (buscar/selecionar
+    linha e voltar ao início) pertencem à camada de interface (frontend).
     """
 
     identificador: str
     parada: Parada
-
-    def buscar_linha(self, termo: str) -> list[Linha]:
-        raise NotImplementedError
-
-    def selecionar_linha(self, linha: Linha) -> None:
-        raise NotImplementedError
-
-    def voltar_ao_inicio(self) -> None:
-        raise NotImplementedError

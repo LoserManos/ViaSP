@@ -25,7 +25,7 @@ class ConsultaPrevisao:
     previsoes: list[PrevisaoChegada] = field(default_factory=list)
 
     def foi_bem_sucedida(self) -> bool:
-        raise NotImplementedError
+        return self.estado in (EstadoConsulta.SUCESSO, EstadoConsulta.SEM_PREVISAO)
 
     def possui_previsoes(self) -> bool:
-        raise NotImplementedError
+        return self.estado == EstadoConsulta.SUCESSO and len(self.previsoes) > 0
