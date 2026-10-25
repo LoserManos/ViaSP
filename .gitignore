@@ -15,6 +15,12 @@
 .env.*
 !.env.example
 
+# Databases
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+
 # Python
 __pycache__/
 *.py[cod]
