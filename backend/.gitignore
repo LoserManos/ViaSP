@@ -1,2 +1,4 @@
-data/*.db
-data/*.db-journal
+*.db
+*.db-journal
+*.db-wal
+*.db-shm

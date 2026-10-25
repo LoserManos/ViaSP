@@ -15,9 +15,10 @@ uvicorn app.main:app --reload
 
 Docs interativas: http://localhost:8000/docs
 
-## Testes
+## Testes e Lint
 
 ```bash
+ruff check .
 pytest
 ```
 
