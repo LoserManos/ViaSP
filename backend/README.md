@@ -22,6 +22,14 @@ ruff check .
 pytest
 ```
 
+## Dados do Totem Físico
+
+Os dados da parada configurada para simular o totem físico no sistema (referentes à variável de ambiente `PARADA_CODIGO`) são:
+
+* **Código da Parada:** `440016921`
+* **Endereço:** Av. Paulista, 2027 (Ref.: R Padre Joao Manuel / R Augusta -- Conjunto Nacional)
+* **Coordenadas:** Latitude `-23.558947`, Longitude `-46.659585`
+
 ## Estrutura
 
 ```
