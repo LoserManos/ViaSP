@@ -15,7 +15,9 @@ classDiagram
     class ClienteSPTrans {
         +autenticar()
         +buscarLinhas(termo)
-        +buscarParadas(linha)
+        +buscarParadas(codigoLinha)
+        +buscarLinhasDaParada(codigoParada)
+        +buscarParada(codigo)
         +obterPrevisoes(parada, linha)
     }
     class Parada {
