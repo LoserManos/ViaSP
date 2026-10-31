@@ -14,8 +14,8 @@ Endpoints previstos (ver docs/entregas/entrega-1.md e ADR-001):
 import asyncio
 import logging
 import re
-from datetime import datetime
 from collections.abc import Sequence
+from datetime import datetime
 from typing import Any
 
 import httpx
