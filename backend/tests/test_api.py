@@ -10,7 +10,7 @@ def test_totem_usa_configuracao(client):
     assert corpo["parada"]["codigo"] == 123
 
 
-def test_rotas_de_consulta_ainda_nao_implementadas(client):
-    # Remover/ajustar conforme cada método for implementado.
-    assert client.get("/api/linhas").status_code == 501
-    assert client.get("/api/previsoes", params={"codigo_linha": 1}).status_code == 501
+#def test_rotas_de_consulta_ainda_nao_implementadas(client):
+#    # Remover/ajustar conforme cada método for implementado.
+#    assert client.get("/api/linhas").status_code == 501
+#    assert client.get("/api/previsoes", params={"codigo_linha": 1}).status_code == 501
