@@ -15,11 +15,19 @@ import asyncio
 import logging
 import re
 from collections.abc import Sequence
+from datetime import datetime
 from typing import Any
 
 import httpx
 
-from app.dominio import ConsultaPrevisao, Linha, Parada
+from app.dominio import (
+    ConsultaPrevisao,
+    EstadoConsulta,
+    Linha,
+    Parada,
+    PrevisaoChegada,
+    Veiculo,
+)
 from app.excecoes import ErroAutenticacaoSPTrans, ErroSPTrans, SPTransIndisponivel
 
 logger = logging.getLogger(__name__)
@@ -155,6 +163,30 @@ def _converter_parada(dados: Any) -> Parada | None:
         endereco=endereco,
         latitude=latitude,
         longitude=longitude,
+    )
+
+
+def _converter_previsao_chegada(dados: Any) -> PrevisaoChegada | None:
+    """Converte um dicionário de veículo (`vs`) da SPTrans em `PrevisaoChegada`."""
+    if not isinstance(dados, dict):
+        return None
+
+    horario_bruto = dados.get("t")
+    if horario_bruto is None or isinstance(horario_bruto, bool):
+        return None
+    horario_previsto = str(horario_bruto).strip()
+    if not horario_previsto:
+        return None
+
+    prefixo_bruto = dados.get("p")
+    if prefixo_bruto is None or isinstance(prefixo_bruto, bool):
+        prefixo = ""
+    else:
+        prefixo = str(prefixo_bruto).strip()
+
+    return PrevisaoChegada(
+        horario_previsto=horario_previsto,
+        veiculo=Veiculo(prefixo=prefixo),
     )
 
 
@@ -375,4 +407,98 @@ class ClienteSPTrans:
         return None
 
     async def obter_previsoes(self, codigo_parada: int, codigo_linha: int) -> ConsultaPrevisao:
-        raise NotImplementedError
+        """Consulta as previsões de chegada de uma linha em uma parada (`GET /Previsao`)."""
+        resposta = await self._requisitar(
+            "GET",
+            "/Previsao",
+            params={"codigoParada": codigo_parada, "codigoLinha": codigo_linha},
+        )
+        horario_consulta = datetime.now()
+        dados = _extrair_json(resposta)
+
+        parada_padrao = Parada(codigo=codigo_parada)
+        linha_padrao = Linha(codigo=codigo_linha, numero="", sentido=1)
+
+        if not isinstance(dados, dict):
+            return ConsultaPrevisao(
+                parada=parada_padrao,
+                linha=linha_padrao,
+                horario_consulta=horario_consulta,
+                horario_referencia="",
+                estado=EstadoConsulta.SEM_PREVISAO,
+                previsoes=[],
+            )
+
+        hr = dados.get("hr")
+        horario_referencia = str(hr).strip() if hr is not None and not isinstance(hr, bool) else ""
+
+        dados_parada = dados.get("p")
+        if not isinstance(dados_parada, dict):
+            return ConsultaPrevisao(
+                parada=parada_padrao,
+                linha=linha_padrao,
+                horario_consulta=horario_consulta,
+                horario_referencia=horario_referencia,
+                estado=EstadoConsulta.SEM_PREVISAO,
+                previsoes=[],
+            )
+
+        dados_parada_fallback = {
+            **dados_parada,
+            "cp": dados_parada.get("cp") if _para_int(dados_parada.get("cp")) is not None else codigo_parada,
+        }
+        parada = _converter_parada(dados_parada_fallback) or parada_padrao
+
+        lista_linhas = dados_parada.get("l")
+        dados_linha_escolhida: dict[str, Any] | None = None
+        if isinstance(lista_linhas, list):
+            for item_linha in lista_linhas:
+                if isinstance(item_linha, dict) and _para_int(item_linha.get("cl")) == codigo_linha:
+                    dados_linha_escolhida = item_linha
+                    break
+            if (
+                dados_linha_escolhida is None
+                and len(lista_linhas) == 1
+                and isinstance(lista_linhas[0], dict)
+                and _para_int(lista_linhas[0].get("cl")) is None
+            ):
+                dados_linha_escolhida = lista_linhas[0]
+
+        if dados_linha_escolhida is None:
+            return ConsultaPrevisao(
+                parada=parada,
+                linha=linha_padrao,
+                horario_consulta=horario_consulta,
+                horario_referencia=horario_referencia,
+                estado=EstadoConsulta.SEM_PREVISAO,
+                previsoes=[],
+            )
+
+        dados_linha_fallback = {
+            **dados_linha_escolhida,
+            "cl": (
+                dados_linha_escolhida.get("cl")
+                if _para_int(dados_linha_escolhida.get("cl")) is not None
+                else codigo_linha
+            ),
+        }
+        linha = _converter_linha(dados_linha_fallback) or linha_padrao
+
+        lista_veiculos = dados_linha_escolhida.get("vs")
+        previsoes: list[PrevisaoChegada] = []
+        if isinstance(lista_veiculos, list):
+            for item_veiculo in lista_veiculos:
+                previsao = _converter_previsao_chegada(item_veiculo)
+                if previsao is not None:
+                    previsoes.append(previsao)
+
+        estado = EstadoConsulta.SUCESSO if previsoes else EstadoConsulta.SEM_PREVISAO
+
+        return ConsultaPrevisao(
+            parada=parada,
+            linha=linha,
+            horario_consulta=horario_consulta,
+            horario_referencia=horario_referencia,
+            estado=estado,
+            previsoes=previsoes,
+        )
