@@ -840,4 +840,3 @@ async def test_obter_previsoes_propaga_excecoes_de_comunicacao_iss05():
     with pytest.raises(ErroSPTrans):
         await cliente_400.obter_previsoes(440016921, 1273)
     await cliente_400.fechar()
-    
