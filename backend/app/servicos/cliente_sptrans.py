@@ -17,6 +17,7 @@ import re
 from collections.abc import Sequence
 from datetime import datetime
 from typing import Any
+from zoneinfo import ZoneInfo
 
 import httpx
 
@@ -413,7 +414,7 @@ class ClienteSPTrans:
             "/Previsao",
             params={"codigoParada": codigo_parada, "codigoLinha": codigo_linha},
         )
-        horario_consulta = datetime.now()
+        horario_consulta = datetime.now(ZoneInfo("America/Sao_Paulo"))
         dados = _extrair_json(resposta)
 
         parada_padrao = Parada(codigo=codigo_parada)
