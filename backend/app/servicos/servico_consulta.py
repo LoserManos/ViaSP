@@ -5,6 +5,7 @@ from app.dominio import ConsultaPrevisao, Linha, Parada
 
 from .cliente_sptrans import ClienteSPTrans
 
+
 def _normalizar_texto(texto: str) -> str:
     """Remove acentos e converte para minúsculas para facilitar a busca."""
     if not texto:
