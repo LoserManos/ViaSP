@@ -1,3 +1,4 @@
+import json
 import logging
 from datetime import datetime
 from pathlib import Path
@@ -14,7 +15,7 @@ from app.dominio import (
     Veiculo,
 )
 from app.excecoes import ErroAutenticacaoSPTrans, ErroSPTrans, SPTransIndisponivel
-from app.servicos.cliente_sptrans import ClienteSPTrans, _mascarar_token
+from app.servicos.cliente_sptrans import ClienteSPTrans, _converter_linha, _mascarar_token
 
 BASE_URL = "https://api.olhovivo.sptrans.com.br/v2.1"
 TOKEN_VALIDO = "mock_token_sptrans_ficticio_1234567890"
@@ -181,25 +182,21 @@ async def test_sessao_expirada_reautentica_uma_vez_e_repete():
         if request.url.path == "/v2.1/Linha/Buscar":
             tentativas_busca += 1
             if tentativas_busca == 1:
-                # Simula cookie expirado na primeira consulta
                 return httpx.Response(401, json={"Message": "Authorization has been denied for this request."})
-            # Na repetição pós-reautenticação, sucesso
             return httpx.Response(200, json=[{"cl": 2506, "lt": "8000"}])
         return httpx.Response(404)
 
     transport = httpx.MockTransport(handler)
     cliente = ClienteSPTrans(token=TOKEN_VALIDO, base_url=BASE_URL, transport=transport)
 
-    # Autentica inicialmente
     await cliente.autenticar()
     assert chamadas_login == 1
 
-    # Faz requisição com sessão simulada expirada
     resposta = await cliente._requisitar("GET", "/Linha/Buscar")
     assert resposta.status_code == 200
     assert resposta.json() == [{"cl": 2506, "lt": "8000"}]
-    assert chamadas_login == 2  # Reautenticou uma vez
-    assert tentativas_busca == 2  # Tentou e repetiu a chamada
+    assert chamadas_login == 2
+    assert tentativas_busca == 2
     assert cliente._autenticado
     await cliente.fechar()
 
@@ -216,7 +213,6 @@ async def test_sessao_expirada_falha_persistente_apos_reautenticacao():
             return httpx.Response(200, text="true")
         if request.url.path == "/v2.1/Linha/Buscar":
             chamadas_busca += 1
-            # Rejeita sempre
             return httpx.Response(401, json={"Message": "Authorization has been denied for this request."})
         return httpx.Response(404)
 
@@ -318,14 +314,9 @@ async def test_token_mascarado_em_logs_e_excecoes(caplog):
         with pytest.raises(ErroAutenticacaoSPTrans) as exc_info:
             await cliente.autenticar()
 
-    # O token bruto NUNCA deve aparecer no texto da exceção
     assert token_secreto not in str(exc_info.value)
-
-    # O token bruto NUNCA deve aparecer nos logs capturados
     for registro in caplog.records:
         assert token_secreto not in registro.message
-
-    # Confirma que a versão mascarada foi utilizada no log informativo
     assert "segr...rans" in caplog.text
     await cliente.fechar()
 
@@ -344,6 +335,300 @@ async def test_timeout_configuravel():
     assert cliente._timeout == 42.5
     assert cliente._http.timeout.read == 42.5
     await cliente.fechar()
+
+
+# --- ISS-06: Linhas e Paradas ---
+
+
+@pytest.mark.asyncio
+async def test_buscar_linhas_com_fixture_real():
+    fixture_linhas = _carregar_fixture_texto("linha_buscar.json")
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        if request.url.path == "/v2.1/Login/Autenticar":
+            return httpx.Response(200, text="true")
+        if request.url.path == "/v2.1/Linha/Buscar":
+            assert request.url.params["termosBusca"] == "8000"
+            return httpx.Response(200, text=fixture_linhas, headers={"Content-Type": "application/json"})
+        return httpx.Response(404)
+
+    cliente = ClienteSPTrans(token=TOKEN_VALIDO, base_url=BASE_URL, transport=httpx.MockTransport(handler))
+    linhas = await cliente.buscar_linhas("8000")
+    await cliente.fechar()
+
+    assert len(linhas) == 4
+    assert linhas[0] == Linha(
+        codigo=2506,
+        numero="8000-1",
+        sentido=1,
+        origem="TERM. LAPA",
+        destino="PÇA. RAMOS DE AZEVEDO",
+    )
+    assert linhas[1] == Linha(
+        codigo=35274,
+        numero="8000-1",
+        sentido=2,
+        origem="PÇA. RAMOS DE AZEVEDO",
+        destino="TERM. LAPA",
+    )
+    assert linhas[2] == Linha(
+        codigo=1273,
+        numero="8000-10",
+        sentido=1,
+        origem="TERM. LAPA",
+        destino="PÇA. RAMOS DE AZEVEDO",
+    )
+    assert linhas[3] == Linha(
+        codigo=34041,
+        numero="8000-10",
+        sentido=2,
+        origem="PÇA. RAMOS DE AZEVEDO",
+        destino="TERM. LAPA",
+    )
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("corpo_vazio", ["[]", "", "null"])
+async def test_buscar_linhas_resposta_vazia_retorna_lista_vazia(corpo_vazio: str):
+    def handler(request: httpx.Request) -> httpx.Response:
+        if request.url.path == "/v2.1/Login/Autenticar":
+            return httpx.Response(200, text="true")
+        return httpx.Response(200, text=corpo_vazio)
+
+    cliente = ClienteSPTrans(token=TOKEN_VALIDO, base_url=BASE_URL, transport=httpx.MockTransport(handler))
+    assert await cliente.buscar_linhas("inexistente") == []
+    await cliente.fechar()
+
+
+@pytest.mark.asyncio
+async def test_buscar_linhas_campos_ausentes_ou_nulos_nao_derrubam_parsing():
+    payload = [
+        {"cl": 100, "lt": "175P"},
+        {"cl": 200, "lt": "875A", "tl": None, "sl": 2, "tp": "PERDIZES", "ts": None},
+        {"lt": "SEM_CODIGO"},
+        None,
+    ]
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        if request.url.path == "/v2.1/Login/Autenticar":
+            return httpx.Response(200, text="true")
+        return httpx.Response(200, json=payload)
+
+    cliente = ClienteSPTrans(token=TOKEN_VALIDO, base_url=BASE_URL, transport=httpx.MockTransport(handler))
+    linhas = await cliente.buscar_linhas("teste")
+    await cliente.fechar()
+
+    assert linhas == [
+        Linha(codigo=100, numero="175P", sentido=1, origem="", destino=""),
+        Linha(codigo=200, numero="875A", sentido=2, origem="PERDIZES", destino=""),
+    ]
+
+
+@pytest.mark.asyncio
+async def test_buscar_paradas_com_fixture_real():
+    fixture_paradas = _carregar_fixture_texto("paradas_por_linha.json")
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        if request.url.path == "/v2.1/Login/Autenticar":
+            return httpx.Response(200, text="true")
+        if request.url.path == "/v2.1/Parada/BuscarParadasPorLinha":
+            assert request.url.params["codigoLinha"] == "1273"
+            return httpx.Response(200, text=fixture_paradas, headers={"Content-Type": "application/json"})
+        return httpx.Response(404)
+
+    cliente = ClienteSPTrans(token=TOKEN_VALIDO, base_url=BASE_URL, transport=httpx.MockTransport(handler))
+    paradas = await cliente.buscar_paradas(1273)
+    await cliente.fechar()
+
+    assert len(paradas) == 13
+    assert paradas[0] == Parada(
+        codigo=614432,
+        nome="BABY BARIONY C/B",
+        endereco="R   PEDRO MACHADO",
+        latitude=-23.527606,
+        longitude=-46.671514,
+    )
+    assert paradas[2] == Parada(
+        codigo=60014604,
+        nome="SESC POMPEIA C/B",
+        endereco="VDTO POMPEIA/ R JOAQUIM FERREIRA",
+        latitude=-23.525262,
+        longitude=-46.682254,
+    )
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("corpo_vazio", ["[]", "", "null"])
+async def test_buscar_paradas_resposta_vazia_retorna_lista_vazia(corpo_vazio: str):
+    def handler(request: httpx.Request) -> httpx.Response:
+        if request.url.path == "/v2.1/Login/Autenticar":
+            return httpx.Response(200, text="true")
+        return httpx.Response(200, text=corpo_vazio)
+
+    cliente = ClienteSPTrans(token=TOKEN_VALIDO, base_url=BASE_URL, transport=httpx.MockTransport(handler))
+    assert await cliente.buscar_paradas(9999) == []
+    await cliente.fechar()
+
+
+@pytest.mark.asyncio
+async def test_buscar_paradas_campos_ausentes_nao_derrubam_parsing():
+    payload = [
+        {"cp": 440016921, "py": -23.558947, "px": -46.659585},
+        {"cp": 12345, "np": None, "ed": "AV PAULISTA", "py": None, "px": "invalido"},
+        {"np": "SEM CODIGO"},
+    ]
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        if request.url.path == "/v2.1/Login/Autenticar":
+            return httpx.Response(200, text="true")
+        return httpx.Response(200, json=payload)
+
+    cliente = ClienteSPTrans(token=TOKEN_VALIDO, base_url=BASE_URL, transport=httpx.MockTransport(handler))
+    paradas = await cliente.buscar_paradas(1273)
+    await cliente.fechar()
+
+    assert paradas == [
+        Parada(codigo=440016921, nome="", endereco="", latitude=-23.558947, longitude=-46.659585),
+        Parada(codigo=12345, nome="", endereco="AV PAULISTA", latitude=0.0, longitude=0.0),
+    ]
+
+
+@pytest.mark.asyncio
+async def test_buscar_linhas_da_parada_conforme_adr_001_com_fixtures_reais():
+    fixture_linhas = _carregar_fixture_texto("linha_buscar.json")
+    fixture_paradas = _carregar_fixture_texto("paradas_por_linha.json")
+    chamadas_login = 0
+    paradas_consultadas: list[str] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        nonlocal chamadas_login
+        if request.url.path == "/v2.1/Login/Autenticar":
+            chamadas_login += 1
+            return httpx.Response(200, text="true")
+        if request.url.path == "/v2.1/Linha/Buscar":
+            return httpx.Response(200, text=fixture_linhas, headers={"Content-Type": "application/json"})
+        if request.url.path == "/v2.1/Parada/BuscarParadasPorLinha":
+            codigo_linha = request.url.params["codigoLinha"]
+            paradas_consultadas.append(codigo_linha)
+            if codigo_linha in {"1273", "2506"}:
+                return httpx.Response(200, text=fixture_paradas, headers={"Content-Type": "application/json"})
+            return httpx.Response(200, json=[])
+        return httpx.Response(404)
+
+    cliente = ClienteSPTrans(token=TOKEN_VALIDO, base_url=BASE_URL, transport=httpx.MockTransport(handler))
+    linhas = await cliente.buscar_linhas_da_parada(60014604, termos_busca=["8000", "LAPA"])
+    await cliente.fechar()
+
+    assert chamadas_login == 1
+    assert sorted(paradas_consultadas) == ["1273", "2506", "34041", "35274"]
+    assert linhas == [
+        Linha(
+            codigo=2506,
+            numero="8000-1",
+            sentido=1,
+            origem="TERM. LAPA",
+            destino="PÇA. RAMOS DE AZEVEDO",
+        ),
+        Linha(
+            codigo=1273,
+            numero="8000-10",
+            sentido=1,
+            origem="TERM. LAPA",
+            destino="PÇA. RAMOS DE AZEVEDO",
+        ),
+    ]
+
+
+@pytest.mark.asyncio
+async def test_buscar_linhas_da_parada_sem_resultado_ou_termos_vazios():
+    def handler(request: httpx.Request) -> httpx.Response:
+        if request.url.path == "/v2.1/Login/Autenticar":
+            return httpx.Response(200, text="true")
+        if request.url.path == "/v2.1/Linha/Buscar":
+            if request.url.params["termosBusca"] == "8":
+                return httpx.Response(
+                    200,
+                    json=[{"cl": 1273, "lt": "8000", "tl": 10, "sl": 1, "tp": "A", "ts": "B"}],
+                )
+            return httpx.Response(200, json=[])
+        if request.url.path == "/v2.1/Parada/BuscarParadasPorLinha":
+            return httpx.Response(200, json=[{"cp": 111, "np": "OUTRA PARADA"}])
+        return httpx.Response(404)
+
+    cliente = ClienteSPTrans(token=TOKEN_VALIDO, base_url=BASE_URL, transport=httpx.MockTransport(handler))
+    assert await cliente.buscar_linhas_da_parada(999999, termos_busca=[]) == []
+    assert await cliente.buscar_linhas_da_parada(999999) == []
+    await cliente.fechar()
+
+
+@pytest.mark.asyncio
+async def test_buscar_parada_com_fixture_real():
+    fixture_parada_buscar = _carregar_fixture_texto("parada_buscar.json")
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        if request.url.path == "/v2.1/Login/Autenticar":
+            return httpx.Response(200, text="true")
+        if request.url.path == "/v2.1/Parada/Buscar":
+            return httpx.Response(200, text=fixture_parada_buscar, headers={"Content-Type": "application/json"})
+        return httpx.Response(404)
+
+    cliente = ClienteSPTrans(token=TOKEN_VALIDO, base_url=BASE_URL, transport=httpx.MockTransport(handler))
+    parada = await cliente.buscar_parada(260015039)
+    parada_cb = await cliente.buscar_parada(260016855, termo="PAULISTA")
+    inexistente = await cliente.buscar_parada(999999999)
+    await cliente.fechar()
+
+    assert parada == Parada(
+        codigo=260015039,
+        nome="PAULISTA B/C",
+        endereco="AV PAULISTA/ AV REBOUCAS",
+        latitude=-23.555883,
+        longitude=-46.66306,
+    )
+    assert parada_cb == Parada(
+        codigo=260016855,
+        nome="PAULISTA C/B",
+        endereco="AV PAULISTA/ R ANTONIO CARLOS",
+        latitude=-23.555176,
+        longitude=-46.66237,
+    )
+    assert inexistente is None
+
+
+@pytest.mark.asyncio
+async def test_resposta_json_malformado_levanta_erro_sptrans():
+    def handler(request: httpx.Request) -> httpx.Response:
+        if request.url.path == "/v2.1/Login/Autenticar":
+            return httpx.Response(200, text="true")
+        return httpx.Response(200, text="{json quebrado")
+
+    cliente = ClienteSPTrans(token=TOKEN_VALIDO, base_url=BASE_URL, transport=httpx.MockTransport(handler))
+    with pytest.raises(ErroSPTrans, match="JSON malformado"):
+        await cliente.buscar_linhas("8000")
+    await cliente.fechar()
+
+
+def test_converter_linha_suporta_formato_previsao_parada_fixture_real():
+    dados = json.loads(_carregar_fixture_texto("previsao_parada.json"))
+    linhas_json = dados["p"]["l"]
+
+    primeira = _converter_linha(linhas_json[0])
+    sentido_2 = _converter_linha(linhas_json[4])
+
+    assert primeira == Linha(
+        codigo=485,
+        numero="702C-10",
+        sentido=1,
+        origem="JD. BONFIGLIOLI",
+        destino="METRÔ BELÉM",
+    )
+    assert sentido_2 == Linha(
+        codigo=33328,
+        numero="178L-10",
+        sentido=2,
+        origem="HOSP. DAS CLÍNICAS",
+        destino="LAUZANE PAULISTA",
+    )
 
 
 # --- ISS-07: Previsões de Chegada ---
@@ -486,12 +771,11 @@ async def test_obter_previsoes_campos_ausentes_ou_nulos_nao_derrubam_parsing():
             "px": None,
             "l": [
                 {
-                    # sem cl, c, sl, lt0, lt1
                     "vs": [
-                        {"t": "15:10"},  # sem prefixo 'p' -> deve virar prefixo ""
-                        {"p": 98765, "t": "15:20"},  # prefixo numérico
-                        {"p": "11111", "t": None},  # sem horário previsto -> ignorado
-                        {"p": "22222", "t": "   "},  # horário em branco -> ignorado
+                        {"t": "15:10"},
+                        {"p": 98765, "t": "15:20"},
+                        {"p": "11111", "t": None},
+                        {"p": "22222", "t": "   "},
                         None,
                     ],
                 }

@@ -3,16 +3,19 @@
 Responsável por autenticação e comunicação com a API externa. O token vem
 de variável de ambiente e nunca deve ser exposto ao frontend nem vazado em logs.
 
-Endpoints previstos (ver docs/entregas/entrega-1.md):
+Endpoints previstos (ver docs/entregas/entrega-1.md e ADR-001):
   POST /Login/Autenticar?token=...
   GET  /Linha/Buscar?termosBusca=...
+  GET  /Parada/Buscar?termosBusca=...
   GET  /Parada/BuscarParadasPorLinha?codigoLinha=...
   GET  /Previsao?codigoParada=...&codigoLinha=...
 """
 
+import asyncio
 import logging
 import re
 from datetime import datetime
+from collections.abc import Sequence
 from typing import Any
 
 import httpx
@@ -28,6 +31,10 @@ from app.dominio import (
 from app.excecoes import ErroAutenticacaoSPTrans, ErroSPTrans, SPTransIndisponivel
 
 logger = logging.getLogger(__name__)
+
+# Limite validado empiricamente no ADR-001 (§5.3: 20 requisições simultâneas sem HTTP 429)
+_CONCORRENCIA_MAXIMA_SPTRANS = 20
+_TERMOS_VARREDURA_PADRAO: tuple[str, ...] = ("0", "1", "2", "3", "4", "5", "6", "7", "8", "9")
 
 
 class MascararTokenLogFilter(logging.Filter):
@@ -88,7 +95,7 @@ def _converter_linha(dados: Any) -> Linha | None:
     """Converte um dicionário JSON da SPTrans em objeto de domínio `Linha`.
 
     Suporta tanto o formato de `/Linha/Buscar` (`cl`, `lt`, `tl`, `sl`, `tp`, `ts`)
-    quanto o formato resumido de `/Previsao` (`cl`, `c`, `sl`, `lt0`, `lt1`).
+    quanto o formato resumido de `/Previsao/Parada` (`cl`, `c`, `sl`, `lt0`, `lt1`).
     Na convenção da SPTrans, `tp`/`lt0` informa o letreiro (destino) quando `sl == 1`
     e `ts`/`lt1` informa o letreiro (destino) quando `sl == 2`.
     """
@@ -304,10 +311,100 @@ class ClienteSPTrans:
         return resposta
 
     async def buscar_linhas(self, termo: str) -> list[Linha]:
-        raise NotImplementedError
+        """Consulta linhas por número ou denominação (`GET /Linha/Buscar`)."""
+        resposta = await self._requisitar("GET", "/Linha/Buscar", params={"termosBusca": termo})
+        dados = _extrair_json(resposta)
+        if not isinstance(dados, list):
+            return []
+
+        linhas: list[Linha] = []
+        for item in dados:
+            linha = _converter_linha(item)
+            if linha is not None:
+                linhas.append(linha)
+        return linhas
 
     async def buscar_paradas(self, codigo_linha: int) -> list[Parada]:
-        raise NotImplementedError
+        """Consulta as paradas do itinerário de uma linha (`GET /Parada/BuscarParadasPorLinha`)."""
+        resposta = await self._requisitar(
+            "GET",
+            "/Parada/BuscarParadasPorLinha",
+            params={"codigoLinha": codigo_linha},
+        )
+        dados = _extrair_json(resposta)
+        if not isinstance(dados, list):
+            return []
+
+        paradas: list[Parada] = []
+        for item in dados:
+            parada = _converter_parada(item)
+            if parada is not None:
+                paradas.append(parada)
+        return paradas
+
+    async def buscar_linhas_da_parada(
+        self,
+        codigo_parada: int,
+        termos_busca: Sequence[str] | None = None,
+        concorrencia_maxima: int = _CONCORRENCIA_MAXIMA_SPTRANS,
+    ) -> list[Linha]:
+        """Obtém todas as linhas que atendem `codigo_parada` conforme o ADR-001.
+
+        Executa o cruzamento entre `/Linha/Buscar` e `/Parada/BuscarParadasPorLinha`
+        com concorrência controlada (destinado à sincronização periódica em background
+        definida na Opção C do ADR-001).
+        """
+        termos = list(termos_busca) if termos_busca is not None else list(_TERMOS_VARREDURA_PADRAO)
+        if not termos:
+            return []
+
+        if not self._autenticado:
+            await self.autenticar()
+
+        limite = max(1, concorrencia_maxima)
+        semaforo = asyncio.Semaphore(limite)
+
+        async def _buscar_por_termo(termo: str) -> list[Linha]:
+            async with semaforo:
+                return await self.buscar_linhas(termo)
+
+        listas_por_termo = await asyncio.gather(*(_buscar_por_termo(t) for t in termos))
+
+        candidatas_por_codigo: dict[int, Linha] = {}
+        for lista in listas_por_termo:
+            for linha in lista:
+                if linha.codigo not in candidatas_por_codigo:
+                    candidatas_por_codigo[linha.codigo] = linha
+
+        if not candidatas_por_codigo:
+            return []
+
+        candidatas = list(candidatas_por_codigo.values())
+
+        async def _linha_atende_parada(linha: Linha) -> bool:
+            async with semaforo:
+                paradas = await self.buscar_paradas(linha.codigo)
+            return any(parada.codigo == codigo_parada for parada in paradas)
+
+        resultados = await asyncio.gather(*(_linha_atende_parada(linha) for linha in candidatas))
+        return [linha for linha, atende in zip(candidatas, resultados, strict=True) if atende]
+
+    async def buscar_parada(self, codigo: int, termo: str | None = None) -> Parada | None:
+        """Busca os metadados cadastrais de uma parada (`GET /Parada/Buscar`).
+
+        Retorna o objeto `Parada` cujo `cp` coincide com `codigo`, ou `None` se não encontrado.
+        """
+        termo_consulta = termo if termo is not None else str(codigo)
+        resposta = await self._requisitar("GET", "/Parada/Buscar", params={"termosBusca": termo_consulta})
+        dados = _extrair_json(resposta)
+        if not isinstance(dados, list):
+            return None
+
+        for item in dados:
+            parada = _converter_parada(item)
+            if parada is not None and parada.codigo == codigo:
+                return parada
+        return None
 
     async def obter_previsoes(self, codigo_parada: int, codigo_linha: int) -> ConsultaPrevisao:
         """Consulta as previsões de chegada de uma linha em uma parada (`GET /Previsao`)."""
