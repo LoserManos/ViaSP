@@ -1,5 +1,8 @@
 """Coordena o fluxo de consulta: parada configurada + linha/sentido."""
+import asyncio
+import time
 import unicodedata
+from collections.abc import Callable
 from datetime import datetime
 from zoneinfo import ZoneInfo
 
@@ -7,6 +10,9 @@ from app.dominio import ConsultaPrevisao, EstadoConsulta, Linha, Parada
 from app.excecoes import ErroAutenticacaoSPTrans, ErroSPTrans, SPTransIndisponivel
 
 from .cliente_sptrans import ClienteSPTrans
+
+# As linhas do ponto mudam pouco; evita uma chamada à SPTrans a cada toque na tela
+TTL_LINHAS_DO_PONTO_SEGUNDOS = 60.0
 
 
 def _normalizar_texto(texto: str) -> str:
@@ -17,13 +23,31 @@ def _normalizar_texto(texto: str) -> str:
     return texto_sem_acento.lower()
 
 class ServicoConsulta:
-    def __init__(self, cliente: ClienteSPTrans) -> None:
+    def __init__(self, cliente: ClienteSPTrans, relogio: Callable[[], float] = time.monotonic) -> None:
         self._cliente = cliente
+        self._relogio = relogio
+        self._cache_linhas: dict[int, tuple[float, list[Linha]]] = {}
+        self._trava_linhas = asyncio.Lock()
+
+    async def _linhas_do_ponto(self, parada: Parada) -> list[Linha]:
+        """Linhas do ponto com cache em memória.
+
+        Provisório: usa `/Previsao/Parada` (Opção (a) do ADR-001), pois a Opção (c),
+        com armazenamento local e sincronização periódica, ainda não foi implementada.
+        A trava faz requisições simultâneas compartilharem uma única chamada à SPTrans.
+        """
+        async with self._trava_linhas:
+            em_cache = self._cache_linhas.get(parada.codigo)
+            if em_cache and self._relogio() - em_cache[0] < TTL_LINHAS_DO_PONTO_SEGUNDOS:
+                return em_cache[1]
+            linhas = await self._cliente.buscar_linhas_com_previsao(parada.codigo)
+            self._cache_linhas[parada.codigo] = (self._relogio(), linhas)
+            return linhas
 
     async def buscar_linhas(self, parada: Parada, termo: str = "") -> list[Linha]:
         """Linhas atendidas pela parada (US01), filtradas por termo (US02)."""
-        # 1. Pede ao cliente para buscar todas as linhas da parada (conforme ADR-001)
-        linhas = await self._cliente.buscar_linhas_da_parada(parada.codigo)
+        # 1. Linhas do ponto (ver _linhas_do_ponto e ADR-001)
+        linhas = await self._linhas_do_ponto(parada)
 
         # 2. Se não houver termo, retorna todas
         termo_limpo = termo.strip()

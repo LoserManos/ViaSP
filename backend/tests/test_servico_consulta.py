@@ -1,3 +1,4 @@
+import asyncio
 import json
 from pathlib import Path
 from unittest.mock import AsyncMock
@@ -17,7 +18,7 @@ class FakeClienteSPTrans:
         self._linhas_retorno = linhas_retorno
         self.chamadas = 0
 
-    async def buscar_linhas_da_parada(self, codigo_parada: int) -> list[Linha]:
+    async def buscar_linhas_com_previsao(self, codigo_parada: int) -> list[Linha]:
         self.chamadas += 1
         return self._linhas_retorno
 
@@ -219,3 +220,30 @@ async def test_consultar_paradas_com_fixture_real_sptrans(servico: ServicoConsul
 
     codigos = [p.codigo for p in resultado]
     assert len(codigos) == len(set(codigos))
+
+
+@pytest.mark.asyncio
+async def test_buscar_linhas_usa_cache_dentro_do_ttl():
+    agora = [1000.0]
+    cliente_fake = FakeClienteSPTrans([Linha(codigo=1, numero="8000", sentido=1)])
+    servico = ServicoConsulta(cliente_fake, relogio=lambda: agora[0])  # type: ignore
+    parada = Parada(codigo=440016921)
+
+    await servico.buscar_linhas(parada)
+    await servico.buscar_linhas(parada, termo="8000")
+    assert cliente_fake.chamadas == 1
+
+    agora[0] += 61
+    await servico.buscar_linhas(parada)
+    assert cliente_fake.chamadas == 2
+
+
+@pytest.mark.asyncio
+async def test_buscar_linhas_simultaneas_fazem_uma_chamada():
+    cliente_fake = FakeClienteSPTrans([Linha(codigo=1, numero="8000", sentido=1)])
+    servico = ServicoConsulta(cliente_fake)  # type: ignore
+    parada = Parada(codigo=440016921)
+
+    await asyncio.gather(servico.buscar_linhas(parada), servico.buscar_linhas(parada))
+
+    assert cliente_fake.chamadas == 1
