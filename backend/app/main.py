@@ -22,7 +22,7 @@ async def lifespan(app: FastAPI):
         base_url=settings.sptrans_base_url,
         timeout=settings.sptrans_timeout_segundos,
     )
-    
+
     # ISS-13.3: Buscar dados reais da parada na subida do servidor
     try:
         parada_real = await cliente.buscar_parada(settings.parada_codigo)
@@ -41,6 +41,7 @@ async def lifespan(app: FastAPI):
     yield
     await cliente.fechar()
 
+
 def criar_app() -> FastAPI:
     settings = get_settings()
     app = FastAPI(title="ViaSP - Backend do Totem", lifespan=lifespan)
@@ -57,29 +58,37 @@ def criar_app() -> FastAPI:
     @app.exception_handler(NotImplementedError)
     async def _nao_implementado(_: Request, __: NotImplementedError):
         return JSONResponse(
-            status_code=501, 
-            content={"codigo": "nao_implementado", "mensagem": "Funcionalidade ainda não implementada.", "tentar_novamente": False}
+            status_code=501,
+            content={"codigo": "nao_implementado",
+                     "mensagem": "Funcionalidade ainda não implementada.",
+                     "tentar_novamente": False}
         )
 
     @app.exception_handler(ErroAutenticacaoSPTrans)
     async def _erro_auth(_: Request, __: ErroAutenticacaoSPTrans):
         return JSONResponse(
-            status_code=502, 
-            content={"codigo": "erro_autenticacao", "mensagem": "Falha de autenticação com a SPTrans.", "tentar_novamente": True}
+            status_code=502,
+            content={"codigo": "erro_autenticacao",
+                     "mensagem": "Falha de autenticação com a SPTrans.",
+                     "tentar_novamente": True}
         )
 
     @app.exception_handler(SPTransIndisponivel)
     async def _indisponivel(_: Request, __: SPTransIndisponivel):
         return JSONResponse(
-            status_code=503, 
-            content={"codigo": "sptrans_indisponivel", "mensagem": "SPTrans indisponível no momento. Tente novamente.", "tentar_novamente": True}
+            status_code=503,
+            content={"codigo": "sptrans_indisponivel",
+                     "mensagem": "SPTrans indisponível no momento. Tente novamente.",
+                     "tentar_novamente": True}
         )
 
     @app.exception_handler(ErroSPTrans)
     async def _erro_sptrans(_: Request, __: ErroSPTrans):
         return JSONResponse(
-            status_code=502, 
-            content={"codigo": "erro_sptrans", "mensagem": "Erro ao consultar a SPTrans.", "tentar_novamente": True}
+            status_code=502,
+            content={"codigo": "erro_sptrans",
+                     "mensagem": "Erro ao consultar a SPTrans.",
+                     "tentar_novamente": True}
         )
 
     return app
