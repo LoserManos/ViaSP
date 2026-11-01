@@ -17,6 +17,11 @@ class Settings(BaseSettings):
     # Totem / parada configurada
     totem_identificador: str = "totem-001"
     parada_codigo: int = 0
+    # Usados quando a SPTrans não devolve os dados da parada (ex.: paradas sem nome no cadastro)
+    parada_nome: str = ""
+    parada_endereco: str = ""
+    parada_latitude: float = 0.0
+    parada_longitude: float = 0.0
 
     # Persistência
     banco_caminho: str = "data/totem.db"
