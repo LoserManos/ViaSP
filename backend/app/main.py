@@ -22,14 +22,24 @@ async def lifespan(app: FastAPI):
         base_url=settings.sptrans_base_url,
         timeout=settings.sptrans_timeout_segundos,
     )
+    
+    # ISS-13.3: Buscar dados reais da parada na subida do servidor
+    try:
+        parada_real = await cliente.buscar_parada(settings.parada_codigo)
+        if parada_real is None:
+            # Fallback caso a SPTrans não encontre a parada
+            parada_real = Parada(codigo=settings.parada_codigo)
+    except Exception:
+        # Se a SPTrans estiver fora do ar na subida, o totem ainda liga (com dados vazios)
+        parada_real = Parada(codigo=settings.parada_codigo)
+
     app.state.servico_consulta = ServicoConsulta(cliente)
     app.state.totem = Totem(
         identificador=settings.totem_identificador,
-        parada=Parada(codigo=settings.parada_codigo),
+        parada=parada_real,
     )
     yield
     await cliente.fechar()
-
 
 def criar_app() -> FastAPI:
     settings = get_settings()

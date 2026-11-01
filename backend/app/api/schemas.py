@@ -41,6 +41,7 @@ class ConsultaPrevisaoSchema(_Base):
     horario_consulta: datetime
     horario_referencia: str
     estado: EstadoConsulta
+    mensagem_erro: str
     previsoes: list[PrevisaoChegadaSchema]
 
 
