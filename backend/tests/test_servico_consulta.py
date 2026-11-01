@@ -277,4 +277,3 @@ async def test_consultar_paradas_com_fixture_real_sptrans(servico: ServicoConsul
 
     codigos = [p.codigo for p in resultado]
     assert len(codigos) == len(set(codigos))
-    
