@@ -1,9 +1,20 @@
 """Coordena o fluxo de consulta: parada configurada + linha/sentido."""
+import unicodedata
+from datetime import datetime
+from zoneinfo import ZoneInfo
+
 from app.dominio import ConsultaPrevisao, EstadoConsulta, Linha, Parada
 from app.excecoes import ErroAutenticacaoSPTrans, ErroSPTrans, SPTransIndisponivel
 
 from .cliente_sptrans import ClienteSPTrans
 
+
+def _normalizar_texto(texto: str) -> str:
+    """Remove acentos e converte para minúsculas para facilitar a busca."""
+    if not texto:
+        return ""
+    texto_sem_acento = unicodedata.normalize("NFKD", texto).encode("ASCII", "ignore").decode("ASCII")
+    return texto_sem_acento.lower()
 
 class ServicoConsulta:
     def __init__(self, cliente: ClienteSPTrans) -> None:
@@ -11,11 +22,45 @@ class ServicoConsulta:
 
     async def buscar_linhas(self, parada: Parada, termo: str = "") -> list[Linha]:
         """Linhas atendidas pela parada (US01), filtradas por termo (US02)."""
-        raise NotImplementedError
+        # 1. Pede ao cliente para buscar todas as linhas da parada (conforme ADR-001)
+        linhas = await self._cliente.buscar_linhas_da_parada(parada.codigo)
 
-    async def consultar_paradas(self, linha: Linha) -> list[Parada]:
+        # 2. Se não houver termo, retorna todas
+        termo_limpo = termo.strip()
+        if not termo_limpo:
+            return linhas
+
+        # 3. Se houver termo, filtra (normalizando acentos e maiúsculas/minúsculas)
+        termo_normalizado = _normalizar_texto(termo_limpo)
+        linhas_filtradas: list[Linha] = []
+
+        for linha in linhas:
+            # Concatena número, origem e destino para buscar em qualquer um deles
+            campos_busca = f"{linha.numero} {linha.origem or ''} {linha.destino or ''}"
+            if termo_normalizado in _normalizar_texto(campos_busca):
+                linhas_filtradas.append(linha)
+
+        return linhas_filtradas
+
+    async def consultar_paradas(self, linha: Linha, limite_numero_paradas: int = 5) -> list[Parada]:
         """Itinerário simplificado: paradas da linha (US03)."""
-        raise NotImplementedError
+        lista_paradas_completa = await self._cliente.buscar_paradas(linha.codigo)
+
+        if not lista_paradas_completa:
+            return []
+
+        total_paradas = len(lista_paradas_completa)
+
+        if total_paradas <= limite_numero_paradas:
+            return lista_paradas_completa
+
+        passo = (total_paradas - 1) / (limite_numero_paradas - 1)
+        lista_paradas_filtrada = []
+        for i in range(limite_numero_paradas):
+            indice_exato = round(i * passo)
+            lista_paradas_filtrada.append(lista_paradas_completa[indice_exato])
+
+        return lista_paradas_filtrada
 
     async def consultar_previsoes(
         self, parada: Parada, linha: Linha
