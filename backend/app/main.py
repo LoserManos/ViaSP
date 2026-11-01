@@ -46,19 +46,31 @@ def criar_app() -> FastAPI:
     # Mensagens claras de erro para o totem (US08)
     @app.exception_handler(NotImplementedError)
     async def _nao_implementado(_: Request, __: NotImplementedError):
-        return JSONResponse(status_code=501, content={"detalhe": "Funcionalidade ainda não implementada."})
+        return JSONResponse(
+            status_code=501, 
+            content={"codigo": "nao_implementado", "mensagem": "Funcionalidade ainda não implementada.", "tentar_novamente": False}
+        )
 
     @app.exception_handler(ErroAutenticacaoSPTrans)
     async def _erro_auth(_: Request, __: ErroAutenticacaoSPTrans):
-        return JSONResponse(status_code=502, content={"detalhe": "Falha de autenticação com a SPTrans."})
+        return JSONResponse(
+            status_code=502, 
+            content={"codigo": "erro_autenticacao", "mensagem": "Falha de autenticação com a SPTrans.", "tentar_novamente": True}
+        )
 
     @app.exception_handler(SPTransIndisponivel)
     async def _indisponivel(_: Request, __: SPTransIndisponivel):
-        return JSONResponse(status_code=503, content={"detalhe": "SPTrans indisponível no momento. Tente novamente."})
+        return JSONResponse(
+            status_code=503, 
+            content={"codigo": "sptrans_indisponivel", "mensagem": "SPTrans indisponível no momento. Tente novamente.", "tentar_novamente": True}
+        )
 
     @app.exception_handler(ErroSPTrans)
     async def _erro_sptrans(_: Request, __: ErroSPTrans):
-        return JSONResponse(status_code=502, content={"detalhe": "Erro ao consultar a SPTrans."})
+        return JSONResponse(
+            status_code=502, 
+            content={"codigo": "erro_sptrans", "mensagem": "Erro ao consultar a SPTrans.", "tentar_novamente": True}
+        )
 
     return app
 
