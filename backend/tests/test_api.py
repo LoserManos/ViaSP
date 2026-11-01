@@ -13,7 +13,13 @@ def test_saude(client):
 def test_totem_usa_configuracao(client):
     corpo = client.get("/api/totem").json()
     assert corpo["identificador"] == "totem-teste"
-    assert corpo["parada"]["codigo"] == 123
+    assert corpo["parada"] == {
+        "codigo": 123,
+        "nome": "Conjunto Nacional",
+        "endereco": "Av. Paulista, 2027",
+        "latitude": -23.558947,
+        "longitude": -46.659585,
+    }
 
 
 class _ServicoQueFalha:
