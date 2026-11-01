@@ -90,8 +90,6 @@ class ServicoConsulta:
 
     def _criar_consulta_falha(self, parada: Parada, linha: Linha, mensagem: str) -> ConsultaPrevisao:
         """Método auxiliar para padronizar a criação de uma consulta com falha."""
-        from datetime import datetime
-        from zoneinfo import ZoneInfo
 
         return ConsultaPrevisao(
             parada=parada,
