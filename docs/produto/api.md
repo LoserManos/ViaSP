@@ -132,3 +132,15 @@ Quando o backend ou a API externa falham (ex: SPTrans fora do ar, token inválid
   "tentar_novamente": true
 }
 ```
+
+**Todos os códigos de erro:**
+
+| HTTP | `codigo` | `tentar_novamente` | Quando acontece |
+| --- | --- | --- | --- |
+| 422 | `requisicao_invalida` | `false` | Parâmetro ausente ou com tipo errado (ex.: `codigo_linha=abc`) |
+| 501 | `nao_implementado` | `false` | Funcionalidade ainda não implementada no backend |
+| 502 | `erro_autenticacao` | `true` | Token da SPTrans inválido ou ausente |
+| 502 | `erro_sptrans` | `true` | Resposta inesperada da SPTrans |
+| 503 | `sptrans_indisponivel` | `true` | Timeout, falha de rede ou SPTrans fora do ar |
+
+> `GET /api/previsoes` não usa esses códigos para falhas da SPTrans: responde 200 com `estado: "falha"` e `mensagem_erro` (ver seção 4). Só o 422 se aplica a ela.

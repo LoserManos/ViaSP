@@ -1,6 +1,8 @@
+import logging
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
@@ -10,6 +12,8 @@ from app.dominio import Parada, Totem
 from app.excecoes import ErroAutenticacaoSPTrans, ErroSPTrans, SPTransIndisponivel
 from app.persistencia import inicializar_banco
 from app.servicos import ClienteSPTrans, ServicoConsulta
+
+logger = logging.getLogger(__name__)
 
 
 @asynccontextmanager
@@ -27,10 +31,11 @@ async def lifespan(app: FastAPI):
     try:
         parada_real = await cliente.buscar_parada(settings.parada_codigo)
         if parada_real is None:
-            # Fallback caso a SPTrans não encontre a parada
+            logger.warning("Parada %s não encontrada na SPTrans; usando só o código.", settings.parada_codigo)
             parada_real = Parada(codigo=settings.parada_codigo)
-    except Exception:
+    except ErroSPTrans as exc:
         # Se a SPTrans estiver fora do ar na subida, o totem ainda liga (com dados vazios)
+        logger.warning("Não foi possível carregar os dados da parada na subida: %s", exc)
         parada_real = Parada(codigo=settings.parada_codigo)
 
     app.state.servico_consulta = ServicoConsulta(cliente)
@@ -40,6 +45,13 @@ async def lifespan(app: FastAPI):
     )
     yield
     await cliente.fechar()
+
+
+def _resposta_erro(status: int, codigo: str, mensagem: str, tentar_novamente: bool) -> JSONResponse:
+    return JSONResponse(
+        status_code=status,
+        content={"codigo": codigo, "mensagem": mensagem, "tentar_novamente": tentar_novamente},
+    )
 
 
 def criar_app() -> FastAPI:
@@ -54,42 +66,26 @@ def criar_app() -> FastAPI:
     )
     app.include_router(router)
 
-    # Mensagens claras de erro para o totem (US08)
+    # Mensagens claras de erro para o totem (US08), no formato de docs/produto/api.md
     @app.exception_handler(NotImplementedError)
     async def _nao_implementado(_: Request, __: NotImplementedError):
-        return JSONResponse(
-            status_code=501,
-            content={"codigo": "nao_implementado",
-                     "mensagem": "Funcionalidade ainda não implementada.",
-                     "tentar_novamente": False}
-        )
+        return _resposta_erro(501, "nao_implementado", "Funcionalidade ainda não implementada.", False)
+
+    @app.exception_handler(RequestValidationError)
+    async def _requisicao_invalida(_: Request, __: RequestValidationError):
+        return _resposta_erro(422, "requisicao_invalida", "Parâmetros da requisição inválidos.", False)
 
     @app.exception_handler(ErroAutenticacaoSPTrans)
     async def _erro_auth(_: Request, __: ErroAutenticacaoSPTrans):
-        return JSONResponse(
-            status_code=502,
-            content={"codigo": "erro_autenticacao",
-                     "mensagem": "Falha de autenticação com a SPTrans.",
-                     "tentar_novamente": True}
-        )
+        return _resposta_erro(502, "erro_autenticacao", "Falha de autenticação com a SPTrans.", True)
 
     @app.exception_handler(SPTransIndisponivel)
     async def _indisponivel(_: Request, __: SPTransIndisponivel):
-        return JSONResponse(
-            status_code=503,
-            content={"codigo": "sptrans_indisponivel",
-                     "mensagem": "SPTrans indisponível no momento. Tente novamente.",
-                     "tentar_novamente": True}
-        )
+        return _resposta_erro(503, "sptrans_indisponivel", "SPTrans indisponível no momento. Tente novamente.", True)
 
     @app.exception_handler(ErroSPTrans)
     async def _erro_sptrans(_: Request, __: ErroSPTrans):
-        return JSONResponse(
-            status_code=502,
-            content={"codigo": "erro_sptrans",
-                     "mensagem": "Erro ao consultar a SPTrans.",
-                     "tentar_novamente": True}
-        )
+        return _resposta_erro(502, "erro_sptrans", "Erro ao consultar a SPTrans.", True)
 
     return app
 
