@@ -39,9 +39,25 @@ class ServicoConsulta:
 
         return linhas_filtradas
 
-    async def consultar_paradas(self, linha: Linha) -> list[Parada]:
+    async def consultar_paradas(self, linha: Linha, limite_numero_paradas: int = 5) -> list[Parada]:
         """Itinerário simplificado: paradas da linha (US03)."""
-        raise NotImplementedError
+        lista_paradas_completa = await self._cliente.buscar_paradas(linha.codigo)
+
+        if not lista_paradas_completa:
+            return []
+
+        total_paradas = len(lista_paradas_completa)
+
+        if total_paradas <= limite_numero_paradas:
+            return lista_paradas_completa
+
+        passo = (total_paradas - 1) / (limite_numero_paradas - 1)
+        lista_paradas_filtrada = []
+        for i in range(limite_numero_paradas):
+            indice_exato = round(i * passo)
+            lista_paradas_filtrada.append(lista_paradas_completa[indice_exato])
+
+        return lista_paradas_filtrada
 
     async def consultar_previsoes(
         self, parada: Parada, linha: Linha

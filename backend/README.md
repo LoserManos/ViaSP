@@ -48,3 +48,16 @@ tests/
 
 Métodos de negócio levantam `NotImplementedError` (a API responde **501**) até serem implementados.
 Funcionando: `/api/saude`, `/api/totem`, criação do banco SQLite.
+
+## Regra de Paradas Principais (Itinerário Simplificado)
+
+Para evitar poluição visual na interface do totem público (US03), a listagem de paradas de uma linha não retorna o itinerário exaustivo. O backend aplica uma **amostragem proporcional com âncoras** para devolver um itinerário simplificado, seguindo a seguinte lógica:
+
+1. **Limite Máximo ($K$):** O sistema estipula um limite flexível de paradas a serem exibidas na timeline (por padrão, $K = 5$).
+2. **Linhas Curtas:** Se a linha possuir um número total de paradas menor ou igual a $K$, o array é retornado integralmente, sem cortes.
+3. **Linhas Longas (Amostragem Estratégica):** Se o trajeto exceder $K$ paradas, o algoritmo seleciona exatamente $K$ pontos preservando o contexto do trajeto:
+   - A **primeira parada** (índice `0`) é obrigatoriamente inclusa (Origem).
+   - A **última parada** (índice `n - 1`) é obrigatoriamente inclusa (Destino Final).
+   - As $K - 2$ **paradas intermediárias** são selecionadas escolhendo-se uniformemente as paradas ao longo da lista. 
+
+Isso garante que o usuário tenha a noção exata da direção e das principais vias do percurso, preservando a velocidade da requisição e o layout da tela.
