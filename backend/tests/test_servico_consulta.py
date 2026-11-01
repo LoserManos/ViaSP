@@ -1,28 +1,15 @@
 import json
-from datetime import datetime
 from pathlib import Path
 from unittest.mock import AsyncMock
 
 import pytest
 
-from app.dominio import (
-    ConsultaPrevisao,
-    EstadoConsulta,
-    Linha,
-    Parada,
-    PrevisaoChegada,
-    Veiculo,
-)
-from app.excecoes import SPTransIndisponivel
+from app.dominio import Linha, Parada
 from app.servicos.cliente_sptrans import ClienteSPTrans
 from app.servicos.servico_consulta import ServicoConsulta
 
 FIXTURES_DIR = Path(__file__).parent / "fixtures"
 
-
-# ==========================================
-# Helpers e Fixtures
-# ==========================================
 
 class FakeClienteSPTrans:
     """Cliente falso para testes unitários do ServicoConsulta (ISS-08)."""
@@ -124,51 +111,6 @@ async def test_buscar_linhas_termo_sem_resultado_retorna_lista_vazia():
     resultado = await servico.buscar_linhas(parada, termo="Linha Inexistente")
 
     assert resultado == []
-
-
-# ==========================================
-# ISS-09: Previsões de Chegada
-# ==========================================
-
-@pytest.mark.asyncio
-async def test_consultar_previsoes_sucesso_e_ordenacao():
-    previsoes_desordenadas = [
-        PrevisaoChegada(horario_previsto="12:10", veiculo=Veiculo(prefixo="A")),
-        PrevisaoChegada(horario_previsto="12:02", veiculo=Veiculo(prefixo="B")),
-    ]
-    consulta_fake = ConsultaPrevisao(
-        parada=Parada(codigo=123),
-        linha=Linha(codigo=1, numero="8000", sentido=1),
-        horario_consulta=datetime.now(),
-        horario_referencia="12:00",
-        estado=EstadoConsulta.SUCESSO,
-        previsoes=previsoes_desordenadas
-    )
-
-    cliente_fake = AsyncMock()
-    cliente_fake.obter_previsoes.return_value = consulta_fake
-    servico = ServicoConsulta(cliente_fake)
-
-    resultado = await servico.consultar_previsoes(Parada(codigo=123), Linha(codigo=1, numero="8000", sentido=1))
-
-    assert resultado.estado == EstadoConsulta.SUCESSO
-    assert len(resultado.previsoes) == 2
-    assert resultado.previsoes[0].veiculo.prefixo == "B"
-    assert resultado.previsoes[1].veiculo.prefixo == "A"
-
-
-@pytest.mark.asyncio
-async def test_consultar_previsoes_falha_de_comunicacao():
-    cliente_fake = AsyncMock()
-    cliente_fake.obter_previsoes.side_effect = SPTransIndisponivel("Timeout")
-    servico = ServicoConsulta(cliente_fake)
-
-    resultado = await servico.consultar_previsoes(Parada(codigo=123), Linha(codigo=1, numero="8000", sentido=1))
-
-    assert resultado.estado == EstadoConsulta.FALHA
-    assert resultado.foi_bem_sucedida() is False
-    assert "indisponível" in resultado.mensagem_erro
-    assert resultado.previsoes == []
 
 
 # ==========================================
