@@ -33,7 +33,7 @@ class ServicoConsulta:
 
         for linha in linhas:
             # Concatena número, origem e destino para buscar em qualquer um deles
-            campos_busca = f"{linha.numero} {linha.origem} {linha.destino}"
+            campos_busca = f"{linha.numero} {linha.origem or ''} {linha.destino or ''}"
             if termo_normalizado in _normalizar_texto(campos_busca):
                 linhas_filtradas.append(linha)
 
