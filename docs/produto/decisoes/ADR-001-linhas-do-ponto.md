@@ -55,3 +55,13 @@ Os parâmetros a seguir foram validados empiricamente através dos testes de car
 ### 5.4 Tratamento de Erros e Tipagem
 - **Parâmetro inválido (String em campo numérico de parada):** Status HTTP `400 Bad Request` com corpo `{"Message":"The request is invalid."}`.
 - **Chamada não autenticada:** Status HTTP `401 Unauthorized`.
+
+## 6. Solução provisória (01/11/2026)
+
+A Opção (c) ainda não foi implementada: o `ServicoConsulta` executava o cruzamento da Opção (b) **a cada requisição** a `/api/linhas`. Contra a API real isso levava mais de 10 s, gerava timeouts e falhas de DNS (resposta 503 no totem) e, quando terminava, devolvia uma lista vazia para a parada `440016921`.
+
+Até a Opção (c) existir, `/api/linhas` usa a **Opção (a)** (`ClienteSPTrans.buscar_linhas_com_previsao`, sobre `/Previsao/Parada`), com cache em memória de 60 s no `ServicoConsulta`. Responde em menos de 1 s, mas **linhas sem ônibus previsto no momento não aparecem**, a consequência descrita na seção 2.
+
+Pendências para cumprir a decisão original:
+- Implementar o armazenamento local e a sincronização periódica (pode ser feito junto com a ISS-11).
+- Investigar por que o cruzamento de `buscar_linhas_da_parada` não encontra a parada `440016921`. O mesmo vale para `Parada/Buscar`: o nome e as coordenadas da parada vêm vazios em `/api/totem`.

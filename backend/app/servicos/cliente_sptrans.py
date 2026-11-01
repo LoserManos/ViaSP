@@ -343,6 +343,25 @@ class ClienteSPTrans:
                 paradas.append(parada)
         return paradas
 
+    async def buscar_linhas_com_previsao(self, codigo_parada: int) -> list[Linha]:
+        """Linhas com veículo previsto na parada neste momento (`GET /Previsao/Parada`).
+
+        Opção (a) do ADR-001, usada como solução provisória até a Opção (c) existir:
+        uma única requisição, mas linhas sem ônibus previsto no momento não aparecem.
+        """
+        resposta = await self._requisitar("GET", "/Previsao/Parada", params={"codigoParada": codigo_parada})
+        dados = _extrair_json(resposta)
+        parada = dados.get("p") if isinstance(dados, dict) else None
+        if not isinstance(parada, dict):
+            return []
+
+        linhas_por_codigo: dict[int, Linha] = {}
+        for item in parada.get("l") or []:
+            linha = _converter_linha(item)
+            if linha is not None:
+                linhas_por_codigo.setdefault(linha.codigo, linha)
+        return sorted(linhas_por_codigo.values(), key=lambda linha: (linha.numero, linha.sentido))
+
     async def buscar_linhas_da_parada(
         self,
         codigo_parada: int,
