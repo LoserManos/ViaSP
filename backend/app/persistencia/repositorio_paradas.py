@@ -14,7 +14,7 @@ from app.dominio import Parada
 
 from .banco import conectar
 
-_PREFIXO_REFERENCIA = "Ref.: "
+_MARCADOR_REFERENCIA = "Ref.:"
 
 
 def _linhas_stops(caminho: Path) -> Iterator[dict[str, str]]:
@@ -36,7 +36,9 @@ def _converter(linha: dict[str, str]) -> tuple[int, str, str, float, float] | No
         longitude = float(linha["stop_lon"])
     except (KeyError, TypeError, ValueError):
         return None
-    endereco = (linha.get("stop_desc") or "").strip().removeprefix(_PREFIXO_REFERENCIA)
+    # stop_desc vem como "Av. X, 540 Ref.: R Y/ R Z" ou só "Ref.: R Y/ R Z"
+    partes = (linha.get("stop_desc") or "").split(_MARCADOR_REFERENCIA)
+    endereco = " · ".join(p.strip() for p in partes if p.strip())
     return codigo, (linha.get("stop_name") or "").strip(), endereco, latitude, longitude
 
 

@@ -19,8 +19,11 @@ def test_importa_stops_de_uma_pasta(repositorio):
 
     parada = repositorio.buscar(440016921)
     assert parada.nome == "Av. Paulista, 2027"
-    # O prefixo "Ref.: " do GTFS é removido
+    # O marcador "Ref.:" do GTFS é removido
     assert parada.endereco == "R Padre Joao Manuel/ R Augusta -- Conjunto Nacional"
+    assert repositorio.buscar(440015007).endereco == (
+        "Av. Rebouças, 540 · R Doutor Ovidio Pires De Campos/ R Melo Alves"
+    )
     assert (parada.latitude, parada.longitude) == (-23.558947, -46.659585)
 
 
