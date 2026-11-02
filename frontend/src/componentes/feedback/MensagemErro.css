@@ -8,8 +8,7 @@
 }
 
 .viasp-mensagem-erro__icone {
-  font-size: 2rem;
-  line-height: 1;
+  color: var(--cor-erro);
 }
 
 .viasp-mensagem-erro__conteudo {
