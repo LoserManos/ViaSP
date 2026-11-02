@@ -151,12 +151,10 @@ export function TelaDetalheLinha({ linha, aoVoltar }) {
                 className="viasp-detalhe-linha__card-previsao"
               >
                 <div className="viasp-detalhe-linha__previsao-esquerda">
-                  <span
+                  <Icone
+                    nome="cronometro"
                     className="viasp-detalhe-linha__previsao-icone"
-                    aria-hidden="true"
-                  >
-                    ⏱️
-                  </span>
+                  />
                   <div>
                     <TextoGrande variante="destaque" peso="bold">
                       Chegada prevista às {item.horario_previsto}

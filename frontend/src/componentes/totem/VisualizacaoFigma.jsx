@@ -1,5 +1,6 @@
 import './VisualizacaoFigma.css'
 import { Botao, Cartao, TextoGrande } from '../base'
+import { Icone } from '../comuns/Icone'
 import { LogoViaSP } from '../comuns/LogoViaSP'
 
 /**
@@ -142,7 +143,7 @@ export function VisualizacaoFigma({ onSelecionarLinha }) {
           <strong>Ver mapa</strong>
           <span>Arredores do ponto e localização</span>
         </div>
-        <span className="viasp-figma-mapa-banner__seta">›</span>
+        <Icone nome="avancar" className="viasp-figma-mapa-banner__seta" />
       </div>
 
       {/* 5. Cartão Principal: VOCÊ ESTÁ EM */}
@@ -227,7 +228,10 @@ export function VisualizacaoFigma({ onSelecionarLinha }) {
                     {linha.tempo}
                   </span>
                 </div>
-                <span className="viasp-figma-linha-item__seta">›</span>
+                <Icone
+                  nome="avancar"
+                  className="viasp-figma-linha-item__seta"
+                />
               </div>
             </div>
           ))}

@@ -38,7 +38,7 @@ describe('Componente: Botao', () => {
     const botao = screen.getByRole('button', { name: /voltar/i })
     expect(botao).toHaveClass('viasp-botao--voltar')
     expect(botao).toHaveClass('viasp-botao--grande')
-    expect(screen.getByText('←')).toBeInTheDocument()
+    expect(botao.querySelector('svg[data-icone="voltar"]')).not.toBeNull()
   })
 
   it('respeita o estado desabilitado', () => {
