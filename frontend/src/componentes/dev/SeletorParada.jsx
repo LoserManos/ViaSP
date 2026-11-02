@@ -9,8 +9,12 @@ import './SeletorParada.css'
 // Abaixo desse zoom a área visível tem milhares de paradas: pede para aproximar
 const ZOOM_MINIMO_PARADAS = 15
 const CENTRO_SAO_PAULO = [-23.5505, -46.6333]
-// Roda do mouse: um clique (cerca de 100 px) muda um nível de zoom, como no Google Maps
-const PIXELS_POR_NIVEL_DE_ZOOM = 100
+// Quanto rolar (em px de deltaY) para mudar um nível de zoom. Maior = zoom mais suave.
+// Roda do mouse: cada clique manda cerca de 100 px, ou seja, ~0,6 nível
+const PIXELS_POR_NIVEL_DE_ZOOM = 160
+// Pinça do trackpad: o navegador manda a abertura dos dedos como fator e^(-deltaY/100);
+// 1 seguiria os dedos exatamente, abaixo de 1 deixa o zoom mais lento que os dedos
+const SENSIBILIDADE_DA_PINCA = 0.6
 
 const ESTILO_PARADA = {
   radius: 7,
@@ -183,10 +187,9 @@ export function SeletorParada({ paradaAtual, aoEscolher, aoFechar }) {
       const escala =
         evento.deltaMode === 1 ? 16 : evento.deltaMode === 2 ? 800 : 1
       const pixels = evento.deltaY * escala
-      // Com ctrlKey é a pinça do trackpad: o navegador manda o quanto os dedos
-      // abriram como deltaY (fator e^(-deltaY/100)), então o mapa segue os dedos
+      // ctrlKey indica a pinça do trackpad; sem ele é rolagem (roda ou dois dedos)
       zoomPendente -= evento.ctrlKey
-        ? pixels / (100 * Math.LN2)
+        ? (pixels * SENSIBILIDADE_DA_PINCA) / (100 * Math.LN2)
         : pixels / PIXELS_POR_NIVEL_DE_ZOOM
       pontoDoZoom = mapa.mouseEventToContainerPoint(evento)
       if (!quadro) quadro = requestAnimationFrame(aplicarZoom)
