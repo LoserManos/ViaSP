@@ -1,4 +1,5 @@
 import { Botao, Cartao, TextoGrande } from '../base'
+import { Icone } from '../comuns/Icone'
 import './MensagemErro.css'
 
 /**
@@ -16,9 +17,11 @@ export function MensagemErro({
 }) {
   return (
     <Cartao className="viasp-mensagem-erro" role="alert">
-      <div className="viasp-mensagem-erro__icone" aria-hidden="true">
-        ⚠️
-      </div>
+      <Icone
+        nome="alerta"
+        tamanho="2rem"
+        className="viasp-mensagem-erro__icone"
+      />
       <div className="viasp-mensagem-erro__conteudo">
         <TextoGrande variante="destaque" cor="erro" peso="bold">
           Não foi possível carregar as informações

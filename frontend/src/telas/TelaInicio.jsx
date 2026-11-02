@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react'
 import { Botao, Cartao, TextoGrande } from '../componentes/base'
+import { Icone } from '../componentes/comuns/Icone'
 import { MensagemErro } from '../componentes/feedback/MensagemErro'
+import { ItemLinha } from '../componentes/totem/ItemLinha'
 import { obterTotem, listarLinhas } from '../servicos/api'
 import './TelaInicio.css'
 
@@ -85,9 +87,7 @@ export function TelaInicio({ aoSelecionarLinha, aoAbrirDemo }) {
       {/* Barra de Busca Rápida por Toque */}
       <section className="viasp-tela-inicio__busca-box">
         <div className="viasp-tela-inicio__busca-campo-wrapper">
-          <span className="viasp-tela-inicio__busca-icone" aria-hidden="true">
-            🔍
-          </span>
+          <Icone nome="busca" className="viasp-tela-inicio__busca-icone" />
           <input
             type="text"
             className="viasp-tela-inicio__busca-input"
@@ -103,7 +103,7 @@ export function TelaInicio({ aoSelecionarLinha, aoAbrirDemo }) {
               onClick={() => setTermoBusca('')}
               aria-label="Limpar busca"
             >
-              ✕
+              <Icone nome="fechar" />
             </button>
           )}
         </div>
@@ -179,32 +179,11 @@ export function TelaInicio({ aoSelecionarLinha, aoAbrirDemo }) {
         ) : (
           <div className="viasp-tela-inicio__grade-linhas">
             {linhas.map((linha) => (
-              <Cartao
+              <ItemLinha
                 key={linha.codigo}
-                onClick={() => aoSelecionarLinha(linha)}
-                className="viasp-tela-inicio__item-linha"
-                ariaLabel={`Ver detalhes da linha ${linha.numero} com destino a ${linha.destino}`}
-              >
-                <div className="viasp-tela-inicio__linha-esquerda">
-                  <div
-                    className={`viasp-tela-inicio__badge-numero viasp-tela-inicio__badge-numero--${linha.corBadge || 'azul'}`}
-                  >
-                    🚌 {linha.numero}
-                  </div>
-                  <div className="viasp-tela-inicio__linha-info">
-                    <TextoGrande variante="destaque" peso="bold">
-                      {linha.destino}
-                    </TextoGrande>
-                    <TextoGrande variante="pequeno" cor="secundario">
-                      Sentido: {linha.origem} → {linha.destino}
-                    </TextoGrande>
-                  </div>
-                </div>
-
-                <div className="viasp-tela-inicio__linha-direita">
-                  <span className="viasp-tela-inicio__seta-acao">›</span>
-                </div>
-              </Cartao>
+                linha={linha}
+                aoSelecionar={aoSelecionarLinha}
+              />
             ))}
           </div>
         )}

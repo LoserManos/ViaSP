@@ -1,8 +1,9 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { CabecalhoTotem } from './componentes/layout/CabecalhoTotem'
 import { TelaInicio } from './telas/TelaInicio'
 import { TelaDetalheLinha } from './telas/TelaDetalheLinha'
 import { TelaDemonstracao } from './telas/TelaDemonstracao'
+import { obterTotem } from './servicos/api'
 import './App.css'
 
 /**
@@ -16,6 +17,20 @@ function App() {
     tela: 'inicio', // 'inicio' | 'detalhe' | 'demo'
     params: {},
   })
+  const [parada, setParada] = useState(null)
+
+  // Nome da parada no cabeçalho vem do backend; se falhar, o logo mostra o subtítulo padrão
+  useEffect(() => {
+    let ativo = true
+    obterTotem()
+      .then((totem) => {
+        if (ativo) setParada(totem.parada)
+      })
+      .catch(() => {})
+    return () => {
+      ativo = false
+    }
+  }, [])
 
   const irParaInicio = () => {
     setNavegacao({ tela: 'inicio', params: {} })
@@ -33,6 +48,9 @@ function App() {
     <div className="viasp-app">
       {/* Cabeçalho fixo do totem com botão voltar condicional */}
       <CabecalhoTotem
+        nomeParada={
+          parada && [parada.nome, parada.endereco].filter(Boolean).join(' — ')
+        }
         aoVoltar={navegacao.tela !== 'inicio' ? irParaInicio : undefined}
         aoAbrirDemo={navegacao.tela !== 'demo' ? irParaDemo : undefined}
         tituloTela={

@@ -46,8 +46,7 @@
 }
 
 .viasp-tela-inicio__busca-icone {
-  font-size: 1.25rem;
-  line-height: 1;
+  color: var(--cor-texto-secundario);
 }
 
 .viasp-tela-inicio__busca-input {
@@ -143,66 +142,6 @@
   display: flex;
   flex-direction: column;
   gap: var(--espacamento-xs);
-}
-
-.viasp-tela-inicio__item-linha {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: var(--espacamento-md) !important;
-  min-height: 80px;
-}
-
-.viasp-tela-inicio__linha-esquerda {
-  display: flex;
-  align-items: center;
-  gap: var(--espacamento-md);
-}
-
-.viasp-tela-inicio__badge-numero {
-  padding: 10px 16px;
-  border-radius: var(--raio-borda-md);
-  color: #ffffff;
-  font-weight: var(--peso-bold);
-  font-size: var(--tamanho-texto-destaque);
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  min-width: 140px;
-  justify-content: center;
-}
-
-.viasp-tela-inicio__badge-numero--vermelha {
-  background-color: var(--cor-linha-vermelha);
-}
-
-.viasp-tela-inicio__badge-numero--azul {
-  background-color: var(--cor-linha-azul);
-}
-
-.viasp-tela-inicio__badge-numero--verde {
-  background-color: var(--cor-linha-verde);
-}
-
-.viasp-tela-inicio__badge-numero--laranja {
-  background-color: var(--cor-linha-laranja);
-}
-
-.viasp-tela-inicio__linha-info {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.viasp-tela-inicio__linha-direita {
-  display: flex;
-  align-items: center;
-}
-
-.viasp-tela-inicio__seta-acao {
-  font-size: 2rem;
-  color: var(--cor-texto-muted);
-  line-height: 1;
 }
 
 /* Spinner e Carregando */

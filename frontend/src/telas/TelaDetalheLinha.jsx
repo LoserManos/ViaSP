@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Botao, Cartao, TextoGrande } from '../componentes/base'
+import { Icone } from '../componentes/comuns/Icone'
 import { MensagemErro } from '../componentes/feedback/MensagemErro'
 import { obterPrevisoes, listarParadasDaLinha } from '../servicos/api'
 import './TelaDetalheLinha.css'
@@ -103,7 +104,8 @@ export function TelaDetalheLinha({ linha, aoVoltar }) {
           <div
             className={`viasp-detalhe-linha__badge viasp-detalhe-linha__badge--${linha.corBadge || 'azul'}`}
           >
-            🚌 {linha.numero}
+            <Icone nome="onibus" />
+            <span>{linha.numero}</span>
           </div>
           <div>
             <TextoGrande as="h1" variante="titulo">
