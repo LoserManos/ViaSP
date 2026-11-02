@@ -1,0 +1,5 @@
+stop_id,"stop_name","stop_desc",stop_lat,stop_lon
+18848,"Clínicas","",-23.554022,-46.671108
+18849,"Vila Madalena","",-23.546498,-46.691141
+440015007,"Clínicas C/B","Av. Rebouças, 540 Ref.: R Doutor Ovidio Pires De Campos/ R Melo Alves",-23.558083,-46.667869
+440016921,"Av. Paulista, 2027","Ref.: R Padre Joao Manuel/ R Augusta -- Conjunto Nacional",-23.558947,-46.659585
