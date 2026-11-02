@@ -11,12 +11,14 @@ import './CabecalhoTotem.css'
  *   (vem de `/api/totem`); sem ele, o logo mostra o subtítulo padrão.
  * @param {() => void} [props.aoVoltar] - Se presente, exibe o botão de voltar sempre visível (ISS-14.2).
  * @param {() => void} [props.aoAbrirDemo] - Acessar a tela de demonstração dos tokens.
+ * @param {() => void} [props.aoEscolherParada] - Modo dev: abre o mapa para escolher a parada.
  * @param {string} [props.tituloTela] - Título opcional da tela atual.
  */
 export function CabecalhoTotem({
   nomeParada,
   aoVoltar,
   aoAbrirDemo,
+  aoEscolherParada,
   tituloTela,
 }) {
   return (
@@ -47,6 +49,17 @@ export function CabecalhoTotem({
       </div>
 
       <div className="viasp-cabecalho-totem__direita">
+        {aoEscolherParada && (
+          <button
+            type="button"
+            onClick={aoEscolherParada}
+            className="viasp-cabecalho-totem__btn-util"
+            aria-label="Escolher a parada do totem no mapa (modo dev)"
+          >
+            <Icone nome="mapa" />
+            <span>Escolher parada</span>
+          </button>
+        )}
         {aoAbrirDemo && (
           <button
             type="button"
