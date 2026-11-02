@@ -1,40 +1,56 @@
 import './Icone.css'
 
-/** Traçados dos ícones (grade 24×24, contorno em currentColor). */
+/**
+ * Traçados dos ícones, copiados do Lucide (https://lucide.dev, licença ISC),
+ * v0.460.0. Grade 24×24, contorno em currentColor.
+ */
 const TRACADOS = {
+  // lucide: bus
   onibus: (
     <>
-      <rect x="4" y="3" width="16" height="15" rx="3" />
-      <path d="M4 11h16" />
-      <path d="M8 3v8M16 3v8" />
-      <circle cx="8" cy="14.5" r="0.75" fill="currentColor" />
-      <circle cx="16" cy="14.5" r="0.75" fill="currentColor" />
-      <path d="M7 18v2.5M17 18v2.5" />
+      <path d="M8 6v6" />
+      <path d="M15 6v6" />
+      <path d="M2 12h19.6" />
+      <path d="M18 18h3s.5-1.7.8-2.8c.1-.4.2-.8.2-1.2 0-.4-.1-.8-.2-1.2l-1.4-5C20.1 6.8 19.1 6 18 6H4a2 2 0 0 0-2 2v10h3" />
+      <circle cx="7" cy="18" r="2" />
+      <path d="M9 18h5" />
+      <circle cx="16" cy="18" r="2" />
     </>
   ),
+  // lucide: search
   busca: (
     <>
-      <circle cx="11" cy="11" r="7" />
-      <path d="m20 20-4-4" />
+      <circle cx="11" cy="11" r="8" />
+      <path d="m21 21-4.3-4.3" />
     </>
   ),
-  fechar: <path d="M6 6l12 12M18 6 6 18" />,
+  // lucide: x
+  fechar: (
+    <>
+      <path d="M18 6 6 18" />
+      <path d="m6 6 12 12" />
+    </>
+  ),
+  // lucide: triangle-alert
   alerta: (
     <>
-      <path d="M10.3 3.9 2.4 17.6A2 2 0 0 0 4.1 20.6h15.8a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z" />
+      <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3" />
       <path d="M12 9v4" />
-      <circle cx="12" cy="16.5" r="0.75" fill="currentColor" />
+      <path d="M12 17h.01" />
     </>
   ),
+  // lucide: palette
   paleta: (
     <>
-      <path d="M12 3a9 9 0 0 0 0 18c1.1 0 1.7-.9 1.7-1.8 0-.5-.2-.9-.5-1.2-.3-.3-.5-.7-.5-1.2 0-1 .8-1.8 1.8-1.8H16a5 5 0 0 0 5-5c0-3.9-4-7-9-7z" />
-      <circle cx="7.5" cy="11" r="1" fill="currentColor" />
-      <circle cx="10" cy="7" r="1" fill="currentColor" />
-      <circle cx="14.5" cy="7" r="1" fill="currentColor" />
+      <circle cx="13.5" cy="6.5" r=".5" fill="currentColor" />
+      <circle cx="17.5" cy="10.5" r=".5" fill="currentColor" />
+      <circle cx="8.5" cy="7.5" r=".5" fill="currentColor" />
+      <circle cx="6.5" cy="12.5" r=".5" fill="currentColor" />
+      <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z" />
     </>
   ),
-  avancar: <path d="m9 5 7 7-7 7" />,
+  // lucide: chevron-right
+  avancar: <path d="m9 18 6-6-6-6" />,
 }
 
 /**
