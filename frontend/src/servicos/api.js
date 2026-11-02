@@ -145,7 +145,7 @@ export async function obterPrevisoes(codigoLinha) {
 
 /**
  * Requisição às rotas /api/dev (modo dev do backend). Sem mock nem fallback:
- * só fazem sentido com o backend rodando com MODO_DEV=true.
+ * só fazem sentido com o backend rodando com `python -m app --dev`.
  *
  * @param {string} endpoint - Caminho relativo sob /api/dev
  * @param {RequestInit} [opcoes]
@@ -167,7 +167,8 @@ async function requisitarDev(endpoint, opcoes = {}) {
   if (resposta.status === 404 && endpoint.startsWith('/paradas')) {
     throw new ErroViaSP({
       codigo: 'MODO_DEV_DESLIGADO',
-      mensagem: 'Suba o backend com MODO_DEV=true para escolher a parada.',
+      mensagem:
+        'Suba o backend com "python -m app --dev" para escolher a parada.',
       tentar_novamente: false,
       statusHttp: 404,
     })

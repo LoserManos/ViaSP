@@ -41,7 +41,14 @@ export function SeletorParada({ paradaAtual, aoEscolher, aoFechar }) {
 
   useEffect(() => {
     const temPosicao = paradaAtual?.latitude && paradaAtual?.longitude
-    const mapa = L.map(elementoMapa.current, { preferCanvas: true }).setView(
+    const mapa = L.map(elementoMapa.current, {
+      preferCanvas: true,
+      // Zoom contínuo: a roda e o pinça não pulam de um nível inteiro para o outro
+      zoomSnap: 0,
+      zoomDelta: 0.5,
+      wheelPxPerZoomLevel: 120,
+      wheelDebounceTime: 0,
+    }).setView(
       temPosicao
         ? [paradaAtual.latitude, paradaAtual.longitude]
         : CENTRO_SAO_PAULO,
