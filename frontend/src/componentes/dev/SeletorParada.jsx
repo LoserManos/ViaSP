@@ -42,12 +42,11 @@ export function SeletorParada({ paradaAtual, aoEscolher, aoFechar }) {
   useEffect(() => {
     const temPosicao = paradaAtual?.latitude && paradaAtual?.longitude
     const mapa = L.map(elementoMapa.current, {
-      preferCanvas: true,
-      // Zoom contínuo: a roda e o pinça não pulam de um nível inteiro para o outro
+      // Zoom contínuo, como no Google Maps: a roda e a pinça não saltam de nível em nível
       zoomSnap: 0,
       zoomDelta: 0.5,
-      wheelPxPerZoomLevel: 120,
-      wheelDebounceTime: 0,
+      wheelPxPerZoomLevel: 60,
+      wheelDebounceTime: 20,
     }).setView(
       temPosicao
         ? [paradaAtual.latitude, paradaAtual.longitude]
@@ -61,43 +60,68 @@ export function SeletorParada({ paradaAtual, aoEscolher, aoFechar }) {
     }).addTo(mapa)
 
     const camada = L.layerGroup().addTo(mapa)
+    // Marcadores por código: um movimento do mapa só adiciona e remove a diferença,
+    // em vez de apagar e redesenhar tudo (o que fazia os pontos piscarem)
+    const marcadores = new Map()
     let codigoSelecionado = paradaAtual?.codigo
     let requisicao = 0
+    let espera = null
+
+    function selecionar(parada) {
+      marcadores.get(codigoSelecionado)?.setStyle(ESTILO_PARADA)
+      codigoSelecionado = parada.codigo
+      marcadores.get(parada.codigo)?.setStyle(ESTILO_SELECIONADA).bringToFront()
+      setSelecionada(parada)
+    }
+
+    function limparMarcadores() {
+      camada.clearLayers()
+      marcadores.clear()
+    }
 
     async function carregarParadas() {
       const atual = ++requisicao
       if (mapa.getZoom() < ZOOM_MINIMO_PARADAS) {
-        camada.clearLayers()
+        limparMarcadores()
         setAviso('Aproxime o mapa para ver as paradas.')
         return
       }
-      const limites = mapa.getBounds()
+      // Margem em volta da área visível: arrastar um pouco não deixa bordas vazias
+      const limites = mapa.getBounds().pad(0.3)
       try {
-        const { paradas, truncado } = await listarParadasNaArea({
-          latMin: limites.getSouth(),
-          latMax: limites.getNorth(),
-          lonMin: limites.getWest(),
-          lonMax: limites.getEast(),
-        })
-        // Uma resposta antiga não apaga os marcadores de uma área mais nova
+        const { paradas, truncado } = await listarParadasNaArea(
+          {
+            latMin: limites.getSouth(),
+            latMax: limites.getNorth(),
+            lonMin: limites.getWest(),
+            lonMax: limites.getEast(),
+          },
+          1500
+        )
+        // Uma resposta antiga não sobrescreve a de uma área mais nova
         if (atual !== requisicao) return
-        camada.clearLayers()
+
+        const visiveis = new Set(paradas.map((parada) => parada.codigo))
+        for (const [codigo, marcador] of marcadores) {
+          if (!visiveis.has(codigo)) {
+            camada.removeLayer(marcador)
+            marcadores.delete(codigo)
+          }
+        }
         for (const parada of paradas) {
+          if (marcadores.has(parada.codigo)) continue
           const marcador = L.circleMarker(
             [parada.latitude, parada.longitude],
             parada.codigo === codigoSelecionado
               ? ESTILO_SELECIONADA
               : ESTILO_PARADA
           )
-          marcador.on('click', () => {
-            codigoSelecionado = parada.codigo
-            camada.eachLayer((m) => m.setStyle(ESTILO_PARADA))
-            marcador.setStyle(ESTILO_SELECIONADA)
-            setSelecionada(parada)
-          })
-          marcador.bindTooltip(parada.nome)
-          marcador.addTo(camada)
+            .on('click', () => selecionar(parada))
+            .bindTooltip(parada.nome)
+            .addTo(camada)
+          marcadores.set(parada.codigo, marcador)
         }
+        marcadores.get(codigoSelecionado)?.bringToFront()
         setAviso(
           truncado ? 'Há mais paradas nesta área: aproxime para ver todas.' : ''
         )
@@ -107,9 +131,17 @@ export function SeletorParada({ paradaAtual, aoEscolher, aoFechar }) {
       }
     }
 
-    mapa.on('moveend', carregarParadas)
+    // Busca só quando o mapa para de se mexer, não a cada passo do zoom
+    mapa.on('movestart', () => clearTimeout(espera))
+    mapa.on('moveend', () => {
+      clearTimeout(espera)
+      espera = setTimeout(carregarParadas, 150)
+    })
     carregarParadas()
-    return () => mapa.remove()
+    return () => {
+      clearTimeout(espera)
+      mapa.remove()
+    }
   }, [paradaAtual])
 
   async function confirmar() {
