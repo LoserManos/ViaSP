@@ -9,7 +9,7 @@ Ver [arquitetura](../docs/produto/arquitetura.md) e [diagrama de classes](../doc
 cd backend
 python -m venv .venv && source .venv/bin/activate
 pip install -r requirements-dev.txt
-cp .env.example .env        # preencha SPTRANS_TOKEN e PARADA_CODIGO
+cp .env.example .env        # preencha SPTRANS_TOKEN e os dados da parada (PARADA_*)
 uvicorn app.main:app --reload
 ```
 
@@ -29,6 +29,16 @@ Os dados da parada configurada para simular o totem físico no sistema (referent
 * **Código da Parada:** `440016921`
 * **Endereço:** Av. Paulista, 2027 (Ref.: R Padre Joao Manuel / R Augusta -- Conjunto Nacional)
 * **Coordenadas:** Latitude `-23.558947`, Longitude `-46.659585`
+
+A SPTrans não tem nome cadastrado para essa parada (`/Previsao/Parada` devolve `np` vazio e `Parada/Buscar` não a encontra). Por isso o nome, o endereço e as coordenadas exibidos pelo totem vêm do `.env` quando a SPTrans não os fornece:
+
+```
+PARADA_CODIGO=440016921
+PARADA_NOME=Conjunto Nacional
+PARADA_ENDERECO=Av. Paulista, 2027
+PARADA_LATITUDE=-23.558947
+PARADA_LONGITUDE=-46.659585
+```
 
 ## Estrutura
 

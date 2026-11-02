@@ -1,7 +1,7 @@
 """Rotas HTTP. Tudo sob /api.
 
-Rotas de consulta delegam ao ServicoConsulta; enquanto os métodos não forem
-implementados, respondem 501 (ver handler em app/main.py).
+Rotas de consulta delegam ao ServicoConsulta. Erros viram respostas no formato
+padrão de docs/produto/api.md (ver handlers em app/main.py).
 """
 from fastapi import APIRouter, Depends
 
