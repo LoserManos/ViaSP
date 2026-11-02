@@ -32,8 +32,7 @@ class ServicoConsulta:
     async def _linhas_do_ponto(self, parada: Parada) -> list[Linha]:
         """Linhas do ponto com cache em memória.
 
-        Provisório: usa `/Previsao/Parada` (Opção (a) do ADR-001), pois a Opção (c),
-        com armazenamento local e sincronização periódica, ainda não foi implementada.
+        Usa `/Previsao/Parada` (Opção (a) do ADR-001): só as linhas com ônibus previsto.
         A trava faz requisições simultâneas compartilharem uma única chamada à SPTrans.
         """
         async with self._trava_linhas:
