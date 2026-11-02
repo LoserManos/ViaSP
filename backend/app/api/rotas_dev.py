@@ -1,4 +1,4 @@
-"""Rotas de desenvolvimento, só registradas com MODO_DEV=true.
+"""Rotas de desenvolvimento, só registradas com `python -m app --dev`.
 
 Na versão final cada totem tem a parada fixa na configuração. Para a
 demonstração, estas rotas deixam escolher a parada num mapa com todas as

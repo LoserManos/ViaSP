@@ -146,9 +146,9 @@ Quando o backend ou a API externa falham (ex: SPTrans fora do ar, token inválid
 
 > `GET /api/previsoes` não usa esses códigos para falhas da SPTrans: responde 200 com `estado: "falha"` e `mensagem_erro` (ver seção 4). Só o 422 se aplica a ela.
 
-## 6. Rotas de desenvolvimento (`MODO_DEV=true`)
+## 6. Rotas de desenvolvimento (`--dev`)
 
-Só existem quando o backend sobe com `MODO_DEV=true`; fora disso respondem 404. Servem para a demonstração: escolher num mapa a parada onde o totem "está". Não fazem parte do contrato do totem final.
+Só existem quando o backend sobe com `python -m app --dev`; fora disso respondem 404. Servem para a demonstração: escolher num mapa a parada onde o totem "está". Não fazem parte do contrato do totem final.
 
 ### `GET /api/dev/paradas?lat_min=&lat_max=&lon_min=&lon_max=&limite=500`
 Paradas do GTFS dentro do retângulo (a área visível do mapa). `limite` vai de 1 a 2000; `truncado: true` indica que há mais paradas na área do que as devolvidas.

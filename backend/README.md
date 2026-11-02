@@ -10,8 +10,10 @@ cd backend
 python -m venv .venv && source .venv/bin/activate
 pip install -r requirements-dev.txt
 cp .env.example .env        # preencha SPTRANS_TOKEN
-uvicorn app.main:app --reload
+python -m app --dev         # ou só `python -m app`, sem as rotas de dev
 ```
+
+`python -m app --help` lista as opções (`--dev`, `--host`, `--porta`).
 
 Docs interativas: http://localhost:8000/docs
 
@@ -44,7 +46,7 @@ Sem o GTFS o totem ainda funciona, mas a parada aparece como "Parada 440016921",
 
 ## Modo dev: escolher a parada no mapa
 
-Com `MODO_DEV=true` no `.env`, o backend libera `/api/dev/paradas` e `/api/dev/parada` (ver [contrato](../docs/produto/api.md#6-rotas-de-desenvolvimento-modo_devtrue)) e o frontend, rodando com `npm run dev`, mostra o botão **Escolher parada** no cabeçalho. Ele abre um mapa com as paradas do GTFS; tocar numa parada e confirmar muda a parada do totem até o backend reiniciar.
+Subindo com `python -m app --dev`, o backend libera `/api/dev/paradas` e `/api/dev/parada` (ver [contrato](../docs/produto/api.md#6-rotas-de-desenvolvimento---dev)) e o frontend, rodando com `npm run dev`, mostra o botão **Escolher parada** no cabeçalho. Ele abre um mapa com as paradas do GTFS; tocar numa parada e confirmar muda a parada do totem até o backend reiniciar.
 
 ## Estrutura
 

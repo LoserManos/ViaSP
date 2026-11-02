@@ -21,7 +21,7 @@ class Settings(BaseSettings):
     # GTFS da SPTrans (pasta ou .zip com stops.txt): nome e coordenadas de todas as paradas
     gtfs_caminho: str = "data/gtfs"
 
-    # Habilita as rotas /api/dev (escolher a parada do totem num mapa, para demonstração)
+    # Rotas /api/dev (escolher a parada num mapa). Ligado por `python -m app --dev`, não pelo .env
     modo_dev: bool = False
 
     # Persistência
