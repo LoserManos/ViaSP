@@ -9,6 +9,8 @@ import './SeletorParada.css'
 // Abaixo desse zoom a área visível tem milhares de paradas: pede para aproximar
 const ZOOM_MINIMO_PARADAS = 15
 const CENTRO_SAO_PAULO = [-23.5505, -46.6333]
+// Roda do mouse: um clique (cerca de 100 px) muda um nível de zoom, como no Google Maps
+const PIXELS_POR_NIVEL_DE_ZOOM = 100
 
 const ESTILO_PARADA = {
   radius: 7,
@@ -42,11 +44,11 @@ export function SeletorParada({ paradaAtual, aoEscolher, aoFechar }) {
   useEffect(() => {
     const temPosicao = paradaAtual?.latitude && paradaAtual?.longitude
     const mapa = L.map(elementoMapa.current, {
-      // Zoom contínuo, como no Google Maps: a roda e a pinça não saltam de nível em nível
       zoomSnap: 0,
       zoomDelta: 0.5,
-      wheelPxPerZoomLevel: 60,
-      wheelDebounceTime: 20,
+      // O zoom por rolagem do Leaflet descarta os eventos que chegam durante a
+      // animação anterior; no trackpad isso perde quase todo o gesto (ver aoRolar)
+      scrollWheelZoom: false,
     }).setView(
       temPosicao
         ? [paradaAtual.latitude, paradaAtual.longitude]
@@ -131,6 +133,70 @@ export function SeletorParada({ paradaAtual, aoEscolher, aoFechar }) {
       }
     }
 
+    // Zoom pela roda e pelo trackpad, no mesmo caminho que o Leaflet usa para a
+    // pinça em telas de toque (Map.TouchZoom): acumula o movimento, aplica uma vez
+    // por quadro centrado no cursor e mantém as imagens do mapa esticadas até as
+    // novas carregarem. Usa métodos internos do Leaflet 1.9 (_move, _moveStart,
+    // _animateZoom), os mesmos do TouchZoom.
+    let zoomPendente = 0
+    let pontoDoZoom = null
+    let quadro = 0
+    let gestoAtivo = false
+    let fimDoGesto = null
+
+    function aplicarZoom() {
+      quadro = 0
+      const zoom = mapa._limitZoom(mapa.getZoom() + zoomPendente)
+      zoomPendente = 0
+      // O ponto do mapa sob o cursor continua sob o cursor depois do zoom
+      const ancora = mapa.containerPointToLatLng(pontoDoZoom)
+      const deslocamento = pontoDoZoom.subtract(mapa.getSize().divideBy(2))
+      const centro = mapa.unproject(
+        mapa.project(ancora, zoom).subtract(deslocamento),
+        zoom
+      )
+      if (!gestoAtivo) {
+        mapa._stop()
+        mapa._moveStart(true, false)
+        gestoAtivo = true
+      }
+      mapa._move(centro, zoom, { pinch: true, round: false })
+    }
+
+    function terminarGesto() {
+      if (quadro) {
+        cancelAnimationFrame(quadro)
+        aplicarZoom()
+      }
+      if (!gestoAtivo) return
+      gestoAtivo = false
+      mapa._animateZoom(
+        mapa.getCenter(),
+        mapa._limitZoom(mapa.getZoom()),
+        true,
+        mapa.options.zoomSnap
+      )
+    }
+
+    function aoRolar(evento) {
+      evento.preventDefault()
+      const escala =
+        evento.deltaMode === 1 ? 16 : evento.deltaMode === 2 ? 800 : 1
+      const pixels = evento.deltaY * escala
+      // Com ctrlKey é a pinça do trackpad: o navegador manda o quanto os dedos
+      // abriram como deltaY (fator e^(-deltaY/100)), então o mapa segue os dedos
+      zoomPendente -= evento.ctrlKey
+        ? pixels / (100 * Math.LN2)
+        : pixels / PIXELS_POR_NIVEL_DE_ZOOM
+      pontoDoZoom = mapa.mouseEventToContainerPoint(evento)
+      if (!quadro) quadro = requestAnimationFrame(aplicarZoom)
+      clearTimeout(fimDoGesto)
+      fimDoGesto = setTimeout(terminarGesto, 150)
+    }
+
+    const container = mapa.getContainer()
+    container.addEventListener('wheel', aoRolar, { passive: false })
+
     // Busca só quando o mapa para de se mexer, não a cada passo do zoom
     mapa.on('movestart', () => clearTimeout(espera))
     mapa.on('moveend', () => {
@@ -140,6 +206,9 @@ export function SeletorParada({ paradaAtual, aoEscolher, aoFechar }) {
     carregarParadas()
     return () => {
       clearTimeout(espera)
+      clearTimeout(fimDoGesto)
+      cancelAnimationFrame(quadro)
+      container.removeEventListener('wheel', aoRolar)
       mapa.remove()
     }
   }, [paradaAtual])
