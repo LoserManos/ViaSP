@@ -631,6 +631,43 @@ def test_converter_linha_suporta_formato_previsao_parada_fixture_real():
     )
 
 
+@pytest.mark.asyncio
+async def test_buscar_linhas_com_previsao_usa_previsao_parada():
+    fixture = _carregar_fixture_texto("previsao_parada.json")
+    caminhos = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        caminhos.append(request.url.path)
+        if request.url.path == "/v2.1/Login/Autenticar":
+            return httpx.Response(200, text="true")
+        assert request.url.path == "/v2.1/Previsao/Parada"
+        assert request.url.params["codigoParada"] == "260015039"
+        return httpx.Response(200, text=fixture, headers={"Content-Type": "application/json"})
+
+    cliente = ClienteSPTrans(token=TOKEN_VALIDO, base_url=BASE_URL, transport=httpx.MockTransport(handler))
+    linhas = await cliente.buscar_linhas_com_previsao(260015039)
+    await cliente.fechar()
+
+    esperadas = {item["cl"] for item in json.loads(fixture)["p"]["l"]}
+    assert {linha.codigo for linha in linhas} == esperadas
+    assert linhas == sorted(linhas, key=lambda linha: (linha.numero, linha.sentido))
+    assert caminhos.count("/v2.1/Previsao/Parada") == 1
+
+
+@pytest.mark.asyncio
+async def test_buscar_linhas_com_previsao_sem_dados_retorna_vazio():
+    fixture_nula = _carregar_fixture_texto("previsao_parada_nula.json")
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        if request.url.path == "/v2.1/Login/Autenticar":
+            return httpx.Response(200, text="true")
+        return httpx.Response(200, text=fixture_nula, headers={"Content-Type": "application/json"})
+
+    cliente = ClienteSPTrans(token=TOKEN_VALIDO, base_url=BASE_URL, transport=httpx.MockTransport(handler))
+    assert await cliente.buscar_linhas_com_previsao(999999) == []
+    await cliente.fechar()
+
+
 # --- ISS-07: Previsões de Chegada ---
 
 
