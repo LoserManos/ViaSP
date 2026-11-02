@@ -162,18 +162,34 @@ export function TelaInicio({ aoSelecionarLinha, aoAbrirDemo }) {
           </div>
         ) : linhas.length === 0 ? (
           <Cartao>
-            <TextoGrande variante="destaque" peso="bold">
-              Nenhuma linha encontrada
-            </TextoGrande>
-            <TextoGrande variante="corpo" cor="secundario">
-              Tente outro número de linha ou limpe o campo de busca acima.
-            </TextoGrande>
-            {termoBusca && (
-              <div style={{ marginTop: '16px' }}>
-                <Botao variante="secundario" onClick={() => setTermoBusca('')}>
-                  Limpar busca
-                </Botao>
-              </div>
+            {termoBusca ? (
+              <>
+                <TextoGrande variante="destaque" peso="bold">
+                  Nenhuma linha encontrada
+                </TextoGrande>
+                <TextoGrande variante="corpo" cor="secundario">
+                  Tente outro número de linha ou limpe o campo de busca acima.
+                </TextoGrande>
+                <div style={{ marginTop: '16px' }}>
+                  <Botao
+                    variante="secundario"
+                    onClick={() => setTermoBusca('')}
+                  >
+                    Limpar busca
+                  </Botao>
+                </div>
+              </>
+            ) : (
+              // Só aparecem linhas com ônibus previsto (ADR-001, Opção (a))
+              <>
+                <TextoGrande variante="destaque" peso="bold">
+                  Nenhum ônibus a caminho deste ponto agora
+                </TextoGrande>
+                <TextoGrande variante="corpo" cor="secundario">
+                  As linhas aparecem aqui assim que houver um ônibus previsto.
+                  Tente de novo em alguns minutos.
+                </TextoGrande>
+              </>
             )}
           </Cartao>
         ) : (
