@@ -9,7 +9,10 @@
 .viasp-item-linha__esquerda {
   display: flex;
   align-items: center;
-  gap: var(--espacamento-md);
+  flex: 1;
+  flex-wrap: wrap;
+  gap: var(--espacamento-sm) var(--espacamento-md);
+  min-width: 0;
 }
 
 .viasp-item-linha__badge {
@@ -23,6 +26,8 @@
   gap: 8px;
   min-width: 140px;
   justify-content: center;
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 
 .viasp-item-linha__badge--vermelha {
@@ -44,7 +49,10 @@
 .viasp-item-linha__info {
   display: flex;
   flex-direction: column;
+  flex: 1 1 12rem;
   gap: 2px;
+  min-width: 0;
+  overflow-wrap: break-word;
 }
 
 .viasp-item-linha__seta {
