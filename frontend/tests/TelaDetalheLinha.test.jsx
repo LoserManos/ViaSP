@@ -143,7 +143,11 @@ describe('TelaDetalheLinha (ISS-17 / US06 / US07)', () => {
     render(<TelaDetalheLinha linha={linhaExemplo} aoVoltar={vi.fn()} />)
 
     await waitFor(() => {
-      expect(screen.getByText('5 paradas · Terminal Origem Real → Aeroporto Congonhas')).toBeInTheDocument()
+      expect(
+        screen.getByText(
+          '5 paradas · Terminal Origem Real → Aeroporto Congonhas'
+        )
+      ).toBeInTheDocument()
       expect(screen.getByText('Terminal Origem Real')).toBeInTheDocument()
       expect(screen.getByText('Av. Rebouças, 100')).toBeInTheDocument()
       expect(screen.getByText('Av. Paulista, 2027')).toBeInTheDocument()

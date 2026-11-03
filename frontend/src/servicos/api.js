@@ -172,7 +172,8 @@ export async function obterPrevisoes(codigoLinha) {
 export function calcularTempoEsperaMinutos(horarioPrevisto, horarioReferencia) {
   if (!horarioPrevisto || typeof horarioPrevisto !== 'string') return null
   const partesPrev = horarioPrevisto.split(':').map((p) => parseInt(p, 10))
-  if (partesPrev.length < 2 || isNaN(partesPrev[0]) || isNaN(partesPrev[1])) return null
+  if (partesPrev.length < 2 || isNaN(partesPrev[0]) || isNaN(partesPrev[1]))
+    return null
   const minutosPrev = partesPrev[0] * 60 + partesPrev[1]
 
   let minutosRef

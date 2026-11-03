@@ -9,11 +9,16 @@ vi.mock('../src/servicos/api', () => ({
   obterPrevisoes: vi.fn(),
   formatarPrevisao: vi.fn((horarioPrevisto, horarioReferencia) => {
     if (!horarioPrevisto) {
-      return { minutos: Infinity, tempo: 'Sem previsão', status: 'Sem previsão', ehDestaque: false }
+      return {
+        minutos: Infinity,
+        tempo: 'Sem previsão',
+        status: 'Sem previsão',
+        ehDestaque: false,
+      }
     }
     const [hP, mP] = horarioPrevisto.split(':').map(Number)
     const [hR, mR] = (horarioReferencia || '19:45').split(':').map(Number)
-    const minutos = (hP * 60 + mP) - (hR * 60 + mR)
+    const minutos = hP * 60 + mP - (hR * 60 + mR)
     return {
       minutos,
       tempo: minutos === 0 ? 'Chegando' : `${minutos} min`,
@@ -59,14 +64,18 @@ describe('TelaInicial alinhada ao protótipo Figma', () => {
         return Promise.resolve({
           horario_referencia: '19:45',
           estado: 'sucesso',
-          previsoes: [{ horario_previsto: '19:48', veiculo: { prefixo: '12845' } }],
+          previsoes: [
+            { horario_previsto: '19:48', veiculo: { prefixo: '12845' } },
+          ],
         })
       }
       if (codigo === 1002) {
         return Promise.resolve({
           horario_referencia: '19:45',
           estado: 'sucesso',
-          previsoes: [{ horario_previsto: '19:53', veiculo: { prefixo: '21004' } }],
+          previsoes: [
+            { horario_previsto: '19:53', veiculo: { prefixo: '21004' } },
+          ],
         })
       }
       return Promise.resolve({

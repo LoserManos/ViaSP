@@ -173,7 +173,12 @@ export function TelaDetalheLinha({
     return () => {
       ativo = false
     }
-  }, [linhaAtiva?.codigo, linhaAtiva?.destino, linhaAtiva?.numero, linhaAtiva?.sentido])
+  }, [
+    linhaAtiva?.codigo,
+    linhaAtiva?.destino,
+    linhaAtiva?.numero,
+    linhaAtiva?.sentido,
+  ])
 
   if (!linha && !propCode) {
     return (
@@ -263,15 +268,24 @@ export function TelaDetalheLinha({
   // Localiza o índice da parada atual na ordem ativa do trajeto
   let hereIdx = stops.findIndex(
     (s) =>
-      (totemCodigo && (s.codigo === totemCodigo || String(s.codigo) === String(totemCodigo))) ||
-      (totemParadaNome && s.name && s.name.toLowerCase() === totemParadaNome.toLowerCase()) ||
-      (totemParadaNome && s.name && s.name.toLowerCase().includes(totemParadaNome.toLowerCase())) ||
+      (totemCodigo &&
+        (s.codigo === totemCodigo ||
+          String(s.codigo) === String(totemCodigo))) ||
+      (totemParadaNome &&
+        s.name &&
+        s.name.toLowerCase() === totemParadaNome.toLowerCase()) ||
+      (totemParadaNome &&
+        s.name &&
+        s.name.toLowerCase().includes(totemParadaNome.toLowerCase())) ||
       s.name === HERE ||
       s.name?.toLowerCase().includes('masp')
   )
 
   if (hereIdx === -1 && totemParadaNome) {
-    const palavras = totemParadaNome.toLowerCase().split(/[\s,—-]+/).filter((w) => w.length > 3)
+    const palavras = totemParadaNome
+      .toLowerCase()
+      .split(/[\s,—-]+/)
+      .filter((w) => w.length > 3)
     if (palavras.length > 0) {
       hereIdx = stops.findIndex((s) => {
         const nomeLower = (s.name || '').toLowerCase()
@@ -396,7 +410,10 @@ export function TelaDetalheLinha({
                             </span>
                           )}
                           {s.access && (
-                            <span className="access-tag" title="Parada acessível">
+                            <span
+                              className="access-tag"
+                              title="Parada acessível"
+                            >
                               <Icon name="accessibility" size={14} />
                               <span className="sr-only">Parada acessível</span>
                             </span>
@@ -408,8 +425,14 @@ export function TelaDetalheLinha({
                         {state === 'next' ? (
                           firstEta !== null ? (
                             <>
-                              {clockIn(Math.round(firstEta + (i - hereIdx) * MIN_PER_STOP))}
-                              <small>+{Math.round((i - hereIdx) * MIN_PER_STOP)} min</small>
+                              {clockIn(
+                                Math.round(
+                                  firstEta + (i - hereIdx) * MIN_PER_STOP
+                                )
+                              )}
+                              <small>
+                                +{Math.round((i - hereIdx) * MIN_PER_STOP)} min
+                              </small>
                             </>
                           ) : null
                         ) : state === 'here' ? (

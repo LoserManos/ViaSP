@@ -23,7 +23,11 @@ export function ItemLinha({ linha, aoSelecionar, previsao }) {
   const statusTexto =
     dados.status ||
     linha.status ||
-    (ehDestaque ? 'Chegando' : dados.tempo || linha.tempo ? 'No horário' : 'Sem previsão')
+    (ehDestaque
+      ? 'Chegando'
+      : dados.tempo || linha.tempo
+        ? 'No horário'
+        : 'Sem previsão')
 
   const tempoEstimado =
     dados.tempo ||

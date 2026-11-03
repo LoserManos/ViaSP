@@ -32,7 +32,11 @@ export function TelaInicio({ aoSelecionarLinha, aoAbrirDemo, aoAbrirMapa }) {
   const [mostrarTodas, setMostrarTodas] = useState(false)
 
   const carregarPrevisoes = async (listaLinhas) => {
-    if (!listaLinhas || listaLinhas.length === 0 || typeof obterPrevisoes !== 'function') {
+    if (
+      !listaLinhas ||
+      listaLinhas.length === 0 ||
+      typeof obterPrevisoes !== 'function'
+    ) {
       return {}
     }
     const mapa = {}
