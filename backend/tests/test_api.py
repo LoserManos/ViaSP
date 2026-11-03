@@ -82,6 +82,7 @@ def test_parametro_obrigatorio_ausente_retorna_422(client):
 
 def test_listar_paradas_da_linha_retorna_todas_e_enriquece_gtfs(client):
     from unittest.mock import AsyncMock
+
     from app.dominio import Parada
 
     mock_servico = AsyncMock()

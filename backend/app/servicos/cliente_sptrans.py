@@ -15,7 +15,6 @@ import asyncio
 import logging
 import re
 from collections.abc import Sequence
-from datetime import datetime
 from typing import Any
 
 import httpx
@@ -29,6 +28,7 @@ from app.dominio import (
     Veiculo,
 )
 from app.excecoes import ErroAutenticacaoSPTrans, ErroSPTrans, SPTransIndisponivel
+
 from .fuso_horario import agora_sao_paulo
 
 logger = logging.getLogger(__name__)
@@ -326,7 +326,10 @@ class ClienteSPTrans:
         return linhas
 
     async def buscar_paradas(self, codigo_linha: int) -> list[Parada]:
-        """Consulta as paradas do itinerário de uma linha (`GET /Parada/BuscarParadasPorLinha` com fallback para `/Previsao/Linha`)."""
+        """Consulta as paradas do itinerário de uma linha.
+
+        Utiliza `GET /Parada/BuscarParadasPorLinha` com fallback para `/Previsao/Linha`.
+        """
         resposta = await self._requisitar(
             "GET",
             "/Parada/BuscarParadasPorLinha",

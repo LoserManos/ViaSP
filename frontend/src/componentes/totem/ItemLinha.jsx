@@ -11,7 +11,7 @@ import './ItemLinha.css'
  * @param {object} [props.previsao] - Informações de previsão calculadas dinamicamente.
  * @param {number} [props.index=0] - Posição do item na lista.
  */
-export function ItemLinha({ linha, aoSelecionar, index = 0, previsao }) {
+export function ItemLinha({ linha, aoSelecionar, previsao }) {
   const dados = previsao || linha
   const ehDestaque =
     dados.ehDestaque !== undefined

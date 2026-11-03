@@ -127,47 +127,53 @@ export function TelaDetalheLinha({
   // Carrega paradas e previsões ao montar ou quando a linha mudar
   useEffect(() => {
     let ativo = true
-    if (linhaAtiva?.codigo) {
-      setCarregandoParadas(true)
-      setErroParadas(null)
-      listarParadasDaLinha(linhaAtiva.codigo, {
-        numero: linhaAtiva.numero,
-        sentido: linhaAtiva.sentido,
-        destino: linhaAtiva.destino,
-      })
-        .then((dados) => {
-          if (ativo) {
-            setParadas(Array.isArray(dados) ? dados : [])
-            setCarregandoParadas(false)
-          }
-        })
-        .catch((err) => {
-          if (ativo) {
-            setErroParadas(err?.mensagem || 'Falha ao carregar o itinerário.')
-            setCarregandoParadas(false)
-          }
-        })
+    if (!linhaAtiva?.codigo) return
 
-      setCarregandoPrevisao(true)
-      setErroPrevisao(null)
-      obterPrevisoes(linhaAtiva.codigo)
-        .then((dados) => {
-          if (ativo) {
-            setConsultaPrevisao(dados)
-            setCarregandoPrevisao(false)
-          }
-        })
-        .catch((err) => {
-          if (ativo) {
-            setErroPrevisao(err.mensagem || 'Falha ao conectar com o servidor.')
-            setCarregandoPrevisao(false)
-          }
-        })
-    }
+    Promise.resolve().then(() => {
+      if (ativo) {
+        setCarregandoParadas(true)
+        setErroParadas(null)
+        setCarregandoPrevisao(true)
+        setErroPrevisao(null)
+      }
+    })
+
+    listarParadasDaLinha(linhaAtiva.codigo, {
+      numero: linhaAtiva.numero,
+      sentido: linhaAtiva.sentido,
+      destino: linhaAtiva.destino,
+    })
+      .then((dados) => {
+        if (ativo) {
+          setParadas(Array.isArray(dados) ? dados : [])
+          setCarregandoParadas(false)
+        }
+      })
+      .catch((err) => {
+        if (ativo) {
+          setErroParadas(err?.mensagem || 'Falha ao carregar o itinerário.')
+          setCarregandoParadas(false)
+        }
+      })
+
+    obterPrevisoes(linhaAtiva.codigo)
+      .then((dados) => {
+        if (ativo) {
+          setConsultaPrevisao(dados)
+          setCarregandoPrevisao(false)
+        }
+      })
+      .catch((err) => {
+        if (ativo) {
+          setErroPrevisao(err.mensagem || 'Falha ao conectar com o servidor.')
+          setCarregandoPrevisao(false)
+        }
+      })
+
     return () => {
       ativo = false
     }
-  }, [linhaAtiva?.codigo])
+  }, [linhaAtiva?.codigo, linhaAtiva?.destino, linhaAtiva?.numero, linhaAtiva?.sentido])
 
   if (!linha && !propCode) {
     return (

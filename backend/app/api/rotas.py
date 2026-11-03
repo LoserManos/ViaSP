@@ -5,7 +5,7 @@ padrão de docs/produto/api.md (ver handlers em app/main.py).
 """
 from fastapi import APIRouter, Depends
 
-from app.dominio import Linha, Totem
+from app.dominio import Linha, Parada, Totem
 from app.persistencia import RepositorioParadas
 from app.servicos import ServicoConsulta
 

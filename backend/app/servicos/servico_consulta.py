@@ -3,7 +3,6 @@ import asyncio
 import time
 import unicodedata
 from collections.abc import Callable
-from datetime import datetime
 
 from app.dominio import ConsultaPrevisao, EstadoConsulta, Linha, Parada
 from app.excecoes import ErroAutenticacaoSPTrans, ErroSPTrans, SPTransIndisponivel
