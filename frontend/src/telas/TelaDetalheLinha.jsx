@@ -4,6 +4,7 @@ import {
   obterPrevisoes,
   listarParadasDaLinha,
   obterTotem,
+  calcularTempoEsperaMinutos,
 } from '../servicos/api'
 import { mockLinhas } from '../mocks/dadosMock'
 import './TelaDetalheLinha.css'
@@ -20,20 +21,13 @@ const busRoutes = {
   '775P-10': { color: '#2563eb' },
 }
 
-const arrivals = [
-  { line: '8012-10', minutes: 3 },
-  { line: '875A-10', minutes: 8 },
-  { line: '175P-10', minutes: 14 },
-  { line: '106A-10', minutes: 6 },
-  { line: '917H-10', minutes: 4 },
-  { line: '775P-10', minutes: 18 },
-]
-
-const clockIn = (min) =>
-  new Date(Date.now() + min * 60000).toLocaleTimeString('pt-BR', {
+const clockIn = (min) => {
+  if (min === null || min === undefined || isNaN(min)) return ''
+  return new Date(Date.now() + min * 60000).toLocaleTimeString('pt-BR', {
     hour: '2-digit',
     minute: '2-digit',
   })
+}
 
 const linhasConhecidas = {
   '106A-10': {
@@ -78,16 +72,20 @@ export function TelaDetalheLinha({
   const [totemParadaNome, setTotemParadaNome] = useState(HERE)
 
   const [consultaPrevisao, setConsultaPrevisao] = useState(null)
+  const [carregandoPrevisao, setCarregandoPrevisao] = useState(false)
   const [erroPrevisao, setErroPrevisao] = useState(null)
 
   const carregarPrevisoes = async () => {
     if (!linhaAtiva?.codigo) return
+    setCarregandoPrevisao(true)
     setErroPrevisao(null)
     try {
       const dados = await obterPrevisoes(linhaAtiva.codigo)
       setConsultaPrevisao(dados)
     } catch (err) {
       setErroPrevisao(err.mensagem || 'Falha ao conectar com o servidor.')
+    } finally {
+      setCarregandoPrevisao(false)
     }
   }
 
@@ -140,13 +138,18 @@ export function TelaDetalheLinha({
           }
         })
 
+      setCarregandoPrevisao(true)
       obterPrevisoes(linhaAtiva.codigo)
         .then((dados) => {
-          if (ativo) setConsultaPrevisao(dados)
+          if (ativo) {
+            setConsultaPrevisao(dados)
+            setCarregandoPrevisao(false)
+          }
         })
         .catch((err) => {
           if (ativo) {
             setErroPrevisao(err.mensagem || 'Falha ao conectar com o servidor.')
+            setCarregandoPrevisao(false)
           }
         })
     }
@@ -216,9 +219,26 @@ export function TelaDetalheLinha({
       ? `var(--cor-linha-${linhaAtiva.corBadge})`
       : '#e5223a')
 
-  const baseEta = arrivals.find((a) => a.line === code)?.minutes ?? 11
-  const firstEta = baseEta
-  const departures = [0, 1, 2].map((k) => firstEta + k * headway)
+  // Processa as previsões reais vindas da SPTrans
+  const previsoesProcessadas = (consultaPrevisao?.previsoes || []).map((p) => {
+    const minutos = calcularTempoEsperaMinutos(
+      p.horario_previsto,
+      consultaPrevisao?.horario_referencia
+    )
+    return {
+      ...p,
+      minutos: minutos ?? 0,
+    }
+  })
+
+  previsoesProcessadas.sort((a, b) => a.minutos - b.minutos)
+
+  const primeiraPrevisao = previsoesProcessadas[0] || null
+  const firstEta = primeiraPrevisao ? primeiraPrevisao.minutos : null
+  const firstHorario =
+    primeiraPrevisao?.horario_previsto ||
+    (firstEta !== null ? clockIn(firstEta) : null)
+  const departures = previsoesProcessadas.map((p) => p.minutos)
 
   // Localiza o índice da parada atual na ordem ativa do trajeto
   const hereIdx = Math.max(
@@ -325,7 +345,10 @@ export function TelaDetalheLinha({
               {stops.map((s, i) => {
                 const state =
                   i < hereIdx ? 'past' : i === hereIdx ? 'here' : 'next'
-                const eta = firstEta + (i - hereIdx) * MIN_PER_STOP
+                const eta =
+                  firstEta !== null
+                    ? firstEta + (i - hereIdx) * MIN_PER_STOP
+                    : null
                 return (
                   <li
                     key={`${s.codigo || s.name}-${i}`}
@@ -354,15 +377,21 @@ export function TelaDetalheLinha({
 
                     <span className="line-stop-time">
                       {state === 'next' ? (
-                        <>
-                          {clockIn(Math.round(eta))}
-                          <small>+{Math.round(eta - firstEta)} min</small>
-                        </>
+                        firstEta !== null ? (
+                          <>
+                            {clockIn(Math.round(firstEta + (i - hereIdx) * MIN_PER_STOP))}
+                            <small>+{Math.round((i - hereIdx) * MIN_PER_STOP)} min</small>
+                          </>
+                        ) : null
                       ) : state === 'here' ? (
-                        <>
-                          {clockIn(firstEta)}
+                        firstEta !== null ? (
+                          <>
+                            {firstHorario}
+                            <small>embarque</small>
+                          </>
+                        ) : (
                           <small>embarque</small>
-                        </>
+                        )
                       ) : null}
                     </span>
                   </li>
@@ -376,24 +405,34 @@ export function TelaDetalheLinha({
         <aside className="map-detail line-panel" aria-live="polite">
           <div className="line-next">
             <span className="line-next-label">Próximo ônibus nesta parada</span>
-            <strong className={firstEta <= 3 ? 'soon' : ''}>
-              {firstEta}
-              <small> min</small>
-            </strong>
-            <span>
-              Sentido <b>{towards}</b> · às {clockIn(firstEta)}
-            </span>
+            {firstEta !== null ? (
+              <>
+                <strong className={firstEta <= 3 ? 'soon' : ''}>
+                  {firstEta}
+                  <small> min</small>
+                </strong>
+                <span>
+                  Sentido <b>{towards}</b> · às {firstHorario}
+                </span>
+              </>
+            ) : carregandoPrevisao ? (
+              <span>Carregando previsão...</span>
+            ) : (
+              <span>Nenhum veículo a caminho</span>
+            )}
           </div>
 
-          <ul className="line-departures">
-            {departures.slice(1).map((m) => (
-              <li key={m}>
-                <span>Depois</span>
-                <strong>{m} min</strong>
-                <small>{clockIn(m)}</small>
-              </li>
-            ))}
-          </ul>
+          {previsoesProcessadas.length > 1 ? (
+            <ul className="line-departures">
+              {previsoesProcessadas.slice(1).map((p, idx) => (
+                <li key={p.veiculo?.prefixo || idx}>
+                  <span>{idx === 0 ? 'Depois' : `${idx + 2}º veículo`}</span>
+                  <strong>{p.minutos} min</strong>
+                  <small>{p.horario_previsto}</small>
+                </li>
+              ))}
+            </ul>
+          ) : null}
 
           {/* Previsões em Tempo Real da SPTrans (quando disponíveis) */}
           {erroPrevisao ? (

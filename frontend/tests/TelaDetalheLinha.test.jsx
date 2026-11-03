@@ -78,6 +78,9 @@ describe('TelaDetalheLinha (ISS-17 / US06 / US07)', () => {
       expect(screen.getByText(/Chegada prevista às 14:48/i)).toBeInTheDocument()
       expect(screen.getByText('Próximo')).toBeInTheDocument()
       expect(screen.getByText('2º veículo')).toBeInTheDocument()
+      expect(screen.getByText('5')).toBeInTheDocument()
+      expect(screen.getByText(/Sentido.*às 14:35/i)).toBeInTheDocument()
+      expect(screen.getByText('18 min')).toBeInTheDocument()
     })
 
     expect(api.obterPrevisoes).toHaveBeenCalledWith(1001)
