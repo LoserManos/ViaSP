@@ -41,10 +41,11 @@ export function ItemLinha({ linha, aoSelecionar, index = 0 }) {
             {linha.destino}
           </TextoGrande>
           <TextoGrande variante="pequeno" cor="secundario">
-            {linha.sentido ||
-              (linha.origem
-                ? `Sentido: ${linha.origem} → ${linha.destino}`
-                : `Sentido: ${linha.destino}`)}
+            {linha.origem
+              ? `Sentido: ${linha.origem} → ${linha.destino}`
+              : typeof linha.sentido === 'string'
+                ? linha.sentido
+                : `Sentido: ${linha.destino}`}
           </TextoGrande>
         </div>
       </div>

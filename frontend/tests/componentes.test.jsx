@@ -142,6 +142,25 @@ describe('Componente: ItemLinha (ISS-15.1)', () => {
     fireEvent.click(screen.getByRole('button', { name: /8012-10/ }))
     expect(aoSelecionar).toHaveBeenCalledWith(linha)
   })
+
+  it('exibe origem → destino mesmo quando linha.sentido for um número (evita exibir o dígito 2)', () => {
+    const linhaComSentidoNumerico = {
+      codigo: 1004,
+      numero: '917H-10',
+      sentido: 2,
+      origem: 'Terminal Sacomã',
+      destino: 'Terminal Pirituba',
+    }
+    render(
+      <ItemLinha linha={linhaComSentidoNumerico} aoSelecionar={() => {}} />
+    )
+
+    expect(
+      screen.getByText('Sentido: Terminal Sacomã → Terminal Pirituba')
+    ).toBeInTheDocument()
+    // Garante que o número 2 do sentido não é exibido isolado
+    expect(screen.queryByText(/^2$/)).not.toBeInTheDocument()
+  })
 })
 
 describe('Componente: CabecalhoTotem', () => {
