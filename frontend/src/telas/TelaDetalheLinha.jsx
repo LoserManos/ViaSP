@@ -2,11 +2,11 @@ import { useState, useEffect } from 'react'
 import { Botao, Cartao, TextoGrande } from '../componentes/base'
 import { Icone } from '../componentes/comuns/Icone'
 import { MensagemErro } from '../componentes/feedback/MensagemErro'
-import { obterPrevisoes, listarParadasDaLinha } from '../servicos/api'
+import { obterPrevisoes } from '../servicos/api'
 import './TelaDetalheLinha.css'
 
 /**
- * Tela de Detalhes da Linha (US03, US06, US07 / ISS-17, ISS-18).
+ * Tela de Detalhes da Linha (US06, US07 / ISS-17, ISS-18).
  *
  * @param {object} props
  * @param {object} props.linha - Objeto da linha selecionada.
@@ -14,25 +14,8 @@ import './TelaDetalheLinha.css'
  */
 export function TelaDetalheLinha({ linha, aoVoltar }) {
   const [consultaPrevisao, setConsultaPrevisao] = useState(null)
-  const [paradas, setParadas] = useState([])
-  const [carregandoParadas, setCarregandoParadas] = useState(true)
   const [carregandoPrevisao, setCarregandoPrevisao] = useState(true)
-  const [erroParadas, setErroParadas] = useState(null)
   const [erroPrevisao, setErroPrevisao] = useState(null)
-
-  const carregarParadas = async () => {
-    if (!linha?.codigo) return
-    setCarregandoParadas(true)
-    setErroParadas(null)
-    try {
-      const dados = await listarParadasDaLinha(linha.codigo)
-      setParadas(dados || [])
-    } catch (err) {
-      setErroParadas(err.mensagem || 'Falha ao consultar itinerário da linha.')
-    } finally {
-      setCarregandoParadas(false)
-    }
-  }
 
   const carregarPrevisoes = async () => {
     if (!linha?.codigo) return
@@ -55,42 +38,29 @@ export function TelaDetalheLinha({ linha, aoVoltar }) {
 
     async function carregar() {
       if (!linha?.codigo) {
-        setCarregandoParadas(false)
         setCarregandoPrevisao(false)
         return
       }
 
-      setCarregandoParadas(true)
       setCarregandoPrevisao(true)
-      setErroParadas(null)
       setErroPrevisao(null)
 
-      const [resParadas, resPrevisoes] = await Promise.allSettled([
-        listarParadasDaLinha(linha.codigo),
-        obterPrevisoes(linha.codigo),
-      ])
-
-      if (!ativo) return
-
-      if (resParadas.status === 'fulfilled') {
-        setParadas(resParadas.value || [])
-      } else {
-        setErroParadas(
-          resParadas.reason?.mensagem ||
-            'Falha ao consultar itinerário da linha.'
-        )
+      try {
+        const dados = await obterPrevisoes(linha.codigo)
+        if (ativo) {
+          setConsultaPrevisao(dados)
+        }
+      } catch (err) {
+        if (ativo) {
+          setErroPrevisao(
+            err.mensagem || 'Falha ao consultar previsões de chegada.'
+          )
+        }
+      } finally {
+        if (ativo) {
+          setCarregandoPrevisao(false)
+        }
       }
-      setCarregandoParadas(false)
-
-      if (resPrevisoes.status === 'fulfilled') {
-        setConsultaPrevisao(resPrevisoes.value)
-      } else {
-        setErroPrevisao(
-          resPrevisoes.reason?.mensagem ||
-            'Falha ao consultar previsões de chegada.'
-        )
-      }
-      setCarregandoPrevisao(false)
     }
 
     carregar()
@@ -224,57 +194,6 @@ export function TelaDetalheLinha({ linha, aoVoltar }) {
               momento.
             </TextoGrande>
           </Cartao>
-        )}
-      </section>
-
-      {/* Itinerário Simplificado e Principais Paradas (US03 / ISS-17.2) */}
-      <section className="viasp-detalhe-linha__secao">
-        <TextoGrande as="h2" variante="subtitulo">
-          Itinerário e principais paradas da rota
-        </TextoGrande>
-
-        {erroParadas ? (
-          <MensagemErro
-            mensagem={erroParadas}
-            aoTentarNovamente={carregarParadas}
-          />
-        ) : carregandoParadas ? (
-          <Cartao>
-            <TextoGrande variante="corpo" cor="secundario">
-              Carregando paradas da linha...
-            </TextoGrande>
-          </Cartao>
-        ) : paradas.length === 0 ? (
-          <Cartao>
-            <TextoGrande variante="corpo" cor="secundario">
-              Nenhuma parada disponível para esta linha no momento.
-            </TextoGrande>
-          </Cartao>
-        ) : (
-          <div className="viasp-detalhe-linha__itinerario-lista" role="list">
-            {paradas.map((parada, idx) => (
-              <div
-                key={parada.codigo}
-                className="viasp-detalhe-linha__parada-item"
-                role="listitem"
-              >
-                <div className="viasp-detalhe-linha__parada-marcador">
-                  <span className="viasp-detalhe-linha__parada-ponto" />
-                  {idx < paradas.length - 1 && (
-                    <span className="viasp-detalhe-linha__parada-linha" />
-                  )}
-                </div>
-                <div className="viasp-detalhe-linha__parada-dados">
-                  <TextoGrande variante="destaque" peso="bold">
-                    {parada.nome}
-                  </TextoGrande>
-                  <TextoGrande variante="pequeno" cor="secundario">
-                    {parada.endereco}
-                  </TextoGrande>
-                </div>
-              </div>
-            ))}
-          </div>
         )}
       </section>
     </div>
