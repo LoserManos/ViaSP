@@ -1,0 +1,74 @@
+.viasp-seletor-parada {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--cor-superficie);
+}
+
+.viasp-seletor-parada__topo,
+.viasp-seletor-parada__rodape {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--espacamento-sm);
+  padding: var(--espacamento-sm) var(--espacamento-md);
+}
+
+.viasp-seletor-parada__topo {
+  border-bottom: 1px solid var(--cor-borda);
+}
+
+.viasp-seletor-parada__rodape {
+  flex-wrap: wrap;
+  border-top: 1px solid var(--cor-borda);
+}
+
+.viasp-seletor-parada__fechar {
+  min-width: var(--alvo-toque-minimo);
+  min-height: var(--alvo-toque-minimo);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--cor-borda-forte);
+  border-radius: var(--raio-borda-full);
+  background-color: var(--cor-fundo);
+  color: var(--cor-texto-principal);
+  cursor: pointer;
+}
+
+.viasp-seletor-parada__mapa-area {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+}
+
+.viasp-seletor-parada__mapa {
+  position: absolute;
+  inset: 0;
+}
+
+.viasp-seletor-parada__aviso {
+  position: absolute;
+  top: var(--espacamento-sm);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 500;
+  padding: var(--espacamento-xs) var(--espacamento-sm);
+  border-radius: var(--raio-borda-full);
+  background-color: var(--cor-texto-principal);
+  color: var(--cor-texto-invertido);
+  font-size: var(--tamanho-texto-pequeno);
+  box-shadow: var(--sombra-elevada);
+  white-space: nowrap;
+}
+
+.viasp-seletor-parada__aviso--erro {
+  background-color: var(--cor-erro);
+}
+
+.viasp-seletor-parada__escolhida {
+  flex: 1 1 16rem;
+  min-width: 0;
+}

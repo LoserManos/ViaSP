@@ -4,7 +4,7 @@ import {
   mockParadasPorLinha,
   mockPrevisoes,
 } from '../mocks/dadosMock'
-import { normalizarErro } from './erro'
+import { ErroViaSP, normalizarErro } from './erro'
 
 const BASE_URL = import.meta.env?.VITE_API_URL || '/api'
 let usarMocksForcado = import.meta.env?.VITE_USAR_MOCKS === 'true'
@@ -140,5 +140,81 @@ export async function obterPrevisoes(codigoLinha) {
         { horario_previsto: '20:15', veiculo: { prefixo: '10888' } },
       ],
     }
+  })
+}
+
+/**
+ * Requisição às rotas /api/dev (modo dev do backend). Sem mock nem fallback:
+ * só fazem sentido com o backend rodando com `python -m app --dev`.
+ *
+ * @param {string} endpoint - Caminho relativo sob /api/dev
+ * @param {RequestInit} [opcoes]
+ */
+async function requisitarDev(endpoint, opcoes = {}) {
+  let resposta
+  try {
+    resposta = await fetch(`${BASE_URL}/dev${endpoint}`, {
+      ...opcoes,
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+      },
+    })
+  } catch (erro) {
+    throw normalizarErro(erro)
+  }
+
+  if (resposta.status === 404 && endpoint.startsWith('/paradas')) {
+    throw new ErroViaSP({
+      codigo: 'MODO_DEV_DESLIGADO',
+      mensagem:
+        'Suba o backend com "python -m app --dev" para escolher a parada.',
+      tentar_novamente: false,
+      statusHttp: 404,
+    })
+  }
+  if (!resposta.ok) {
+    let payloadErro = null
+    try {
+      payloadErro = await resposta.json()
+    } catch {
+      // Corpo não é JSON
+    }
+    throw normalizarErro({ status: resposta.status, ...(payloadErro || {}) })
+  }
+  return resposta.json()
+}
+
+/**
+ * Paradas do GTFS dentro de uma área do mapa (modo dev).
+ *
+ * @param {{latMin: number, latMax: number, lonMin: number, lonMax: number}} area
+ * @param {number} [limite=500]
+ * @returns {Promise<{paradas: Array<typeof mockTotem.parada>, truncado: boolean}>}
+ */
+export async function listarParadasNaArea(
+  { latMin, latMax, lonMin, lonMax },
+  limite = 500
+) {
+  const query = new URLSearchParams({
+    lat_min: latMin,
+    lat_max: latMax,
+    lon_min: lonMin,
+    lon_max: lonMax,
+    limite,
+  })
+  return requisitarDev(`/paradas?${query}`)
+}
+
+/**
+ * Troca a parada do totem (modo dev). Vale até o backend reiniciar.
+ *
+ * @param {number} codigo - Código da parada no GTFS / SPTrans.
+ * @returns {Promise<typeof mockTotem>}
+ */
+export async function escolherParada(codigo) {
+  return requisitarDev('/parada', {
+    method: 'PUT',
+    body: JSON.stringify({ codigo }),
   })
 }

@@ -1,3 +1,4 @@
+import { Icone } from '../comuns/Icone'
 import './Botao.css'
 
 /**
@@ -43,9 +44,7 @@ export function Botao({
       {...outrasProps}
     >
       {variante === 'voltar' && (
-        <span className="viasp-botao__icone" aria-hidden="true">
-          ←
-        </span>
+        <Icone nome="voltar" className="viasp-botao__icone" />
       )}
       <span className="viasp-botao__conteudo">{children}</span>
     </button>

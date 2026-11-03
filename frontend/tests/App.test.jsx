@@ -18,6 +18,13 @@ describe('Navegação por Estado no Totem (ISS-14.2)', () => {
       expect(screen.getByText(/8012-10/i)).toBeInTheDocument()
     })
 
+    // O cabeçalho mostra a parada vinda de /api/totem, não um nome fixo
+    await waitFor(() => {
+      expect(
+        screen.getByText(/Parada MASP — Av\. Paulista, 1578/)
+      ).toBeInTheDocument()
+    })
+
     // Na tela inicial, o botão de voltar não deve estar presente no cabeçalho
     expect(
       screen.queryByRole('button', { name: /voltar para a tela anterior/i })

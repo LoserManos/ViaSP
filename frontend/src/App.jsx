@@ -1,9 +1,17 @@
-import { useState } from 'react'
+import { lazy, Suspense, useEffect, useState } from 'react'
 import { CabecalhoTotem } from './componentes/layout/CabecalhoTotem'
 import { TelaInicio } from './telas/TelaInicio'
 import { TelaDetalheLinha } from './telas/TelaDetalheLinha'
 import { TelaDemonstracao } from './telas/TelaDemonstracao'
+import { estaUsandoMocks, obterTotem } from './servicos/api'
 import './App.css'
+
+// Modo dev: o mapa (Leaflet) só é baixado quando o seletor abre
+const SeletorParada = lazy(() =>
+  import('./componentes/dev/SeletorParada').then((m) => ({
+    default: m.SeletorParada,
+  }))
+)
 
 /**
  * Componente principal do Totem com navegação por estado (ISS-14.2).
@@ -16,6 +24,24 @@ function App() {
     tela: 'inicio', // 'inicio' | 'detalhe' | 'demo'
     params: {},
   })
+  const [parada, setParada] = useState(null)
+  const [seletorAberto, setSeletorAberto] = useState(false)
+  // Muda quando a parada é trocada no modo dev, para a tela inicial recarregar as linhas
+  const [versaoParada, setVersaoParada] = useState(0)
+  const modoDev = import.meta.env.DEV && !estaUsandoMocks()
+
+  // Nome da parada no cabeçalho vem do backend; se falhar, o logo mostra o subtítulo padrão
+  useEffect(() => {
+    let ativo = true
+    obterTotem()
+      .then((totem) => {
+        if (ativo) setParada(totem.parada)
+      })
+      .catch(() => {})
+    return () => {
+      ativo = false
+    }
+  }, [])
 
   const irParaInicio = () => {
     setNavegacao({ tela: 'inicio', params: {} })
@@ -29,12 +55,23 @@ function App() {
     setNavegacao({ tela: 'demo', params: {} })
   }
 
+  const trocarParada = (totem) => {
+    setParada(totem.parada)
+    setVersaoParada((versao) => versao + 1)
+    setSeletorAberto(false)
+    irParaInicio()
+  }
+
   return (
     <div className="viasp-app">
       {/* Cabeçalho fixo do totem com botão voltar condicional */}
       <CabecalhoTotem
+        nomeParada={
+          parada && [parada.nome, parada.endereco].filter(Boolean).join(' — ')
+        }
         aoVoltar={navegacao.tela !== 'inicio' ? irParaInicio : undefined}
         aoAbrirDemo={navegacao.tela !== 'demo' ? irParaDemo : undefined}
+        aoEscolherParada={modoDev ? () => setSeletorAberto(true) : undefined}
         tituloTela={
           navegacao.tela === 'detalhe'
             ? `Linha ${navegacao.params?.linha?.numero || ''}`
@@ -48,6 +85,7 @@ function App() {
       <main className="viasp-app__conteudo">
         {navegacao.tela === 'inicio' && (
           <TelaInicio
+            key={versaoParada}
             aoSelecionarLinha={irParaDetalhe}
             aoAbrirDemo={irParaDemo}
           />
@@ -64,6 +102,16 @@ function App() {
           <TelaDemonstracao aoVoltar={irParaInicio} />
         )}
       </main>
+
+      {seletorAberto && (
+        <Suspense fallback={null}>
+          <SeletorParada
+            paradaAtual={parada}
+            aoEscolher={trocarParada}
+            aoFechar={() => setSeletorAberto(false)}
+          />
+        </Suspense>
+      )}
     </div>
   )
 }

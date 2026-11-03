@@ -1,6 +1,7 @@
 import { render, screen, fireEvent } from '@testing-library/react'
 import { describe, it, expect, vi } from 'vitest'
 import { Botao, Cartao, TextoGrande } from '../src/componentes/base'
+import { ItemLinha } from '../src/componentes/totem/ItemLinha'
 import { TOKENS } from '../src/tokens'
 
 describe('Design Tokens & Ergonomia (ISS-14.4)', () => {
@@ -37,7 +38,7 @@ describe('Componente: Botao', () => {
     const botao = screen.getByRole('button', { name: /voltar/i })
     expect(botao).toHaveClass('viasp-botao--voltar')
     expect(botao).toHaveClass('viasp-botao--grande')
-    expect(screen.getByText('←')).toBeInTheDocument()
+    expect(botao.querySelector('svg[data-icone="voltar"]')).not.toBeNull()
   })
 
   it('respeita o estado desabilitado', () => {
@@ -103,5 +104,41 @@ describe('Componente: TextoGrande', () => {
     expect(heading).toHaveClass('viasp-texto--display')
     expect(heading).toHaveClass('viasp-texto--cor-primaria')
     expect(heading).toHaveTextContent('Ponto Butantã')
+  })
+})
+
+describe('Componente: ItemLinha (ISS-15.1)', () => {
+  const linha = {
+    codigo: 1001,
+    numero: '8012-10',
+    origem: 'Cidade Universitária',
+    destino: 'Aeroporto Congonhas',
+  }
+
+  it('mostra número, destino e sentido da linha', () => {
+    render(<ItemLinha linha={linha} aoSelecionar={() => {}} />)
+
+    expect(screen.getByText('8012-10')).toBeInTheDocument()
+    expect(screen.getByText('Aeroporto Congonhas')).toBeInTheDocument()
+    expect(
+      screen.getByText('Sentido: Cidade Universitária → Aeroporto Congonhas')
+    ).toBeInTheDocument()
+  })
+
+  it('usa ícone SVG em vez de emoji', () => {
+    const { container } = render(
+      <ItemLinha linha={linha} aoSelecionar={() => {}} />
+    )
+
+    expect(container.querySelector('svg[data-icone="onibus"]')).not.toBeNull()
+    expect(container.textContent).not.toMatch(/\p{Extended_Pictographic}/u)
+  })
+
+  it('devolve a linha ao ser tocado', () => {
+    const aoSelecionar = vi.fn()
+    render(<ItemLinha linha={linha} aoSelecionar={aoSelecionar} />)
+
+    fireEvent.click(screen.getByRole('button', { name: /8012-10/ }))
+    expect(aoSelecionar).toHaveBeenCalledWith(linha)
   })
 })
