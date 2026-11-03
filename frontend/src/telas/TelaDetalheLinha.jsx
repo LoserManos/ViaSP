@@ -7,6 +7,7 @@ import './TelaDetalheLinha.css'
 
 /**
  * Tela de Detalhes da Linha (US06, US07 / ISS-17, ISS-18).
+ * Alinhada à identidade visual e métricas de acessibilidade do Figma.
  *
  * @param {object} props
  * @param {object} props.linha - Objeto da linha selecionada.
@@ -83,9 +84,13 @@ export function TelaDetalheLinha({ linha, aoVoltar }) {
             Voltar para todas as linhas
           </Botao>
         </div>
-        <Cartao>
-          <TextoGrande variante="destaque">
+        <Cartao className="viasp-detalhe-linha__cartao-vazio">
+          <TextoGrande variante="destaque" peso="bold">
             Nenhuma linha selecionada.
+          </TextoGrande>
+          <TextoGrande variante="corpo" cor="secundario">
+            Retorne à tela inicial para escolher uma das linhas disponíveis
+            neste ponto.
           </TextoGrande>
         </Cartao>
       </div>
@@ -94,20 +99,26 @@ export function TelaDetalheLinha({ linha, aoVoltar }) {
 
   return (
     <div className="viasp-detalhe-linha">
-      {/* Barra de Ação Superior com Botão de Voltar Sempre Visível (ISS-17 / Ergonomia) */}
+      {/* 1. Barra de Ação Superior com Botão de Voltar Ergonômico (Figma) */}
       <div className="viasp-detalhe-linha__topo">
         <Botao
           variante="voltar"
           tamanho="grande"
           onClick={aoVoltar}
           ariaLabel="Voltar para a lista de linhas"
+          className="viasp-detalhe-linha__btn-voltar"
         >
           Voltar para todas as linhas
         </Botao>
       </div>
 
-      {/* Cartão de Destaque da Linha (ISS-17.1: número, sentido e destino) */}
+      {/* 2. Cartão de Destaque da Linha (Figma) */}
       <Cartao destaque className="viasp-detalhe-linha__cartao-linha">
+        <div className="viasp-detalhe-linha__tag-linha">
+          <span className="viasp-detalhe-linha__tag-dot" />
+          <span>DETALHES DA LINHA</span>
+        </div>
+
         <div className="viasp-detalhe-linha__identificacao">
           <div
             className={`viasp-detalhe-linha__badge viasp-detalhe-linha__badge--${linha.corBadge || 'azul'}`}
@@ -116,6 +127,7 @@ export function TelaDetalheLinha({ linha, aoVoltar }) {
             <Icone nome="onibus" />
             <span>{linha.numero}</span>
           </div>
+
           <div className="viasp-detalhe-linha__info-topo">
             <TextoGrande as="h1" variante="titulo">
               Destino: {linha.destino}
@@ -124,13 +136,15 @@ export function TelaDetalheLinha({ linha, aoVoltar }) {
               Sentido:{' '}
               {linha.origem
                 ? `${linha.origem} → ${linha.destino}`
-                : linha.destino}
+                : typeof linha.sentido === 'string'
+                  ? linha.sentido
+                  : linha.destino}
             </TextoGrande>
           </div>
         </div>
       </Cartao>
 
-      {/* Previsão de Chegada dos Próximos Veículos (US06 / US07 / ISS-18) */}
+      {/* 3. Seção de Previsão de Chegada dos Próximos Veículos (Figma) */}
       <section className="viasp-detalhe-linha__secao">
         <div className="viasp-detalhe-linha__secao-cabecalho">
           <TextoGrande as="h2" variante="subtitulo">
@@ -149,24 +163,38 @@ export function TelaDetalheLinha({ linha, aoVoltar }) {
             aoTentarNovamente={carregarPrevisoes}
           />
         ) : carregandoPrevisao ? (
-          <Cartao>
-            <TextoGrande variante="corpo" cor="secundario">
+          <Cartao className="viasp-detalhe-linha__carregando" role="status">
+            <div className="viasp-detalhe-linha__spinner" aria-hidden="true" />
+            <TextoGrande variante="destaque">
               Consultando previsão de chegada na SPTrans...
             </TextoGrande>
           </Cartao>
         ) : consultaPrevisao?.previsoes &&
           consultaPrevisao.previsoes.length > 0 ? (
-          <div className="viasp-detalhe-linha__grade-previsoes">
+          <div className="viasp-detalhe-linha__grade-previsoes" role="list">
+            <div
+              className="viasp-detalhe-linha__tabela-topo"
+              aria-hidden="true"
+            >
+              <span>VEÍCULO E PREVISÃO</span>
+              <span>ORDEM DE CHEGADA</span>
+            </div>
+
             {consultaPrevisao.previsoes.map((item, index) => (
-              <Cartao
+              <div
                 key={index}
                 className="viasp-detalhe-linha__card-previsao"
+                role="listitem"
               >
                 <div className="viasp-detalhe-linha__previsao-esquerda">
-                  <Icone
-                    nome="cronometro"
-                    className="viasp-detalhe-linha__previsao-icone"
-                  />
+                  <div
+                    className={`viasp-detalhe-linha__previsao-icone-box ${index === 0 ? 'viasp-detalhe-linha__previsao-icone-box--destaque' : ''}`}
+                  >
+                    <Icone
+                      nome="cronometro"
+                      className="viasp-detalhe-linha__previsao-icone"
+                    />
+                  </div>
                   <div>
                     <TextoGrande variante="destaque" peso="bold">
                       Chegada prevista às {item.horario_previsto}
@@ -176,17 +204,20 @@ export function TelaDetalheLinha({ linha, aoVoltar }) {
                     </TextoGrande>
                   </div>
                 </div>
+
                 <div className="viasp-detalhe-linha__previsao-direita">
-                  <span className="viasp-detalhe-linha__tempo-destaque">
+                  <span
+                    className={`viasp-detalhe-linha__tempo-destaque ${index === 0 ? 'viasp-detalhe-linha__tempo-destaque--proximo' : ''}`}
+                  >
                     {index === 0 ? 'Próximo' : `${index + 1}º veículo`}
                   </span>
                 </div>
-              </Cartao>
+              </div>
             ))}
           </div>
         ) : (
-          <Cartao>
-            <TextoGrande variante="destaque">
+          <Cartao className="viasp-detalhe-linha__cartao-vazio">
+            <TextoGrande variante="destaque" peso="bold">
               Sem previsão no momento
             </TextoGrande>
             <TextoGrande variante="corpo" cor="secundario">
