@@ -17,7 +17,6 @@ import re
 from collections.abc import Sequence
 from datetime import datetime
 from typing import Any
-from zoneinfo import ZoneInfo
 
 import httpx
 
@@ -30,6 +29,7 @@ from app.dominio import (
     Veiculo,
 )
 from app.excecoes import ErroAutenticacaoSPTrans, ErroSPTrans, SPTransIndisponivel
+from .fuso_horario import agora_sao_paulo
 
 logger = logging.getLogger(__name__)
 
@@ -433,7 +433,7 @@ class ClienteSPTrans:
             "/Previsao",
             params={"codigoParada": codigo_parada, "codigoLinha": codigo_linha},
         )
-        horario_consulta = datetime.now(ZoneInfo("America/Sao_Paulo"))
+        horario_consulta = agora_sao_paulo()
         dados = _extrair_json(resposta)
 
         parada_padrao = Parada(codigo=codigo_parada)

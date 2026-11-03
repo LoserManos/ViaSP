@@ -61,7 +61,7 @@ describe('TelaDetalheLinha (ISS-17 / US06 / US07)', () => {
       name: /voltar para a lista de linhas/i,
     })
     expect(btnVoltar).toBeInTheDocument()
-    expect(btnVoltar).toHaveTextContent('Voltar para todas as linhas')
+    expect(btnVoltar).toHaveTextContent('Voltar')
 
     fireEvent.click(btnVoltar)
     expect(mockVoltar).toHaveBeenCalledTimes(1)
@@ -114,18 +114,19 @@ describe('TelaDetalheLinha (ISS-17 / US06 / US07)', () => {
     })
   })
 
-  it('permite alternar o sentido da linha atualizando o destino', async () => {
+  it('não exibe botões para alternar o sentido da linha', async () => {
     vi.spyOn(api, 'obterPrevisoes').mockResolvedValue(previsoesExemplo)
 
     render(<TelaDetalheLinha linha={linhaExemplo} aoVoltar={vi.fn()} />)
 
-    const btnSentidoOrigem = screen.getByRole('button', {
-      name: /cidade universitária/i,
-    })
-    fireEvent.click(btnSentidoOrigem)
-
     expect(
-      screen.getByRole('heading', { name: /destino: cidade universitária/i })
+      screen.queryByRole('group', { name: /sentido da linha/i })
+    ).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole('button', { name: /cidade universitária/i })
+    ).not.toBeInTheDocument()
+    expect(
+      screen.getByRole('heading', { name: /destino: aeroporto congonhas/i })
     ).toBeInTheDocument()
   })
 

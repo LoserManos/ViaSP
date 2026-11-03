@@ -3,7 +3,12 @@ import { Botao, Cartao, TextoGrande } from '../componentes/base'
 import { Icone } from '../componentes/comuns/Icone'
 import { MensagemErro } from '../componentes/feedback/MensagemErro'
 import { ItemLinha } from '../componentes/totem/ItemLinha'
-import { obterTotem, listarLinhas } from '../servicos/api'
+import {
+  obterTotem,
+  listarLinhas,
+  obterPrevisoes,
+  formatarPrevisao,
+} from '../servicos/api'
 import './TelaInicio.css'
 
 /**
@@ -18,12 +23,50 @@ import './TelaInicio.css'
 export function TelaInicio({ aoSelecionarLinha, aoAbrirDemo, aoAbrirMapa }) {
   const [totem, setTotem] = useState(null)
   const [linhas, setLinhas] = useState([])
+  const [previsoesPorLinha, setPrevisoesPorLinha] = useState({})
   const [termoBusca, setTermoBusca] = useState('')
   const [carregando, setCarregando] = useState(true)
   const [erro, setErro] = useState(null)
   const [ouvindoVoz, setOuvindoVoz] = useState(false)
   const [mensagemVoz, setMensagemVoz] = useState('')
   const [mostrarTodas, setMostrarTodas] = useState(false)
+
+  const carregarPrevisoes = async (listaLinhas) => {
+    if (!listaLinhas || listaLinhas.length === 0 || typeof obterPrevisoes !== 'function') {
+      return {}
+    }
+    const mapa = {}
+    await Promise.all(
+      listaLinhas.map(async (l) => {
+        if (!l.codigo) return
+        try {
+          const dados = await obterPrevisoes(l.codigo)
+          const primeira = dados?.previsoes?.[0]
+          if (primeira?.horario_previsto) {
+            mapa[l.codigo] = formatarPrevisao(
+              primeira.horario_previsto,
+              dados.horario_referencia
+            )
+          } else {
+            mapa[l.codigo] = {
+              minutos: Infinity,
+              tempo: 'Sem previsão',
+              status: 'Sem previsão',
+              ehDestaque: false,
+            }
+          }
+        } catch {
+          mapa[l.codigo] = {
+            minutos: Infinity,
+            tempo: 'Sem previsão',
+            status: 'Sem previsão',
+            ehDestaque: false,
+          }
+        }
+      })
+    )
+    return mapa
+  }
 
   const carregarDados = async (termo = '') => {
     setCarregando(true)
@@ -33,8 +76,17 @@ export function TelaInicio({ aoSelecionarLinha, aoAbrirDemo, aoAbrirMapa }) {
         obterTotem(),
         listarLinhas(termo),
       ])
+      const mapaPrevisoes = await carregarPrevisoes(dadosLinhas)
       setTotem(dadosTotem)
-      setLinhas(dadosLinhas)
+      setPrevisoesPorLinha(mapaPrevisoes)
+
+      const linhasOrdenadas = [...(dadosLinhas || [])].sort((a, b) => {
+        const minA = mapaPrevisoes[a.codigo]?.minutos ?? Infinity
+        const minB = mapaPrevisoes[b.codigo]?.minutos ?? Infinity
+        if (minA !== minB) return minA - minB
+        return (a.numero || '').localeCompare(b.numero || '')
+      })
+      setLinhas(linhasOrdenadas)
     } catch (err) {
       setErro(err.mensagem || 'Falha ao carregar as linhas da parada.')
     } finally {
@@ -51,9 +103,18 @@ export function TelaInicio({ aoSelecionarLinha, aoAbrirDemo, aoAbrirMapa }) {
           obterTotem(),
           listarLinhas(termoBusca),
         ])
+        const mapaPrevisoes = await carregarPrevisoes(dadosLinhas)
         if (ativo) {
           setTotem(dadosTotem)
-          setLinhas(dadosLinhas)
+          setPrevisoesPorLinha(mapaPrevisoes)
+
+          const linhasOrdenadas = [...(dadosLinhas || [])].sort((a, b) => {
+            const minA = mapaPrevisoes[a.codigo]?.minutos ?? Infinity
+            const minB = mapaPrevisoes[b.codigo]?.minutos ?? Infinity
+            if (minA !== minB) return minA - minB
+            return (a.numero || '').localeCompare(b.numero || '')
+          })
+          setLinhas(linhasOrdenadas)
         }
       } catch (err) {
         if (ativo) {
@@ -284,6 +345,7 @@ export function TelaInicio({ aoSelecionarLinha, aoAbrirDemo, aoAbrirMapa }) {
                 key={linha.codigo || linha.numero}
                 linha={linha}
                 index={idx}
+                previsao={previsoesPorLinha[linha.codigo]}
                 aoSelecionar={aoSelecionarLinha}
               />
             ))}

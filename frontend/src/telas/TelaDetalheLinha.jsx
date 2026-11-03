@@ -79,7 +79,6 @@ export function TelaDetalheLinha({
 
   const [consultaPrevisao, setConsultaPrevisao] = useState(null)
   const [erroPrevisao, setErroPrevisao] = useState(null)
-  const [dir, setDir] = useState(0)
 
   const carregarPrevisoes = async () => {
     if (!linhaAtiva?.codigo) return
@@ -169,7 +168,7 @@ export function TelaDetalheLinha({
             <span className="back-icon">
               <Icon name="arrow" size={20} />
             </span>
-            Voltar para todas as linhas
+            Voltar
           </button>
         </div>
         <div className="line-panel" style={{ padding: '24px' }}>
@@ -207,8 +206,8 @@ export function TelaDetalheLinha({
           { name: to, access: true },
         ]
 
-  const stops = dir === 0 ? stopsBase : [...stopsBase].reverse()
-  const towards = dir === 0 ? to : from
+  const stops = stopsBase
+  const towards = to
 
   // Cor da linha: busca nas rotas conhecidas, na badge da linha ou default escuro
   const color =
@@ -218,7 +217,7 @@ export function TelaDetalheLinha({
       : '#e5223a')
 
   const baseEta = arrivals.find((a) => a.line === code)?.minutes ?? 11
-  const firstEta = dir === 0 ? baseEta : (baseEta + 7) % headway || headway
+  const firstEta = baseEta
   const departures = [0, 1, 2].map((k) => firstEta + k * headway)
 
   // Localiza o índice da parada atual na ordem ativa do trajeto
@@ -253,7 +252,7 @@ export function TelaDetalheLinha({
           <span className="back-icon">
             <Icon name="arrow" size={20} />
           </span>
-          Voltar para todas as linhas
+          Voltar
         </button>
 
         <div className="line-title-group">
@@ -270,25 +269,6 @@ export function TelaDetalheLinha({
               Sentido: {from} → {to}
             </div>
           </div>
-        </div>
-
-        <div
-          className="line-direction"
-          role="group"
-          aria-label="Sentido da linha"
-        >
-          {[to, from].map((dest, i) => (
-            <button
-              key={dest}
-              type="button"
-              className={dir === i ? 'active' : ''}
-              aria-pressed={dir === i}
-              onClick={() => setDir(i)}
-            >
-              <small>Sentido</small>
-              {dest}
-            </button>
-          ))}
         </div>
       </div>
 

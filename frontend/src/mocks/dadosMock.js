@@ -443,4 +443,23 @@ export const mockPrevisoes = {
     estado: 'sucesso',
     previsoes: [{ horario_previsto: '19:59', veiculo: { prefixo: '33412' } }],
   },
+  1004: {
+    parada: mockParadaMasp,
+    linha: mockLinhas[3],
+    horario_consulta: new Date().toISOString(),
+    horario_referencia: '19:45',
+    estado: 'sucesso',
+    previsoes: [
+      { horario_previsto: '19:49', veiculo: { prefixo: '41200' } },
+      { horario_previsto: '20:12', veiculo: { prefixo: '41235' } },
+    ],
+  },
+  1005: {
+    parada: mockParadaMasp,
+    linha: mockLinhas[4],
+    horario_consulta: new Date().toISOString(),
+    horario_referencia: '19:45',
+    estado: 'sucesso',
+    previsoes: [{ horario_previsto: '20:03', veiculo: { prefixo: '51090' } }],
+  },
 }

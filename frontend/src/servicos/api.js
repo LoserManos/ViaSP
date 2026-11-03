@@ -156,6 +156,68 @@ export async function obterPrevisoes(codigoLinha) {
 }
 
 /**
+ * Calcula os minutos de espera entre o horário previsto e o horário de referência ("HH:MM").
+ * Trata virada de meia-noite e não retorna valores negativos.
+ *
+ * @param {string} horarioPrevisto - Horário no formato "HH:MM".
+ * @param {string} [horarioReferencia] - Horário de referência no formato "HH:MM". Se omitido, usa a hora local.
+ * @returns {number | null} Minutos de espera ou null se horário for inválido.
+ */
+export function calcularTempoEsperaMinutos(horarioPrevisto, horarioReferencia) {
+  if (!horarioPrevisto || typeof horarioPrevisto !== 'string') return null
+  const partesPrev = horarioPrevisto.split(':').map((p) => parseInt(p, 10))
+  if (partesPrev.length < 2 || isNaN(partesPrev[0]) || isNaN(partesPrev[1])) return null
+  const minutosPrev = partesPrev[0] * 60 + partesPrev[1]
+
+  let minutosRef
+  if (horarioReferencia && typeof horarioReferencia === 'string') {
+    const partesRef = horarioReferencia.split(':').map((p) => parseInt(p, 10))
+    if (partesRef.length >= 2 && !isNaN(partesRef[0]) && !isNaN(partesRef[1])) {
+      minutosRef = partesRef[0] * 60 + partesRef[1]
+    }
+  }
+
+  if (minutosRef === undefined) {
+    const agora = new Date()
+    minutosRef = agora.getHours() * 60 + agora.getMinutes()
+  }
+
+  let diferenca = minutosPrev - minutosRef
+  if (diferenca < 0) {
+    // Trata virada de meia-noite (ex.: 00:03 com referência 23:58 -> +5 min)
+    if (diferenca < -720) {
+      diferenca += 24 * 60
+    } else {
+      diferenca = 0
+    }
+  }
+  return diferenca
+}
+
+/**
+ * Formata os dados de previsão calculando o tempo e rótulo de status.
+ *
+ * @param {string} [horarioPrevisto] - Horário previsto "HH:MM".
+ * @param {string} [horarioReferencia] - Horário de referência "HH:MM".
+ * @returns {{ minutos: number, tempo: string, status: string, ehDestaque: boolean }}
+ */
+export function formatarPrevisao(horarioPrevisto, horarioReferencia) {
+  const minutos = calcularTempoEsperaMinutos(horarioPrevisto, horarioReferencia)
+  if (minutos === null) {
+    return {
+      minutos: Infinity,
+      tempo: 'Sem previsão',
+      status: 'Sem previsão',
+      ehDestaque: false,
+    }
+  }
+  const ehDestaque = minutos <= 3
+  const status = ehDestaque ? 'Chegando' : 'No horário'
+  const tempo = minutos === 0 ? 'Chegando' : `${minutos} min`
+  return { minutos, tempo, status, ehDestaque }
+}
+
+/**
  * Requisição às rotas /api/dev (modo dev do backend). Sem mock nem fallback:
  * só fazem sentido com o backend rodando com `python -m app --dev`.
  *

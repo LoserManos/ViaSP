@@ -4,12 +4,12 @@ import time
 import unicodedata
 from collections.abc import Callable
 from datetime import datetime
-from zoneinfo import ZoneInfo
 
 from app.dominio import ConsultaPrevisao, EstadoConsulta, Linha, Parada
 from app.excecoes import ErroAutenticacaoSPTrans, ErroSPTrans, SPTransIndisponivel
 
 from .cliente_sptrans import ClienteSPTrans
+from .fuso_horario import agora_sao_paulo
 
 # As linhas do ponto mudam pouco; evita uma chamada à SPTrans a cada toque na tela
 TTL_LINHAS_DO_PONTO_SEGUNDOS = 60.0
@@ -117,7 +117,7 @@ class ServicoConsulta:
         return ConsultaPrevisao(
             parada=parada,
             linha=linha,
-            horario_consulta=datetime.now(ZoneInfo("America/Sao_Paulo")),
+            horario_consulta=agora_sao_paulo(),
             estado=EstadoConsulta.FALHA,
             mensagem_erro=mensagem
         )

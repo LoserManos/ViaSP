@@ -1,11 +1,26 @@
 import { render, screen, fireEvent } from '@testing-library/react'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { TelaInicio } from '../src/telas/TelaInicio'
-import { listarLinhas, obterTotem } from '../src/servicos/api'
+import { listarLinhas, obterTotem, obterPrevisoes } from '../src/servicos/api'
 
 vi.mock('../src/servicos/api', () => ({
   obterTotem: vi.fn(),
   listarLinhas: vi.fn(),
+  obterPrevisoes: vi.fn(),
+  formatarPrevisao: vi.fn((horarioPrevisto, horarioReferencia) => {
+    if (!horarioPrevisto) {
+      return { minutos: Infinity, tempo: 'Sem previsão', status: 'Sem previsão', ehDestaque: false }
+    }
+    const [hP, mP] = horarioPrevisto.split(':').map(Number)
+    const [hR, mR] = (horarioReferencia || '19:45').split(':').map(Number)
+    const minutos = (hP * 60 + mP) - (hR * 60 + mR)
+    return {
+      minutos,
+      tempo: minutos === 0 ? 'Chegando' : `${minutos} min`,
+      status: minutos <= 3 ? 'Chegando' : 'No horário',
+      ehDestaque: minutos <= 3,
+    }
+  }),
 }))
 
 describe('TelaInicial alinhada ao protótipo Figma', () => {
@@ -39,6 +54,27 @@ describe('TelaInicial alinhada ao protótipo Figma', () => {
       },
     })
     vi.mocked(listarLinhas).mockResolvedValue(linhasExemplo)
+    vi.mocked(obterPrevisoes).mockImplementation((codigo) => {
+      if (codigo === 1001) {
+        return Promise.resolve({
+          horario_referencia: '19:45',
+          estado: 'sucesso',
+          previsoes: [{ horario_previsto: '19:48', veiculo: { prefixo: '12845' } }],
+        })
+      }
+      if (codigo === 1002) {
+        return Promise.resolve({
+          horario_referencia: '19:45',
+          estado: 'sucesso',
+          previsoes: [{ horario_previsto: '19:53', veiculo: { prefixo: '21004' } }],
+        })
+      }
+      return Promise.resolve({
+        horario_referencia: '19:45',
+        estado: 'sem_previsao',
+        previsoes: [],
+      })
+    })
   })
 
   it('renderiza os elementos principais da identidade visual do Figma', async () => {
@@ -91,6 +127,18 @@ describe('TelaInicial alinhada ao protótipo Figma', () => {
     fireEvent.click(btnLinha)
 
     expect(mockSelecionar).toHaveBeenCalledWith(linhasExemplo[0])
+  })
+
+  it('calcula e exibe previsões dinâmicas em vez de valores fixos', async () => {
+    render(<TelaInicio aoSelecionarLinha={() => {}} />)
+
+    // Linha 8012-10 (prevista para 19:48 com ref 19:45 -> 3 min)
+    expect(await screen.findByText('3 min')).toBeInTheDocument()
+    expect(screen.getByText('Chegando')).toBeInTheDocument()
+
+    // Linha 875A-10 (prevista para 19:53 com ref 19:45 -> 8 min)
+    expect(screen.getByText('8 min')).toBeInTheDocument()
+    expect(screen.getByText('No horário')).toBeInTheDocument()
   })
 
   it('dispara callback ao clicar no banner Ver mapa', () => {

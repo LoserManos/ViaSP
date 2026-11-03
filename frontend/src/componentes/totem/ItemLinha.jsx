@@ -8,12 +8,29 @@ import './ItemLinha.css'
  * @param {object} props
  * @param {object} props.linha - Objeto da linha.
  * @param {(linha: object) => void} props.aoSelecionar - Disparado ao tocar no item.
+ * @param {object} [props.previsao] - Informações de previsão calculadas dinamicamente.
  * @param {number} [props.index=0] - Posição do item na lista.
  */
-export function ItemLinha({ linha, aoSelecionar, index = 0 }) {
-  const ehDestaque = index === 0 || linha.status === 'Chegando'
-  const statusTexto = linha.status || (index === 0 ? 'Chegando' : 'No horário')
-  const tempoEstimado = linha.tempo || `${(index + 1) * 4 - 1} min`
+export function ItemLinha({ linha, aoSelecionar, index = 0, previsao }) {
+  const dados = previsao || linha
+  const ehDestaque =
+    dados.ehDestaque !== undefined
+      ? dados.ehDestaque
+      : dados.status === 'Chegando' ||
+        (dados.minutos !== undefined && dados.minutos <= 3) ||
+        linha.status === 'Chegando'
+
+  const statusTexto =
+    dados.status ||
+    linha.status ||
+    (ehDestaque ? 'Chegando' : dados.tempo || linha.tempo ? 'No horário' : 'Sem previsão')
+
+  const tempoEstimado =
+    dados.tempo ||
+    linha.tempo ||
+    (dados.minutos !== undefined && dados.minutos !== Infinity
+      ? `${dados.minutos} min`
+      : 'Sem previsão')
 
   return (
     <div
