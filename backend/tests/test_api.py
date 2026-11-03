@@ -10,16 +10,26 @@ def test_saude(client):
     assert resposta.json() == {"status": "ok"}
 
 
-def test_totem_usa_configuracao(client):
+def test_totem_usa_dados_do_gtfs(client):
     corpo = client.get("/api/totem").json()
     assert corpo["identificador"] == "totem-teste"
     assert corpo["parada"] == {
-        "codigo": 123,
-        "nome": "Conjunto Nacional",
-        "endereco": "Av. Paulista, 2027",
+        "codigo": 440016921,
+        "nome": "Av. Paulista, 2027",
+        "endereco": "R Padre Joao Manuel/ R Augusta -- Conjunto Nacional",
         "latitude": -23.558947,
         "longitude": -46.659585,
     }
+
+
+def test_totem_sobe_com_parada_fora_do_gtfs_e_sem_sptrans(criar_client):
+    client = criar_client(PARADA_CODIGO="123")
+    assert client.get("/api/totem").json()["parada"]["nome"] == "Parada 123"
+
+
+def test_totem_sobe_sem_gtfs(criar_client, tmp_path):
+    client = criar_client(GTFS_CAMINHO=str(tmp_path / "nao-existe"))
+    assert client.get("/api/totem").json()["parada"]["codigo"] == 440016921
 
 
 class _ServicoQueFalha:

@@ -15,6 +15,9 @@
 .env.*
 !.env.example
 
+# GTFS da SPTrans (baixado da área do desenvolvedor, não versionado)
+backend/data/gtfs/
+
 # Databases
 *.db
 *.db-journal

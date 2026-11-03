@@ -7,13 +7,42 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from app.api.rotas import router
+from app.api.rotas_dev import router_dev
 from app.config import get_settings
 from app.dominio import Parada, Totem
 from app.excecoes import ErroAutenticacaoSPTrans, ErroSPTrans, SPTransIndisponivel
-from app.persistencia import inicializar_banco
+from app.persistencia import RepositorioParadas, inicializar_banco
 from app.servicos import ClienteSPTrans, ServicoConsulta
 
 logger = logging.getLogger(__name__)
+
+
+def _carregar_gtfs(repositorio: RepositorioParadas, caminho: str) -> None:
+    """Importa as paradas do GTFS na primeira subida (ou depois de apagar o banco)."""
+    if repositorio.contar() > 0:
+        return
+    try:
+        total = repositorio.importar_gtfs(caminho)
+    except FileNotFoundError:
+        logger.warning("GTFS não encontrado em %s; nomes e coordenadas virão só da SPTrans.", caminho)
+        return
+    logger.info("%d paradas importadas do GTFS (%s).", total, caminho)
+
+
+async def _parada_do_totem(codigo: int, repositorio: RepositorioParadas, cliente: ClienteSPTrans) -> Parada:
+    """ISS-13.3: dados da parada vêm do GTFS; se ela não estiver lá, da SPTrans."""
+    parada = repositorio.buscar(codigo)
+    if parada is not None:
+        return parada
+    try:
+        parada = await cliente.buscar_parada(codigo)
+    except ErroSPTrans as exc:
+        # Se a SPTrans estiver fora do ar na subida, o totem ainda liga
+        logger.warning("Não foi possível carregar os dados da parada na subida: %s", exc)
+    if parada is None:
+        logger.warning("Parada %s não está no GTFS nem na SPTrans.", codigo)
+        parada = Parada(codigo=codigo, nome=f"Parada {codigo}")
+    return parada
 
 
 @asynccontextmanager
@@ -27,28 +56,14 @@ async def lifespan(app: FastAPI):
         timeout=settings.sptrans_timeout_segundos,
     )
 
-    # ISS-13.3: dados reais da parada na subida; se a SPTrans não os tiver, vale a configuração
-    parada_configurada = Parada(
-        codigo=settings.parada_codigo,
-        nome=settings.parada_nome,
-        endereco=settings.parada_endereco,
-        latitude=settings.parada_latitude,
-        longitude=settings.parada_longitude,
-    )
-    try:
-        parada_real = await cliente.buscar_parada(settings.parada_codigo)
-    except ErroSPTrans as exc:
-        # Se a SPTrans estiver fora do ar na subida, o totem ainda liga
-        logger.warning("Não foi possível carregar os dados da parada na subida: %s", exc)
-        parada_real = None
-    if parada_real is None:
-        logger.warning("Parada %s sem dados na SPTrans; usando a configuração.", settings.parada_codigo)
-        parada_real = parada_configurada
+    repositorio_paradas = RepositorioParadas(settings.banco_caminho)
+    _carregar_gtfs(repositorio_paradas, settings.gtfs_caminho)
 
+    app.state.repositorio_paradas = repositorio_paradas
     app.state.servico_consulta = ServicoConsulta(cliente)
     app.state.totem = Totem(
         identificador=settings.totem_identificador,
-        parada=parada_real,
+        parada=await _parada_do_totem(settings.parada_codigo, repositorio_paradas, cliente),
     )
     yield
     await cliente.fechar()
@@ -68,10 +83,12 @@ def criar_app() -> FastAPI:
     app.add_middleware(
         CORSMiddleware,
         allow_origins=settings.cors_origens,
-        allow_methods=["GET"],
+        allow_methods=["GET", "PUT"],
         allow_headers=["*"],
     )
     app.include_router(router)
+    if settings.modo_dev:
+        app.include_router(router_dev)
 
     # Mensagens claras de erro para o totem (US08), no formato de docs/produto/api.md
     @app.exception_handler(NotImplementedError)

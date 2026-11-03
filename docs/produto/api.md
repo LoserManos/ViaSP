@@ -4,6 +4,7 @@ Todas as rotas têm o prefixo `/api`. O servidor roda por padrão em `http://loc
 
 ## 1. `GET /api/totem`
 Retorna as informações da parada onde o totem está instalado (útil para o mapa da US05).
+Nome, endereço e coordenadas vêm do GTFS da SPTrans; se a parada não estiver nele, da API Olho Vivo.
 
 **Resposta (200 OK):**
 ```json
@@ -144,3 +145,22 @@ Quando o backend ou a API externa falham (ex: SPTrans fora do ar, token inválid
 | 503 | `sptrans_indisponivel` | `true` | Timeout, falha de rede ou SPTrans fora do ar |
 
 > `GET /api/previsoes` não usa esses códigos para falhas da SPTrans: responde 200 com `estado: "falha"` e `mensagem_erro` (ver seção 4). Só o 422 se aplica a ela.
+
+## 6. Rotas de desenvolvimento (`--dev`)
+
+Só existem quando o backend sobe com `python -m app --dev`; fora disso respondem 404. Servem para a demonstração: escolher num mapa a parada onde o totem "está". Não fazem parte do contrato do totem final.
+
+### `GET /api/dev/paradas?lat_min=&lat_max=&lon_min=&lon_max=&limite=500`
+Paradas do GTFS dentro do retângulo (a área visível do mapa). `limite` vai de 1 a 2000; `truncado: true` indica que há mais paradas na área do que as devolvidas.
+
+```json
+{
+  "paradas": [
+    {"codigo": 440016921, "nome": "Av. Paulista, 2027", "endereco": "R Padre Joao Manuel/ R Augusta -- Conjunto Nacional", "latitude": -23.558947, "longitude": -46.659585}
+  ],
+  "truncado": false
+}
+```
+
+### `PUT /api/dev/parada`
+Corpo: `{"codigo": 440015007}`. Troca a parada do totem e devolve o mesmo formato de `GET /api/totem`. Vale até o backend reiniciar, quando volta a valer `PARADA_CODIGO`. Parada fora do GTFS: **404** com `codigo: "parada_nao_encontrada"`.

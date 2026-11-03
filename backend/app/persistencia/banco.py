@@ -15,6 +15,16 @@ CREATE TABLE IF NOT EXISTS log_consulta (
     erro           TEXT,
     criado_em      TEXT    NOT NULL DEFAULT (datetime('now'))
 );
+
+-- Paradas da cidade importadas do GTFS da SPTrans (stops.txt)
+CREATE TABLE IF NOT EXISTS parada_gtfs (
+    codigo     INTEGER PRIMARY KEY,
+    nome       TEXT    NOT NULL,
+    endereco   TEXT    NOT NULL DEFAULT '',
+    latitude   REAL    NOT NULL,
+    longitude  REAL    NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_parada_gtfs_posicao ON parada_gtfs (latitude, longitude);
 """
 
 

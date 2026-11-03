@@ -9,9 +9,11 @@ Ver [arquitetura](../docs/produto/arquitetura.md) e [diagrama de classes](../doc
 cd backend
 python -m venv .venv && source .venv/bin/activate
 pip install -r requirements-dev.txt
-cp .env.example .env        # preencha SPTRANS_TOKEN e os dados da parada (PARADA_*)
-uvicorn app.main:app --reload
+cp .env.example .env        # preencha SPTRANS_TOKEN
+python -m app --dev         # ou só `python -m app`, sem as rotas de dev
 ```
+
+`python -m app --help` lista as opções (`--dev`, `--host`, `--porta`).
 
 Docs interativas: http://localhost:8000/docs
 
@@ -30,15 +32,21 @@ Os dados da parada configurada para simular o totem físico no sistema (referent
 * **Endereço:** Av. Paulista, 2027 (Ref.: R Padre Joao Manuel / R Augusta -- Conjunto Nacional)
 * **Coordenadas:** Latitude `-23.558947`, Longitude `-46.659585`
 
-A SPTrans não tem nome cadastrado para essa parada (`/Previsao/Parada` devolve `np` vazio e `Parada/Buscar` não a encontra). Por isso o nome, o endereço e as coordenadas exibidos pelo totem vêm do `.env` quando a SPTrans não os fornece:
+A API Olho Vivo não tem nome cadastrado para essa parada (`/Previsao/Parada` devolve `np` vazio e `Parada/Buscar` não a encontra). Por isso nome, endereço e coordenadas vêm do **GTFS da SPTrans**.
 
-```
-PARADA_CODIGO=440016921
-PARADA_NOME=Conjunto Nacional
-PARADA_ENDERECO=Av. Paulista, 2027
-PARADA_LATITUDE=-23.558947
-PARADA_LONGITUDE=-46.659585
-```
+## GTFS da SPTrans
+
+O GTFS tem todas as paradas da cidade (cerca de 22 mil) com nome e coordenadas. O backend importa o `stops.txt` para o SQLite na primeira subida.
+
+1. Entre na [área do desenvolvedor da SPTrans](https://www.sptrans.com.br/desenvolvedores/) (mesma conta do token) e baixe o GTFS.
+2. Coloque a pasta descompactada ou o `.zip` em `backend/data/gtfs/` (fica fora do git).
+3. Suba o backend. Para importar um GTFS mais novo, apague `data/totem.db` e suba de novo.
+
+Sem o GTFS o totem ainda funciona, mas a parada aparece como "Parada 440016921", sem nome nem coordenadas.
+
+## Modo dev: escolher a parada no mapa
+
+Subindo com `python -m app --dev`, o backend libera `/api/dev/paradas` e `/api/dev/parada` (ver [contrato](../docs/produto/api.md#6-rotas-de-desenvolvimento---dev)) e o frontend, rodando com `npm run dev`, mostra o botão **Escolher parada** no cabeçalho. Ele abre um mapa com as paradas do GTFS; tocar numa parada e confirmar muda a parada do totem até o backend reiniciar.
 
 ## Estrutura
 
