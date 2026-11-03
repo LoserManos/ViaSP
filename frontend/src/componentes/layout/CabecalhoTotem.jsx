@@ -24,7 +24,7 @@ export function CabecalhoTotem({
   return (
     <header className="viasp-cabecalho-totem">
       <div className="viasp-cabecalho-totem__esquerda">
-        {aoVoltar ? (
+        {aoVoltar && (
           <Botao
             variante="voltar"
             onClick={aoVoltar}
@@ -33,11 +33,11 @@ export function CabecalhoTotem({
           >
             Voltar
           </Botao>
-        ) : (
-          <LogoViaSP
-            {...(nomeParada && { subtituloPersonalizado: nomeParada })}
-          />
         )}
+
+        <LogoViaSP
+          {...(nomeParada && { subtituloPersonalizado: nomeParada })}
+        />
 
         {tituloTela && (
           <div className="viasp-cabecalho-totem__titulo-tela">

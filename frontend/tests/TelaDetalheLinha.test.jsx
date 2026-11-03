@@ -1,6 +1,6 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { TelaDetalheLinha } from '../src/telas/TelaDetalheLinha'
+import { TelaDetalheLinha, LineScreen } from '../src/telas/TelaDetalheLinha'
 import * as api from '../src/servicos/api'
 
 describe('TelaDetalheLinha (ISS-17 / US06 / US07)', () => {
@@ -83,15 +83,68 @@ describe('TelaDetalheLinha (ISS-17 / US06 / US07)', () => {
     expect(api.obterPrevisoes).toHaveBeenCalledWith(1001)
   })
 
-  it('não exibe a seção de paradas principais da rota', async () => {
+  it('carrega dinamicamente as paradas da linha via listarParadasDaLinha', async () => {
+    const mockParadas = [
+      { codigo: 1, nome: 'Estação Inicial Teste', access: true },
+      { codigo: 2, nome: 'Parada MASP', access: true },
+      { codigo: 3, nome: 'Estação Final Teste', access: true },
+    ]
+    const spyParadas = vi
+      .spyOn(api, 'listarParadasDaLinha')
+      .mockResolvedValue(mockParadas)
+
+    render(<TelaDetalheLinha linha={linhaExemplo} aoVoltar={vi.fn()} />)
+
+    await waitFor(() => {
+      expect(screen.getByText('Estação Inicial Teste')).toBeInTheDocument()
+      expect(screen.getByText('Parada MASP')).toBeInTheDocument()
+      expect(screen.getByText('Estação Final Teste')).toBeInTheDocument()
+    })
+    expect(spyParadas).toHaveBeenCalledWith(1001)
+  })
+
+  it('exibe o diagrama interativo do itinerário com indicação da parada atual (Você está aqui)', async () => {
     vi.spyOn(api, 'obterPrevisoes').mockResolvedValue(previsoesExemplo)
 
     render(<TelaDetalheLinha linha={linhaExemplo} aoVoltar={vi.fn()} />)
 
+    await waitFor(() => {
+      expect(screen.getByText('Você está aqui')).toBeInTheDocument()
+      expect(screen.getByText('Parada MASP')).toBeInTheDocument()
+    })
+  })
+
+  it('permite alternar o sentido da linha atualizando o destino', async () => {
+    vi.spyOn(api, 'obterPrevisoes').mockResolvedValue(previsoesExemplo)
+
+    render(<TelaDetalheLinha linha={linhaExemplo} aoVoltar={vi.fn()} />)
+
+    const btnSentidoOrigem = screen.getByRole('button', {
+      name: /cidade universitária/i,
+    })
+    fireEvent.click(btnSentidoOrigem)
+
     expect(
-      screen.queryByText(/Itinerário e principais paradas da rota/i)
-    ).not.toBeInTheDocument()
-    expect(screen.queryByText('Parada MASP')).not.toBeInTheDocument()
+      screen.getByRole('heading', { name: /destino: cidade universitária/i })
+    ).toBeInTheDocument()
+  })
+
+  it('funciona quando chamado como LineScreen com prop code e onMap', async () => {
+    const mockBack = vi.fn()
+    const mockMap = vi.fn()
+    render(<LineScreen code="106A-10" onBack={mockBack} onMap={mockMap} />)
+
+    expect(screen.getByText('106A-10')).toBeInTheDocument()
+    await waitFor(() => {
+      expect(
+        screen.getByRole('heading', { name: /destino: metrô santana/i })
+      ).toBeInTheDocument()
+      expect(screen.getByText('Você está aqui')).toBeInTheDocument()
+    })
+
+    const btnMap = screen.getByRole('button', { name: /ver linha no mapa/i })
+    fireEvent.click(btnMap)
+    expect(mockMap).toHaveBeenCalledTimes(1)
   })
 
   it('exibe mensagem de erro com botão de tentar novamente se a busca de previsões falhar', async () => {

@@ -69,16 +69,10 @@ function App() {
         nomeParada={
           parada && [parada.nome, parada.endereco].filter(Boolean).join(' — ')
         }
-        aoVoltar={navegacao.tela !== 'inicio' ? irParaInicio : undefined}
+        aoVoltar={navegacao.tela === 'demo' ? irParaInicio : undefined}
         aoAbrirDemo={navegacao.tela !== 'demo' ? irParaDemo : undefined}
         aoEscolherParada={modoDev ? () => setSeletorAberto(true) : undefined}
-        tituloTela={
-          navegacao.tela === 'detalhe'
-            ? `Linha ${navegacao.params?.linha?.numero || ''}`
-            : navegacao.tela === 'demo'
-              ? 'Design Tokens'
-              : undefined
-        }
+        tituloTela={navegacao.tela === 'demo' ? 'Design Tokens' : undefined}
       />
 
       {/* Conteúdo dinâmico renderizado de acordo com o estado ativo */}

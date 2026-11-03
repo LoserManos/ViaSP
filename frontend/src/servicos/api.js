@@ -109,10 +109,22 @@ export async function listarLinhas(termo = '') {
  * @returns {Promise<Array<typeof mockParadasPorLinha[1001][0]>>}
  */
 export async function listarParadasDaLinha(codigoLinha) {
-  return requisitar(
-    `/linhas/${codigoLinha}/paradas`,
-    () => mockParadasPorLinha[codigoLinha] || [mockTotem.parada]
-  )
+  return requisitar(`/linhas/${codigoLinha}/paradas`, () => {
+    if (mockParadasPorLinha[codigoLinha]) {
+      return mockParadasPorLinha[codigoLinha]
+    }
+    const linha = mockLinhas.find((l) => l.codigo === codigoLinha)
+    if (linha) {
+      return [
+        { codigo: 9001, nome: linha.origem, access: true },
+        { codigo: 9002, nome: 'Av. Central, 500', access: true },
+        mockTotem.parada,
+        { codigo: 9003, nome: 'Av. Principal, 1000', access: true },
+        { codigo: 9004, nome: linha.destino, access: true },
+      ]
+    }
+    return [mockTotem.parada]
+  })
 }
 
 /**

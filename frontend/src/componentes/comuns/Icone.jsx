@@ -96,24 +96,67 @@ const TRACADOS = {
       <path d="M2 12h20" />
     </>
   ),
+  // lucide: route
+  route: (
+    <>
+      <circle cx="6" cy="19" r="3" />
+      <path d="M9 19h8.5a3.5 3.5 0 0 0 0-7h-11a3.5 3.5 0 0 1 0-7H15" />
+      <circle cx="18" cy="5" r="3" />
+    </>
+  ),
+  // lucide: accessibility
+  accessibility: (
+    <>
+      <circle cx="16" cy="4" r="1" />
+      <path d="m18 19 1-7-6 1" />
+      <path d="m5 8 3-3 5.5 3-2.36 3.5" />
+      <path d="M4.24 14.5a5 5 0 0 0 6.88 6" />
+      <path d="M13.76 17.5a5 5 0 0 0-6.88-6" />
+    </>
+  ),
+  // lucide: arrow-left / arrow
+  arrow: (
+    <>
+      <path d="m12 19-7-7 7-7" />
+      <path d="M19 12H5" />
+    </>
+  ),
 }
+
+// Aliases para máxima compatibilidade com componentes existentes
+TRACADOS.bus = TRACADOS.onibus
+TRACADOS.rota = TRACADOS.route
+TRACADOS.acessibilidade = TRACADOS.accessibility
 
 /**
  * Ícone SVG do totem. O projeto não usa emoji como ícone: a aparência do emoji
  * muda de um sistema para outro e não segue as cores do tema.
  *
  * @param {object} props
- * @param {keyof typeof TRACADOS} props.nome - Qual ícone desenhar.
- * @param {string} [props.tamanho='1em'] - Largura e altura (herda o tamanho do texto por padrão).
+ * @param {keyof typeof TRACADOS} [props.nome] - Qual ícone desenhar.
+ * @param {string} [props.name] - Alias para nome.
+ * @param {string | number} [props.tamanho='1em'] - Largura e altura.
+ * @param {string | number} [props.size] - Alias para tamanho.
  * @param {string} [props.className] - Classes CSS complementares.
  */
-export function Icone({ nome, tamanho = '1em', className = '' }) {
+export function Icone({
+  nome,
+  name,
+  tamanho,
+  size,
+  className = '',
+  ...outrasProps
+}) {
+  const chave = nome || name || 'onibus'
+  const dim =
+    tamanho || (typeof size === 'number' ? `${size}px` : size) || '1em'
+
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
       viewBox="0 0 24 24"
-      width={tamanho}
-      height={tamanho}
+      width={dim}
+      height={dim}
       fill="none"
       stroke="currentColor"
       strokeWidth="2"
@@ -122,9 +165,13 @@ export function Icone({ nome, tamanho = '1em', className = '' }) {
       className={`viasp-icone ${className}`.trim()}
       aria-hidden="true"
       focusable="false"
-      data-icone={nome}
+      data-icone={chave}
+      {...outrasProps}
     >
-      {TRACADOS[nome]}
+      {TRACADOS[chave] || TRACADOS.onibus}
     </svg>
   )
 }
+
+// Exporta Icon como alias de Icone
+export const Icon = Icone

@@ -49,13 +49,22 @@ describe('Navegação por Estado no Totem (ISS-14.2)', () => {
         screen.getByRole('heading', { name: /aeroporto congonhas/i })
       ).toBeInTheDocument()
       expect(
-        screen.getByText(/próximos ônibus neste ponto/i)
+        screen.getByText(/próximo ônibus nesta parada/i)
+      ).toBeInTheDocument()
+      // O cabeçalho com o logo do viaSP e parada atual continua visível
+      expect(screen.getByText('SP')).toBeInTheDocument()
+      expect(
+        screen.getByText(/Parada MASP — Av\. Paulista, 1578/)
       ).toBeInTheDocument()
     })
 
-    // O botão de voltar deve estar visível
+    // O botão de voltar no cabeçalho foi removido em favor do botão da própria tela de detalhe
+    expect(
+      screen.queryByRole('button', { name: /voltar para a tela anterior/i })
+    ).not.toBeInTheDocument()
+
     const btnVoltar = screen.getByRole('button', {
-      name: /voltar para a tela anterior/i,
+      name: /voltar para a lista de linhas/i,
     })
     expect(btnVoltar).toBeInTheDocument()
 
