@@ -15,25 +15,38 @@ import './TelaDetalheLinha.css'
 export function TelaDetalheLinha({ linha, aoVoltar }) {
   const [consultaPrevisao, setConsultaPrevisao] = useState(null)
   const [paradas, setParadas] = useState([])
-  const [carregando, setCarregando] = useState(true)
-  const [erro, setErro] = useState(null)
+  const [carregandoParadas, setCarregandoParadas] = useState(true)
+  const [carregandoPrevisao, setCarregandoPrevisao] = useState(true)
+  const [erroParadas, setErroParadas] = useState(null)
+  const [erroPrevisao, setErroPrevisao] = useState(null)
 
-  const carregarDetalhes = async () => {
+  const carregarParadas = async () => {
     if (!linha?.codigo) return
-    setCarregando(true)
-    setErro(null)
-
+    setCarregandoParadas(true)
+    setErroParadas(null)
     try {
-      const [dadosPrevisao, dadosParadas] = await Promise.all([
-        obterPrevisoes(linha.codigo),
-        listarParadasDaLinha(linha.codigo),
-      ])
-      setConsultaPrevisao(dadosPrevisao)
-      setParadas(dadosParadas)
+      const dados = await listarParadasDaLinha(linha.codigo)
+      setParadas(dados || [])
     } catch (err) {
-      setErro(err.mensagem || 'Falha ao consultar previsões e itinerário.')
+      setErroParadas(err.mensagem || 'Falha ao consultar itinerário da linha.')
     } finally {
-      setCarregando(false)
+      setCarregandoParadas(false)
+    }
+  }
+
+  const carregarPrevisoes = async () => {
+    if (!linha?.codigo) return
+    setCarregandoPrevisao(true)
+    setErroPrevisao(null)
+    try {
+      const dados = await obterPrevisoes(linha.codigo)
+      setConsultaPrevisao(dados)
+    } catch (err) {
+      setErroPrevisao(
+        err.mensagem || 'Falha ao consultar previsões de chegada.'
+      )
+    } finally {
+      setCarregandoPrevisao(false)
     }
   }
 
@@ -41,25 +54,43 @@ export function TelaDetalheLinha({ linha, aoVoltar }) {
     let ativo = true
 
     async function carregar() {
-      if (!linha?.codigo) return
-      try {
-        const [dadosPrevisao, dadosParadas] = await Promise.all([
-          obterPrevisoes(linha.codigo),
-          listarParadasDaLinha(linha.codigo),
-        ])
-        if (ativo) {
-          setConsultaPrevisao(dadosPrevisao)
-          setParadas(dadosParadas)
-        }
-      } catch (err) {
-        if (ativo) {
-          setErro(err.mensagem || 'Falha ao consultar previsões e itinerário.')
-        }
-      } finally {
-        if (ativo) {
-          setCarregando(false)
-        }
+      if (!linha?.codigo) {
+        setCarregandoParadas(false)
+        setCarregandoPrevisao(false)
+        return
       }
+
+      setCarregandoParadas(true)
+      setCarregandoPrevisao(true)
+      setErroParadas(null)
+      setErroPrevisao(null)
+
+      const [resParadas, resPrevisoes] = await Promise.allSettled([
+        listarParadasDaLinha(linha.codigo),
+        obterPrevisoes(linha.codigo),
+      ])
+
+      if (!ativo) return
+
+      if (resParadas.status === 'fulfilled') {
+        setParadas(resParadas.value || [])
+      } else {
+        setErroParadas(
+          resParadas.reason?.mensagem ||
+            'Falha ao consultar itinerário da linha.'
+        )
+      }
+      setCarregandoParadas(false)
+
+      if (resPrevisoes.status === 'fulfilled') {
+        setConsultaPrevisao(resPrevisoes.value)
+      } else {
+        setErroPrevisao(
+          resPrevisoes.reason?.mensagem ||
+            'Falha ao consultar previsões de chegada.'
+        )
+      }
+      setCarregandoPrevisao(false)
     }
 
     carregar()
@@ -72,9 +103,16 @@ export function TelaDetalheLinha({ linha, aoVoltar }) {
   if (!linha) {
     return (
       <div className="viasp-detalhe-linha">
-        <Botao variante="voltar" onClick={aoVoltar}>
-          Voltar para as linhas
-        </Botao>
+        <div className="viasp-detalhe-linha__topo">
+          <Botao
+            variante="voltar"
+            tamanho="grande"
+            onClick={aoVoltar}
+            ariaLabel="Voltar para a lista de linhas"
+          >
+            Voltar para todas as linhas
+          </Botao>
+        </div>
         <Cartao>
           <TextoGrande variante="destaque">
             Nenhuma linha selecionada.
@@ -86,7 +124,7 @@ export function TelaDetalheLinha({ linha, aoVoltar }) {
 
   return (
     <div className="viasp-detalhe-linha">
-      {/* Barra de Ação Superior com Botão de Voltar Sempre Visível */}
+      {/* Barra de Ação Superior com Botão de Voltar Sempre Visível (ISS-17 / Ergonomia) */}
       <div className="viasp-detalhe-linha__topo">
         <Botao
           variante="voltar"
@@ -98,32 +136,31 @@ export function TelaDetalheLinha({ linha, aoVoltar }) {
         </Botao>
       </div>
 
-      {/* Cartão de Destaque da Linha */}
+      {/* Cartão de Destaque da Linha (ISS-17.1: número, sentido e destino) */}
       <Cartao destaque className="viasp-detalhe-linha__cartao-linha">
         <div className="viasp-detalhe-linha__identificacao">
           <div
             className={`viasp-detalhe-linha__badge viasp-detalhe-linha__badge--${linha.corBadge || 'azul'}`}
+            aria-label={`Linha ${linha.numero}`}
           >
             <Icone nome="onibus" />
             <span>{linha.numero}</span>
           </div>
-          <div>
+          <div className="viasp-detalhe-linha__info-topo">
             <TextoGrande as="h1" variante="titulo">
-              {linha.destino}
+              Destino: {linha.destino}
             </TextoGrande>
             <TextoGrande variante="destaque" cor="secundario">
-              Origem: {linha.origem}
+              Sentido:{' '}
+              {linha.origem
+                ? `${linha.origem} → ${linha.destino}`
+                : linha.destino}
             </TextoGrande>
           </div>
         </div>
       </Cartao>
 
-      {/* Feedback de Erro */}
-      {erro && (
-        <MensagemErro mensagem={erro} aoTentarNovamente={carregarDetalhes} />
-      )}
-
-      {/* Previsão de Chegada dos Próximos Veículos (US06 / US07) */}
+      {/* Previsão de Chegada dos Próximos Veículos (US06 / US07 / ISS-18) */}
       <section className="viasp-detalhe-linha__secao">
         <div className="viasp-detalhe-linha__secao-cabecalho">
           <TextoGrande as="h2" variante="subtitulo">
@@ -136,7 +173,12 @@ export function TelaDetalheLinha({ linha, aoVoltar }) {
           )}
         </div>
 
-        {carregando ? (
+        {erroPrevisao ? (
+          <MensagemErro
+            mensagem={erroPrevisao}
+            aoTentarNovamente={carregarPrevisoes}
+          />
+        ) : carregandoPrevisao ? (
           <Cartao>
             <TextoGrande variante="corpo" cor="secundario">
               Consultando previsão de chegada na SPTrans...
@@ -185,24 +227,36 @@ export function TelaDetalheLinha({ linha, aoVoltar }) {
         )}
       </section>
 
-      {/* Itinerário Simplificado e Principais Paradas (US03) */}
+      {/* Itinerário Simplificado e Principais Paradas (US03 / ISS-17.2) */}
       <section className="viasp-detalhe-linha__secao">
         <TextoGrande as="h2" variante="subtitulo">
           Itinerário e principais paradas da rota
         </TextoGrande>
 
-        {carregando ? (
+        {erroParadas ? (
+          <MensagemErro
+            mensagem={erroParadas}
+            aoTentarNovamente={carregarParadas}
+          />
+        ) : carregandoParadas ? (
           <Cartao>
             <TextoGrande variante="corpo" cor="secundario">
               Carregando paradas da linha...
             </TextoGrande>
           </Cartao>
+        ) : paradas.length === 0 ? (
+          <Cartao>
+            <TextoGrande variante="corpo" cor="secundario">
+              Nenhuma parada disponível para esta linha no momento.
+            </TextoGrande>
+          </Cartao>
         ) : (
-          <div className="viasp-detalhe-linha__itinerario-lista">
+          <div className="viasp-detalhe-linha__itinerario-lista" role="list">
             {paradas.map((parada, idx) => (
               <div
                 key={parada.codigo}
                 className="viasp-detalhe-linha__parada-item"
+                role="listitem"
               >
                 <div className="viasp-detalhe-linha__parada-marcador">
                   <span className="viasp-detalhe-linha__parada-ponto" />
