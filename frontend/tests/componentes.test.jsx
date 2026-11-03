@@ -1,6 +1,7 @@
 import { render, screen, fireEvent } from '@testing-library/react'
 import { describe, it, expect, vi } from 'vitest'
 import { Botao, Cartao, TextoGrande } from '../src/componentes/base'
+import { CabecalhoTotem } from '../src/componentes/layout/CabecalhoTotem'
 import { ItemLinha } from '../src/componentes/totem/ItemLinha'
 import { TOKENS } from '../src/tokens'
 
@@ -140,5 +141,28 @@ describe('Componente: ItemLinha (ISS-15.1)', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /8012-10/ }))
     expect(aoSelecionar).toHaveBeenCalledWith(linha)
+  })
+})
+
+describe('Componente: CabecalhoTotem (Acessibilidade & Figma)', () => {
+  it('exibe badge de idioma PT-BR e botão de alto contraste quando configurado', () => {
+    const alternar = vi.fn()
+    render(
+      <CabecalhoTotem
+        nomeParada="Parada MASP"
+        altoContraste={false}
+        aoAlternarAltoContraste={alternar}
+      />
+    )
+
+    expect(screen.getByText('PT-BR')).toBeInTheDocument()
+    const btnContraste = screen.getByRole('button', {
+      name: /alternar modo de alto contraste/i,
+    })
+    expect(btnContraste).toBeInTheDocument()
+    expect(btnContraste).toHaveAttribute('aria-pressed', 'false')
+
+    fireEvent.click(btnContraste)
+    expect(alternar).toHaveBeenCalledTimes(1)
   })
 })

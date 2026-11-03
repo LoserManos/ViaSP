@@ -20,6 +20,8 @@ export function CabecalhoTotem({
   aoAbrirDemo,
   aoEscolherParada,
   tituloTela,
+  altoContraste = false,
+  aoAlternarAltoContraste,
 }) {
   return (
     <header className="viasp-cabecalho-totem">
@@ -49,6 +51,26 @@ export function CabecalhoTotem({
       </div>
 
       <div className="viasp-cabecalho-totem__direita">
+        {aoAlternarAltoContraste && (
+          <button
+            type="button"
+            onClick={aoAlternarAltoContraste}
+            className={`viasp-cabecalho-totem__btn-util ${altoContraste ? 'viasp-cabecalho-totem__btn-util--ativo' : ''}`}
+            aria-label="Alternar modo de alto contraste"
+            aria-pressed={altoContraste}
+          >
+            <Icone nome="contraste" />
+            <span>Modo de alto contraste</span>
+          </button>
+        )}
+
+        <div
+          className="viasp-cabecalho-totem__idioma"
+          aria-label="Idioma: Português do Brasil"
+        >
+          <span>PT-BR</span>
+        </div>
+
         {aoEscolherParada && (
           <button
             type="button"

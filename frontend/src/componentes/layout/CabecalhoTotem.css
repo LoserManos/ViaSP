@@ -96,3 +96,16 @@
   min-height: 56px !important;
   font-size: 1.125rem !important;
 }
+
+.viasp-cabecalho-totem__idioma {
+  background-color: #0f172a;
+  color: #ffffff;
+  border-radius: var(--raio-borda-full);
+  padding: 8px 18px;
+  font-size: 0.95rem;
+  font-weight: var(--peso-bold);
+  min-height: 52px;
+  display: flex;
+  align-items: center;
+  user-select: none;
+}
