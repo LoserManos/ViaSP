@@ -242,6 +242,26 @@
   padding: 20px 28px 28px;
   background: linear-gradient(var(--canvas), var(--paper) 220px);
   overflow-x: auto;
+  max-height: 720px;
+  overflow-y: auto;
+}
+
+.line-diagram-wrap::-webkit-scrollbar {
+  width: 8px;
+}
+
+.line-diagram-wrap::-webkit-scrollbar-track {
+  background: var(--canvas);
+  border-radius: 4px;
+}
+
+.line-diagram-wrap::-webkit-scrollbar-thumb {
+  background: var(--line);
+  border-radius: 4px;
+}
+
+.line-diagram-wrap::-webkit-scrollbar-thumb:hover {
+  background: var(--muted);
 }
 
 .line-diagram-head {
@@ -678,7 +698,23 @@
   margin-bottom: 12px;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 12px;
+}
+
+.line-loading-spinner {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 2px solid var(--line);
+  border-top-color: var(--brand);
+  animation: line-spin 0.8s linear infinite;
+  flex-shrink: 0;
+}
+
+@keyframes line-spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .line-empty-box {
@@ -771,5 +807,16 @@
   .line-stop.here .line-node,
   .line-bus::before {
     animation: none;
+  }
+}
+
+@media print {
+  .line-screen {
+    page-break-before: avoid;
+    break-before: avoid;
+  }
+  .line-diagram-wrap {
+    max-height: none !important;
+    overflow: visible !important;
   }
 }

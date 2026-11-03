@@ -108,8 +108,14 @@ export async function listarLinhas(termo = '') {
  * @param {number} codigoLinha
  * @returns {Promise<Array<typeof mockParadasPorLinha[1001][0]>>}
  */
-export async function listarParadasDaLinha(codigoLinha) {
-  return requisitar(`/linhas/${codigoLinha}/paradas`, () => {
+export async function listarParadasDaLinha(codigoLinha, params = {}) {
+  const query = new URLSearchParams()
+  if (params.numero) query.set('numero', params.numero)
+  if (params.sentido) query.set('sentido', String(params.sentido))
+  if (params.destino) query.set('destino', params.destino)
+  const qs = query.toString() ? `?${query.toString()}` : ''
+
+  return requisitar(`/linhas/${codigoLinha}/paradas${qs}`, () => {
     if (mockParadasPorLinha[codigoLinha]) {
       return mockParadasPorLinha[codigoLinha]
     }

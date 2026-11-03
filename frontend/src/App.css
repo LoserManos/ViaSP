@@ -9,3 +9,13 @@
   display: flex;
   flex-direction: column;
 }
+
+@media print {
+  .viasp-app {
+    min-height: auto;
+    display: block;
+  }
+  .viasp-cabecalho-totem {
+    position: static !important;
+  }
+}

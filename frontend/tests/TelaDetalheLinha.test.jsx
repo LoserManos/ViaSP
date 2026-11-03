@@ -103,7 +103,10 @@ describe('TelaDetalheLinha (ISS-17 / US06 / US07)', () => {
       expect(screen.getByText('Parada MASP')).toBeInTheDocument()
       expect(screen.getByText('Estação Final Teste')).toBeInTheDocument()
     })
-    expect(spyParadas).toHaveBeenCalledWith(1001)
+    expect(spyParadas).toHaveBeenCalledWith(
+      1001,
+      expect.objectContaining({ numero: '8012-10' })
+    )
   })
 
   it('exibe o diagrama interativo do itinerário com indicação da parada atual (Você está aqui)', async () => {
@@ -114,6 +117,39 @@ describe('TelaDetalheLinha (ISS-17 / US06 / US07)', () => {
     await waitFor(() => {
       expect(screen.getByText('Você está aqui')).toBeInTheDocument()
       expect(screen.getByText('Parada MASP')).toBeInTheDocument()
+    })
+  })
+
+  it('exibe todas as paradas da linha no diagrama e localiza o totem por código', async () => {
+    const mockTotemCustom = {
+      identificador: 'TOTEM-01',
+      parada: {
+        codigo: 440016921,
+        nome: 'Av. Paulista, 2027',
+      },
+    }
+    vi.spyOn(api, 'obterTotem').mockResolvedValue(mockTotemCustom)
+
+    const paradasCompletas = [
+      { codigo: 101, nome: 'Terminal Origem Real' },
+      { codigo: 102, nome: 'Av. Rebouças, 100' },
+      { codigo: 440016921, nome: 'Av. Paulista, 2027' },
+      { codigo: 103, nome: 'Av. Brigadeiro, 500' },
+      { codigo: 104, nome: 'Terminal Destino Real' },
+    ]
+    vi.spyOn(api, 'listarParadasDaLinha').mockResolvedValue(paradasCompletas)
+    vi.spyOn(api, 'obterPrevisoes').mockResolvedValue(previsoesExemplo)
+
+    render(<TelaDetalheLinha linha={linhaExemplo} aoVoltar={vi.fn()} />)
+
+    await waitFor(() => {
+      expect(screen.getByText('5 paradas · Terminal Origem Real → Aeroporto Congonhas')).toBeInTheDocument()
+      expect(screen.getByText('Terminal Origem Real')).toBeInTheDocument()
+      expect(screen.getByText('Av. Rebouças, 100')).toBeInTheDocument()
+      expect(screen.getByText('Av. Paulista, 2027')).toBeInTheDocument()
+      expect(screen.getByText('Av. Brigadeiro, 500')).toBeInTheDocument()
+      expect(screen.getByText('Terminal Destino Real')).toBeInTheDocument()
+      expect(screen.getByText('Você está aqui')).toBeInTheDocument()
     })
   })
 

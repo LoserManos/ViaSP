@@ -25,6 +25,23 @@ CREATE TABLE IF NOT EXISTS parada_gtfs (
     longitude  REAL    NOT NULL
 );
 CREATE INDEX IF NOT EXISTS idx_parada_gtfs_posicao ON parada_gtfs (latitude, longitude);
+
+-- Viagens e Itinerários importados do GTFS da SPTrans (trips.txt e stop_times.txt)
+CREATE TABLE IF NOT EXISTS viagem_gtfs (
+    trip_id       TEXT PRIMARY KEY,
+    route_id      TEXT NOT NULL,
+    direction_id  INTEGER,
+    trip_headsign TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_viagem_gtfs_route ON viagem_gtfs (route_id);
+
+CREATE TABLE IF NOT EXISTS itinerario_gtfs (
+    trip_id       TEXT NOT NULL,
+    stop_id       INTEGER NOT NULL,
+    stop_sequence INTEGER NOT NULL,
+    PRIMARY KEY (trip_id, stop_sequence)
+);
+CREATE INDEX IF NOT EXISTS idx_itinerario_gtfs_trip ON itinerario_gtfs (trip_id);
 """
 
 

@@ -67,12 +67,12 @@ export function TelaDetalheLinha({
     }
 
   const [paradas, setParadas] = useState([])
-  const [carregandoParadas, setCarregandoParadas] = useState(false)
+  const [carregandoParadas, setCarregandoParadas] = useState(true)
   const [erroParadas, setErroParadas] = useState(null)
-  const [totemParadaNome, setTotemParadaNome] = useState(HERE)
+  const [totemParada, setTotemParada] = useState(null)
 
   const [consultaPrevisao, setConsultaPrevisao] = useState(null)
-  const [carregandoPrevisao, setCarregandoPrevisao] = useState(false)
+  const [carregandoPrevisao, setCarregandoPrevisao] = useState(true)
   const [erroPrevisao, setErroPrevisao] = useState(null)
 
   const carregarPrevisoes = async () => {
@@ -94,7 +94,11 @@ export function TelaDetalheLinha({
     setCarregandoParadas(true)
     setErroParadas(null)
     try {
-      const dados = await listarParadasDaLinha(linhaAtiva.codigo)
+      const dados = await listarParadasDaLinha(linhaAtiva.codigo, {
+        numero: linhaAtiva.numero,
+        sentido: linhaAtiva.sentido,
+        destino: linhaAtiva.destino,
+      })
       setParadas(Array.isArray(dados) ? dados : [])
     } catch (err) {
       setErroParadas(
@@ -110,8 +114,8 @@ export function TelaDetalheLinha({
     let ativo = true
     obterTotem()
       .then((t) => {
-        if (ativo && t?.parada?.nome) {
-          setTotemParadaNome(t.parada.nome)
+        if (ativo && t?.parada) {
+          setTotemParada(t.parada)
         }
       })
       .catch(() => {})
@@ -124,7 +128,13 @@ export function TelaDetalheLinha({
   useEffect(() => {
     let ativo = true
     if (linhaAtiva?.codigo) {
-      listarParadasDaLinha(linhaAtiva.codigo)
+      setCarregandoParadas(true)
+      setErroParadas(null)
+      listarParadasDaLinha(linhaAtiva.codigo, {
+        numero: linhaAtiva.numero,
+        sentido: linhaAtiva.sentido,
+        destino: linhaAtiva.destino,
+      })
         .then((dados) => {
           if (ativo) {
             setParadas(Array.isArray(dados) ? dados : [])
@@ -139,6 +149,7 @@ export function TelaDetalheLinha({
         })
 
       setCarregandoPrevisao(true)
+      setErroPrevisao(null)
       obterPrevisoes(linhaAtiva.codigo)
         .then((dados) => {
           if (ativo) {
@@ -186,6 +197,9 @@ export function TelaDetalheLinha({
   const hours = linhaAtiva.horario_funcionamento || '4h40 – 0h30'
   const headway = linhaAtiva.intervalo_medio || 12
 
+  const totemParadaNome = totemParada?.nome || HERE
+  const totemCodigo = totemParada?.codigo
+
   // Converte a lista de paradas da API para o formato visual esperado pelo diagrama
   const stopsBase =
     paradas.length > 0
@@ -205,7 +219,7 @@ export function TelaDetalheLinha({
         })
       : [
           { name: from, access: true },
-          { name: totemParadaNome, access: true },
+          { name: totemParadaNome, access: true, codigo: totemCodigo },
           { name: to, access: true },
         ]
 
@@ -241,15 +255,28 @@ export function TelaDetalheLinha({
   const departures = previsoesProcessadas.map((p) => p.minutos)
 
   // Localiza o índice da parada atual na ordem ativa do trajeto
-  const hereIdx = Math.max(
-    0,
-    stops.findIndex(
-      (s) =>
-        s.name === totemParadaNome ||
-        s.name === HERE ||
-        s.name?.toLowerCase().includes('masp')
-    )
+  let hereIdx = stops.findIndex(
+    (s) =>
+      (totemCodigo && (s.codigo === totemCodigo || String(s.codigo) === String(totemCodigo))) ||
+      (totemParadaNome && s.name && s.name.toLowerCase() === totemParadaNome.toLowerCase()) ||
+      (totemParadaNome && s.name && s.name.toLowerCase().includes(totemParadaNome.toLowerCase())) ||
+      s.name === HERE ||
+      s.name?.toLowerCase().includes('masp')
   )
+
+  if (hereIdx === -1 && totemParadaNome) {
+    const palavras = totemParadaNome.toLowerCase().split(/[\s,—-]+/).filter((w) => w.length > 3)
+    if (palavras.length > 0) {
+      hereIdx = stops.findIndex((s) => {
+        const nomeLower = (s.name || '').toLowerCase()
+        return palavras.some((p) => nomeLower.includes(p))
+      })
+    }
+  }
+
+  if (hereIdx === -1) {
+    hereIdx = 0
+  }
 
   const buses = departures
     .map((eta) => ({ eta, pos: hereIdx - eta / MIN_PER_STOP }))
@@ -305,7 +332,8 @@ export function TelaDetalheLinha({
           </div>
 
           {carregandoParadas && paradas.length === 0 ? (
-            <div className="line-loading-box">
+            <div className="line-loading-box" role="status">
+              <div className="line-loading-spinner" aria-hidden="true" />
               <span>Carregando itinerário da linha...</span>
             </div>
           ) : erroParadas && paradas.length === 0 ? (
@@ -319,86 +347,82 @@ export function TelaDetalheLinha({
                 Tentar carregar itinerário novamente
               </button>
             </div>
-          ) : null}
-
-          <div className="line-diagram" style={{ '--row': `${ROW}px` }}>
-            <span className="line-track" aria-hidden="true">
-              <span
-                className="line-track-done"
-                style={{ height: `${hereIdx * ROW}px` }}
-              />
-            </span>
-
-            {buses.map((b) => (
-              <span
-                key={b.eta}
-                className="line-bus"
-                style={{ top: `${b.pos * ROW + ROW / 2}px` }}
-                aria-hidden="true"
-              >
-                <Icon name="bus" size={16} />
-                <b>{b.eta} min</b>
+          ) : (
+            <div className="line-diagram" style={{ '--row': `${ROW}px` }}>
+              <span className="line-track" aria-hidden="true">
+                <span
+                  className="line-track-done"
+                  style={{ height: `${hereIdx * ROW}px` }}
+                />
               </span>
-            ))}
 
-            <ol className="line-stops">
-              {stops.map((s, i) => {
-                const state =
-                  i < hereIdx ? 'past' : i === hereIdx ? 'here' : 'next'
-                const eta =
-                  firstEta !== null
-                    ? firstEta + (i - hereIdx) * MIN_PER_STOP
-                    : null
-                return (
-                  <li
-                    key={`${s.codigo || s.name}-${i}`}
-                    className={`line-stop ${state} ${i === stops.length - 1 ? 'terminal' : ''} ${i === 0 ? 'start' : ''}`}
-                  >
-                    <span className="line-node" aria-hidden="true" />
-                    <div className="line-stop-text">
-                      <strong>{s.name}</strong>
-                      <span className="line-stop-meta">
-                        {state === 'here' && (
-                          <em className="here-tag">Você está aqui</em>
-                        )}
-                        {s.transfer && (
-                          <span className="metro-tag">
-                            <Icon name="route" size={13} /> Metrô {s.transfer}
-                          </span>
-                        )}
-                        {s.access && (
-                          <span className="access-tag" title="Parada acessível">
-                            <Icon name="accessibility" size={14} />
-                            <span className="sr-only">Parada acessível</span>
-                          </span>
-                        )}
-                      </span>
-                    </div>
+              {buses.map((b) => (
+                <span
+                  key={b.eta}
+                  className="line-bus"
+                  style={{ top: `${b.pos * ROW + ROW / 2}px` }}
+                  aria-hidden="true"
+                >
+                  <Icon name="bus" size={16} />
+                  <b>{b.eta} min</b>
+                </span>
+              ))}
 
-                    <span className="line-stop-time">
-                      {state === 'next' ? (
-                        firstEta !== null ? (
-                          <>
-                            {clockIn(Math.round(firstEta + (i - hereIdx) * MIN_PER_STOP))}
-                            <small>+{Math.round((i - hereIdx) * MIN_PER_STOP)} min</small>
-                          </>
-                        ) : null
-                      ) : state === 'here' ? (
-                        firstEta !== null ? (
-                          <>
-                            {firstHorario}
+              <ol className="line-stops">
+                {stops.map((s, i) => {
+                  const state =
+                    i < hereIdx ? 'past' : i === hereIdx ? 'here' : 'next'
+                  return (
+                    <li
+                      key={`${s.codigo || s.name}-${i}`}
+                      className={`line-stop ${state} ${i === stops.length - 1 ? 'terminal' : ''} ${i === 0 ? 'start' : ''}`}
+                    >
+                      <span className="line-node" aria-hidden="true" />
+                      <div className="line-stop-text">
+                        <strong>{s.name}</strong>
+                        <span className="line-stop-meta">
+                          {state === 'here' && (
+                            <em className="here-tag">Você está aqui</em>
+                          )}
+                          {s.transfer && (
+                            <span className="metro-tag">
+                              <Icon name="route" size={13} /> Metrô {s.transfer}
+                            </span>
+                          )}
+                          {s.access && (
+                            <span className="access-tag" title="Parada acessível">
+                              <Icon name="accessibility" size={14} />
+                              <span className="sr-only">Parada acessível</span>
+                            </span>
+                          )}
+                        </span>
+                      </div>
+
+                      <span className="line-stop-time">
+                        {state === 'next' ? (
+                          firstEta !== null ? (
+                            <>
+                              {clockIn(Math.round(firstEta + (i - hereIdx) * MIN_PER_STOP))}
+                              <small>+{Math.round((i - hereIdx) * MIN_PER_STOP)} min</small>
+                            </>
+                          ) : null
+                        ) : state === 'here' ? (
+                          firstEta !== null ? (
+                            <>
+                              {firstHorario}
+                              <small>embarque</small>
+                            </>
+                          ) : (
                             <small>embarque</small>
-                          </>
-                        ) : (
-                          <small>embarque</small>
-                        )
-                      ) : null}
-                    </span>
-                  </li>
-                )
-              })}
-            </ol>
-          </div>
+                          )
+                        ) : null}
+                      </span>
+                    </li>
+                  )
+                })}
+              </ol>
+            </div>
+          )}
         </div>
 
         {/* Painel Lateral com Próximas Chegadas */}

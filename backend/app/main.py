@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 
 def _carregar_gtfs(repositorio: RepositorioParadas, caminho: str) -> None:
     """Importa as paradas do GTFS na primeira subida (ou depois de apagar o banco)."""
-    if repositorio.contar() > 0:
+    if repositorio.contar() > 0 and repositorio.contar_viagens() > 0:
         return
     try:
         total = repositorio.importar_gtfs(caminho)

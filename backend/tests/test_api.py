@@ -78,3 +78,31 @@ def test_parametro_obrigatorio_ausente_retorna_422(client):
 
     assert resposta.status_code == 422
     assert resposta.json()["codigo"] == "requisicao_invalida"
+
+
+def test_listar_paradas_da_linha_retorna_todas_e_enriquece_gtfs(client):
+    from unittest.mock import AsyncMock
+    from app.dominio import Parada
+
+    mock_servico = AsyncMock()
+    # 7 paradas, sendo uma sem nome para testar enriquecimento via GTFS
+    mock_servico.consultar_paradas.return_value = [
+        Parada(codigo=1, nome="Parada 1", endereco="Rua 1", latitude=0.0, longitude=0.0),
+        Parada(codigo=2, nome="Parada 2", endereco="Rua 2", latitude=0.0, longitude=0.0),
+        Parada(codigo=3, nome="Parada 3", endereco="Rua 3", latitude=0.0, longitude=0.0),
+        Parada(codigo=4, nome="Parada 4", endereco="Rua 4", latitude=0.0, longitude=0.0),
+        Parada(codigo=5, nome="Parada 5", endereco="Rua 5", latitude=0.0, longitude=0.0),
+        Parada(codigo=6, nome="Parada 6", endereco="Rua 6", latitude=0.0, longitude=0.0),
+        Parada(codigo=440016921, nome="", endereco="", latitude=0.0, longitude=0.0),
+    ]
+
+    client.app.dependency_overrides[get_servico_consulta] = lambda: mock_servico
+    resposta = client.get("/api/linhas/307/paradas")
+
+    assert resposta.status_code == 200
+    dados = resposta.json()
+    assert len(dados) == 7
+    # Verifica enriquecimento com GTFS da parada sem nome (440016921)
+    parada_gtfs = next(p for p in dados if p["codigo"] == 440016921)
+    assert parada_gtfs["nome"] == "Av. Paulista, 2027"
+

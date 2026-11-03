@@ -326,21 +326,37 @@ class ClienteSPTrans:
         return linhas
 
     async def buscar_paradas(self, codigo_linha: int) -> list[Parada]:
-        """Consulta as paradas do itinerário de uma linha (`GET /Parada/BuscarParadasPorLinha`)."""
+        """Consulta as paradas do itinerário de uma linha (`GET /Parada/BuscarParadasPorLinha` com fallback para `/Previsao/Linha`)."""
         resposta = await self._requisitar(
             "GET",
             "/Parada/BuscarParadasPorLinha",
             params={"codigoLinha": codigo_linha},
         )
         dados = _extrair_json(resposta)
-        if not isinstance(dados, list):
-            return []
-
         paradas: list[Parada] = []
-        for item in dados:
-            parada = _converter_parada(item)
-            if parada is not None:
-                paradas.append(parada)
+        if isinstance(dados, list):
+            for item in dados:
+                parada = _converter_parada(item)
+                if parada is not None:
+                    paradas.append(parada)
+
+        if not paradas:
+            # Fallback para /Previsao/Linha quando /Parada/BuscarParadasPorLinha não retorna paradas
+            try:
+                resp_prev = await self._requisitar(
+                    "GET",
+                    "/Previsao/Linha",
+                    params={"codigoLinha": codigo_linha},
+                )
+                dados_prev = _extrair_json(resp_prev)
+                if isinstance(dados_prev, dict) and isinstance(dados_prev.get("ps"), list):
+                    for item in dados_prev["ps"]:
+                        parada = _converter_parada(item)
+                        if parada is not None:
+                            paradas.append(parada)
+            except Exception as exc:
+                logger.debug("Falha ao buscar paradas por /Previsao/Linha (linha %s): %s", codigo_linha, exc)
+
         return paradas
 
     async def buscar_linhas_com_previsao(self, codigo_parada: int) -> list[Linha]:
