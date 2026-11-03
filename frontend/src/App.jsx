@@ -26,7 +26,6 @@ function App() {
   })
   const [parada, setParada] = useState(null)
   const [seletorAberto, setSeletorAberto] = useState(false)
-  const [altoContraste, setAltoContraste] = useState(false)
   // Muda quando a parada é trocada no modo dev, para a tela inicial recarregar as linhas
   const [versaoParada, setVersaoParada] = useState(0)
   const modoDev = import.meta.env.DEV && !estaUsandoMocks()
@@ -64,7 +63,7 @@ function App() {
   }
 
   return (
-    <div className={`viasp-app ${altoContraste ? 'viasp-alto-contraste' : ''}`}>
+    <div className="viasp-app">
       {/* Cabeçalho fixo do totem com botão voltar condicional */}
       <CabecalhoTotem
         nomeParada={
@@ -73,8 +72,6 @@ function App() {
         aoVoltar={navegacao.tela !== 'inicio' ? irParaInicio : undefined}
         aoAbrirDemo={navegacao.tela !== 'demo' ? irParaDemo : undefined}
         aoEscolherParada={modoDev ? () => setSeletorAberto(true) : undefined}
-        altoContraste={altoContraste}
-        aoAlternarAltoContraste={() => setAltoContraste((atual) => !atual)}
         tituloTela={
           navegacao.tela === 'detalhe'
             ? `Linha ${navegacao.params?.linha?.numero || ''}`

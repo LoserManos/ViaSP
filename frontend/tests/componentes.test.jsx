@@ -144,25 +144,22 @@ describe('Componente: ItemLinha (ISS-15.1)', () => {
   })
 })
 
-describe('Componente: CabecalhoTotem (Acessibilidade & Figma)', () => {
-  it('exibe badge de idioma PT-BR e botão de alto contraste quando configurado', () => {
-    const alternar = vi.fn()
+describe('Componente: CabecalhoTotem', () => {
+  it('exibe o nome da parada e botões de apoio quando fornecidos', () => {
+    const mockEscolher = vi.fn()
     render(
       <CabecalhoTotem
         nomeParada="Parada MASP"
-        altoContraste={false}
-        aoAlternarAltoContraste={alternar}
+        aoEscolherParada={mockEscolher}
       />
     )
 
-    expect(screen.getByText('PT-BR')).toBeInTheDocument()
-    const btnContraste = screen.getByRole('button', {
-      name: /alternar modo de alto contraste/i,
+    expect(screen.getByText(/Parada MASP/i)).toBeInTheDocument()
+    const btnParada = screen.getByRole('button', {
+      name: /escolher a parada do totem/i,
     })
-    expect(btnContraste).toBeInTheDocument()
-    expect(btnContraste).toHaveAttribute('aria-pressed', 'false')
-
-    fireEvent.click(btnContraste)
-    expect(alternar).toHaveBeenCalledTimes(1)
+    expect(btnParada).toBeInTheDocument()
+    fireEvent.click(btnParada)
+    expect(mockEscolher).toHaveBeenCalledTimes(1)
   })
 })

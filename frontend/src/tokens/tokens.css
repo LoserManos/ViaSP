@@ -102,16 +102,3 @@ body {
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
 }
-
-/* Modo de Alto Contraste (Acessibilidade WCAG AAA) */
-.viasp-alto-contraste {
-  --cor-fundo: #000000;
-  --cor-superficie: #0a0a0a;
-  --cor-superficie-destaque: #171717;
-  --cor-superficie-hover: #262626;
-  --cor-texto-principal: #ffffff;
-  --cor-texto-secundario: #e5e5e5;
-  --cor-borda: #ffffff;
-  --cor-borda-forte: #ffffff;
-  --cor-marca: #ff4d6d;
-}
