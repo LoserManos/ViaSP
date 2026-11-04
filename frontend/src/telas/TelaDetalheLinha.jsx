@@ -488,7 +488,7 @@ export function TelaDetalheLinha({
           ) : null}
 
           {/* Previsões em Tempo Real da SPTrans (quando disponíveis) */}
-          {erroPrevisao ? (
+          {erroPrevisao && (
             <div className="line-error-box">
               <span>{erroPrevisao}</span>
               <button
@@ -500,39 +500,7 @@ export function TelaDetalheLinha({
                 Tentar carregar as informações novamente
               </button>
             </div>
-          ) : consultaPrevisao?.previsoes &&
-            consultaPrevisao.previsoes.length > 0 ? (
-            <div className="line-realtime-section" role="list">
-              <span className="line-next-label">
-                Veículos em circulação (SPTrans)
-              </span>
-              {consultaPrevisao.previsoes.map((p, idx) => (
-                <div key={idx} className="line-realtime-row" role="listitem">
-                  <div className="line-realtime-left">
-                    <Icon name="bus" size={16} />
-                    <div>
-                      <strong>Chegada prevista às {p.horario_previsto}</strong>
-                      <small>Veículo prefixo #{p.veiculo.prefixo}</small>
-                    </div>
-                  </div>
-                  <span
-                    className={`line-realtime-tag ${idx === 0 ? 'line-realtime-tag--destaque' : ''}`}
-                  >
-                    {idx === 0 ? 'Próximo' : `${idx + 1}º veículo`}
-                  </span>
-                </div>
-              ))}
-            </div>
-          ) : consultaPrevisao?.previsoes &&
-            consultaPrevisao.previsoes.length === 0 ? (
-            <div className="line-empty-box">
-              <strong>Sem previsão no momento</strong>
-              <small>
-                Não há veículos em circulação informados para esta linha no
-                momento.
-              </small>
-            </div>
-          ) : null}
+          )}
 
           <dl className="line-facts">
             <div>

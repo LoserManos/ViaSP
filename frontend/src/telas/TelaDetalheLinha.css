@@ -622,61 +622,6 @@
   margin-top: auto;
 }
 
-/* Previsões em Tempo Real da SPTrans */
-.line-realtime-section {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding: 14px;
-  border-radius: 14px;
-  background: var(--canvas);
-  border: 1px solid var(--line);
-}
-
-.line-realtime-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  padding: 8px 10px;
-  background: var(--paper);
-  border-radius: 10px;
-  border: 1px solid var(--line);
-}
-
-.line-realtime-left {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.line-realtime-left strong {
-  display: block;
-  font-size: 14px;
-  font-weight: 700;
-  color: var(--ink);
-}
-
-.line-realtime-left small {
-  display: block;
-  font-size: 12px;
-  color: var(--muted);
-}
-
-.line-realtime-tag {
-  font-size: 11px;
-  font-weight: 800;
-  padding: 3px 8px;
-  border-radius: 999px;
-  background: var(--canvas);
-  color: var(--muted);
-}
-
-.line-realtime-tag--destaque {
-  background: var(--soft-green);
-  color: var(--green);
-}
-
 .line-error-box {
   padding: 12px;
   border-radius: 12px;
@@ -728,26 +673,6 @@
   to {
     transform: rotate(360deg);
   }
-}
-
-.line-empty-box {
-  padding: 12px;
-  border-radius: 12px;
-  background: var(--canvas);
-  border: 1px dashed var(--line);
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.line-empty-box strong {
-  font-size: 14px;
-  color: var(--ink);
-}
-
-.line-empty-box small {
-  font-size: 12px;
-  color: var(--muted);
 }
 
 .high-contrast .line-next,

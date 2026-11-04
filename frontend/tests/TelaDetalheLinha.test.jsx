@@ -73,16 +73,20 @@ describe('TelaDetalheLinha (ISS-17 / US06 / US07)', () => {
     render(<TelaDetalheLinha linha={linhaExemplo} aoVoltar={vi.fn()} />)
 
     await waitFor(() => {
-      expect(screen.getByText(/Chegada prevista às 14:35/i)).toBeInTheDocument()
-      expect(screen.getByText(/Veículo prefixo #12345/i)).toBeInTheDocument()
-      expect(screen.getByText(/Chegada prevista às 14:48/i)).toBeInTheDocument()
-      expect(screen.getByText('Próximo')).toBeInTheDocument()
-      expect(screen.getByText('2º veículo')).toBeInTheDocument()
+      expect(
+        screen.getByText('Próximo ônibus nesta parada')
+      ).toBeInTheDocument()
       expect(screen.getByText('5')).toBeInTheDocument()
       expect(screen.getByText(/Sentido.*às 14:35/i)).toBeInTheDocument()
+      expect(screen.getByText('Depois')).toBeInTheDocument()
       expect(screen.getByText('18 min')).toBeInTheDocument()
+      expect(screen.getByText('14:48')).toBeInTheDocument()
     })
 
+    expect(
+      screen.queryByText(/veículos em circulação/i)
+    ).not.toBeInTheDocument()
+    expect(screen.queryByText(/prefixo/i)).not.toBeInTheDocument()
     expect(api.obterPrevisoes).toHaveBeenCalledWith(1001)
   })
 
@@ -213,24 +217,22 @@ describe('TelaDetalheLinha (ISS-17 / US06 / US07)', () => {
 
     // Na segunda tentativa, exibe as previsões com sucesso
     await waitFor(() => {
-      expect(screen.getByText(/Chegada prevista às 14:35/i)).toBeInTheDocument()
+      expect(screen.getByText(/14:35/i)).toBeInTheDocument()
     })
     expect(spy).toHaveBeenCalledTimes(2)
   })
 
-  it('exibe mensagem amigável quando a consulta de previsões vier vazia', async () => {
+  it('exibe mensagem amigável quando a consulta de previsões vier vazia e não exibe veículos em circulação', async () => {
     vi.spyOn(api, 'obterPrevisoes').mockResolvedValue({ previsoes: [] })
 
     render(<TelaDetalheLinha linha={linhaExemplo} aoVoltar={vi.fn()} />)
 
     await waitFor(() => {
-      expect(screen.getByText('Sem previsão no momento')).toBeInTheDocument()
-      expect(
-        screen.getByText(
-          /Não há veículos em circulação informados para esta linha no momento/i
-        )
-      ).toBeInTheDocument()
+      expect(screen.getByText('Nenhum veículo a caminho')).toBeInTheDocument()
     })
+    expect(
+      screen.queryByText(/veículos em circulação/i)
+    ).not.toBeInTheDocument()
   })
 
   it('trata caso em que nenhuma linha é fornecida exibindo aviso e botão de voltar', () => {
