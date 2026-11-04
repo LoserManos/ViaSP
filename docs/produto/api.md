@@ -22,6 +22,7 @@ Nome, endereço e coordenadas vêm do GTFS da SPTrans; se a parada não estiver 
 
 ## 2. `GET /api/linhas?termo={busca}`
 Retorna as linhas do ponto. O parâmetro `termo` é opcional (usado para a busca da US02).
+Inclui o cabeçalho `X-Dados-Desatualizados: true` caso a SPTrans falhe após o vencimento do cache e o último resultado válido seja servido (`false` em consultas atualizadas).
 
 **Resposta (200 OK):**
 ```json
@@ -38,6 +39,7 @@ Retorna as linhas do ponto. O parâmetro `termo` é opcional (usado para a busca
 
 ## 3. `GET /api/linhas/{codigo_linha}/paradas`
 Retorna as paradas principais do itinerário da linha selecionada (US03).
+Inclui o cabeçalho `X-Dados-Desatualizados: true` caso a SPTrans falhe após o vencimento do cache e o último itinerário válido seja servido (`false` em consultas atualizadas).
 
 **Resposta (200 OK):**
 ```json
@@ -54,6 +56,7 @@ Retorna as paradas principais do itinerário da linha selecionada (US03).
 
 ## 4. `GET /api/previsoes?codigo_linha={codigo}`
 Retorna as previsões de chegada para a parada do totem e a linha escolhida (US06 e US07).
+Também expõe o cabeçalho `X-Dados-Desatualizados` (`true` ou `false`), espelhando o campo `desatualizado` do corpo JSON.
 
 **Resposta (200 OK - Sucesso):**
 ```json
@@ -76,6 +79,7 @@ Retorna as previsões de chegada para a parada do totem e a linha escolhida (US0
   "horario_referencia": "10:00",
   "estado": "sucesso",
   "mensagem_erro": "",
+  "desatualizado": false,
   "previsoes": [
     {
       "horario_previsto": "10:05",
@@ -96,11 +100,33 @@ Retorna as previsões de chegada para a parada do totem e a linha escolhida (US0
   "horario_referencia": "10:00",
   "estado": "sem_previsao",
   "mensagem_erro": "",
+  "desatualizado": false,
   "previsoes": []
 }
 ```
 
-**Resposta (200 OK - Falha de Comunicação com a SPTrans):**
+**Resposta (200 OK - Último Resultado Válido em Caso de Falha na SPTrans):**
+```json
+{
+  "parada": { "codigo": 12345, "nome": "PAULISTA B/C", "endereco": "", "latitude": 0.0, "longitude": 0.0 },
+  "linha": { "codigo": 2506, "numero": "8000-1", "sentido": 1, "origem": "", "destino": "" },
+  "horario_consulta": "2026-10-31T10:00:00-03:00",
+  "horario_referencia": "10:00",
+  "estado": "sucesso",
+  "mensagem_erro": "O sistema de previsão está indisponível no momento. Tente novamente em instantes.",
+  "desatualizado": true,
+  "previsoes": [
+    {
+      "horario_previsto": "10:05",
+      "veiculo": {
+        "prefixo": "81506"
+      }
+    }
+  ]
+}
+```
+
+**Resposta (200 OK - Falha de Comunicação com a SPTrans sem Cache Anterior):**
 ```json
 {
   "parada": { "codigo": 12345, "nome": "PAULISTA B/C", "endereco": "", "latitude": 0.0, "longitude": 0.0 },
@@ -109,6 +135,7 @@ Retorna as previsões de chegada para a parada do totem e a linha escolhida (US0
   "horario_referencia": "",
   "estado": "falha",
   "mensagem_erro": "O sistema de previsão está indisponível no momento. Tente novamente em instantes.",
+  "desatualizado": false,
   "previsoes": []
 }
 ```

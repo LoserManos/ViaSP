@@ -23,7 +23,8 @@ class ConsultaPrevisao:
     horario_referencia: str = ""  # "hr" informado pela SPTrans
     estado: EstadoConsulta = EstadoConsulta.SUCESSO
     previsoes: list[PrevisaoChegada] = field(default_factory=list)
-    mensagem_erro: str = ""  # NOVO CAMPO AQUI
+    mensagem_erro: str = ""
+    desatualizado: bool = False
 
     def foi_bem_sucedida(self) -> bool:
         return self.estado in (EstadoConsulta.SUCESSO, EstadoConsulta.SEM_PREVISAO)

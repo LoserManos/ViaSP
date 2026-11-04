@@ -42,6 +42,7 @@ class ConsultaPrevisaoSchema(_Base):
     horario_referencia: str
     estado: EstadoConsulta
     mensagem_erro: str
+    desatualizado: bool = False
     previsoes: list[PrevisaoChegadaSchema]
 
 
