@@ -42,17 +42,26 @@ export function TelaInicio({ aoSelecionarLinha, aoAbrirDemo, aoAbrirMapa }) {
     const mapa = {}
     await Promise.all(
       listaLinhas.map(async (l) => {
-        if (!l.codigo) return
+        const idLinha = l.codigo || l.numero
+        if (!l.codigo) {
+          mapa[idLinha] = {
+            minutos: Infinity,
+            tempo: 'Sem previsão',
+            status: 'Sem previsão',
+            ehDestaque: false,
+          }
+          return
+        }
         try {
           const dados = await obterPrevisoes(l.codigo)
           const primeira = dados?.previsoes?.[0]
           if (primeira?.horario_previsto) {
-            mapa[l.codigo] = formatarPrevisao(
+            mapa[idLinha] = formatarPrevisao(
               primeira.horario_previsto,
               dados.horario_referencia
             )
           } else {
-            mapa[l.codigo] = {
+            mapa[idLinha] = {
               minutos: Infinity,
               tempo: 'Sem previsão',
               status: 'Sem previsão',
@@ -60,7 +69,7 @@ export function TelaInicio({ aoSelecionarLinha, aoAbrirDemo, aoAbrirMapa }) {
             }
           }
         } catch {
-          mapa[l.codigo] = {
+          mapa[idLinha] = {
             minutos: Infinity,
             tempo: 'Sem previsão',
             status: 'Sem previsão',
@@ -85,8 +94,10 @@ export function TelaInicio({ aoSelecionarLinha, aoAbrirDemo, aoAbrirMapa }) {
       setPrevisoesPorLinha(mapaPrevisoes)
 
       const linhasOrdenadas = [...(dadosLinhas || [])].sort((a, b) => {
-        const minA = mapaPrevisoes[a.codigo]?.minutos ?? Infinity
-        const minB = mapaPrevisoes[b.codigo]?.minutos ?? Infinity
+        const idA = a.codigo || a.numero
+        const idB = b.codigo || b.numero
+        const minA = mapaPrevisoes[idA]?.minutos ?? Infinity
+        const minB = mapaPrevisoes[idB]?.minutos ?? Infinity
         if (minA !== minB) return minA - minB
         return (a.numero || '').localeCompare(b.numero || '')
       })
@@ -113,8 +124,10 @@ export function TelaInicio({ aoSelecionarLinha, aoAbrirDemo, aoAbrirMapa }) {
           setPrevisoesPorLinha(mapaPrevisoes)
 
           const linhasOrdenadas = [...(dadosLinhas || [])].sort((a, b) => {
-            const minA = mapaPrevisoes[a.codigo]?.minutos ?? Infinity
-            const minB = mapaPrevisoes[b.codigo]?.minutos ?? Infinity
+            const idA = a.codigo || a.numero
+            const idB = b.codigo || b.numero
+            const minA = mapaPrevisoes[idA]?.minutos ?? Infinity
+            const minB = mapaPrevisoes[idB]?.minutos ?? Infinity
             if (minA !== minB) return minA - minB
             return (a.numero || '').localeCompare(b.numero || '')
           })
@@ -349,7 +362,7 @@ export function TelaInicio({ aoSelecionarLinha, aoAbrirDemo, aoAbrirMapa }) {
                 key={linha.codigo || linha.numero}
                 linha={linha}
                 index={idx}
-                previsao={previsoesPorLinha[linha.codigo]}
+                previsao={previsoesPorLinha[linha.codigo || linha.numero]}
                 aoSelecionar={aoSelecionarLinha}
               />
             ))}
