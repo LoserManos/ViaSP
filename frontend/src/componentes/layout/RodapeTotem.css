@@ -1,0 +1,76 @@
+.viasp-rodape-totem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px var(--espacamento-md);
+  background-color: var(--cor-superficie);
+  border-top: 1px solid var(--cor-borda);
+  min-height: 52px;
+  color: var(--cor-texto-secundario);
+  font-family: var(--fonte-padrao);
+  font-size: var(--tamanho-texto-pequeno);
+  user-select: none;
+}
+
+.viasp-rodape-totem__esquerda {
+  display: flex;
+  align-items: center;
+  gap: var(--espacamento-xs);
+  color: var(--cor-texto-principal);
+  font-weight: var(--peso-semibold);
+}
+
+.viasp-rodape-totem__icone-relogio {
+  color: var(--cor-texto-secundario);
+}
+
+.viasp-rodape-totem__hora {
+  font-size: 1.0625rem;
+  letter-spacing: -0.2px;
+}
+
+.viasp-rodape-totem__direita {
+  display: flex;
+  align-items: center;
+  gap: var(--espacamento-xs);
+}
+
+.viasp-rodape-totem__ponto-vivo {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background-color: var(--cor-sucesso);
+  box-shadow: 0 0 0 3px var(--cor-sucesso-fundo);
+  animation: viasp-pulso-status 2s infinite ease-in-out;
+}
+
+@keyframes viasp-pulso-status {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.15);
+    opacity: 0.8;
+  }
+}
+
+.viasp-rodape-totem__divisor {
+  color: var(--cor-borda-forte);
+}
+
+.viasp-rodape-totem__sptrans-nome {
+  color: var(--cor-marca);
+  font-weight: var(--peso-bold);
+  letter-spacing: 0.5px;
+}
+
+@media (max-width: 520px) {
+  .viasp-rodape-totem {
+    flex-direction: column;
+    gap: var(--espacamento-xs);
+    padding: 10px var(--espacamento-sm);
+    text-align: center;
+  }
+}

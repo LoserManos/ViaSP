@@ -1,5 +1,6 @@
 import { lazy, Suspense, useEffect, useState } from 'react'
 import { CabecalhoTotem } from './componentes/layout/CabecalhoTotem'
+import { RodapeTotem } from './componentes/layout/RodapeTotem'
 import { TelaInicio } from './telas/TelaInicio'
 import { TelaDetalheLinha } from './telas/TelaDetalheLinha'
 import { TelaDemonstracao } from './telas/TelaDemonstracao'
@@ -97,6 +98,9 @@ function App() {
           <TelaDemonstracao aoVoltar={irParaInicio} />
         )}
       </main>
+
+      {/* Rodapé fixo com horário e dados em tempo real SPTrans */}
+      <RodapeTotem />
 
       {seletorAberto && (
         <Suspense fallback={null}>

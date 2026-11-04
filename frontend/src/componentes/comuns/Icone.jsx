@@ -57,6 +57,13 @@ const TRACADOS = {
       <circle cx="12" cy="14" r="8" />
     </>
   ),
+  // lucide: clock
+  relogio: (
+    <>
+      <circle cx="12" cy="12" r="10" />
+      <polyline points="12 6 12 12 16 14" />
+    </>
+  ),
   // lucide: arrow-left
   voltar: (
     <>
@@ -127,6 +134,7 @@ const TRACADOS = {
 TRACADOS.bus = TRACADOS.onibus
 TRACADOS.rota = TRACADOS.route
 TRACADOS.acessibilidade = TRACADOS.accessibility
+TRACADOS.clock = TRACADOS.relogio
 
 /**
  * Ícone SVG do totem. O projeto não usa emoji como ícone: a aparência do emoji

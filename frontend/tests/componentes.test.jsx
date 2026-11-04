@@ -2,6 +2,7 @@ import { render, screen, fireEvent } from '@testing-library/react'
 import { describe, it, expect, vi } from 'vitest'
 import { Botao, Cartao, TextoGrande } from '../src/componentes/base'
 import { CabecalhoTotem } from '../src/componentes/layout/CabecalhoTotem'
+import { RodapeTotem } from '../src/componentes/layout/RodapeTotem'
 import { ItemLinha } from '../src/componentes/totem/ItemLinha'
 import { TOKENS } from '../src/tokens'
 
@@ -180,5 +181,17 @@ describe('Componente: CabecalhoTotem', () => {
     expect(btnParada).toBeInTheDocument()
     fireEvent.click(btnParada)
     expect(mockEscolher).toHaveBeenCalledTimes(1)
+  })
+})
+
+describe('Componente: RodapeTotem', () => {
+  it('exibe o relógio e a indicação de dados em tempo real da SPTrans', () => {
+    render(<RodapeTotem />)
+
+    expect(screen.getByText('Dados em tempo real')).toBeInTheDocument()
+    expect(screen.getByText('SPTrans')).toBeInTheDocument()
+    // O relógio exibe o horário formatado (ex: HH:MM)
+    const horaRegex = /^\d{2}:\d{2}$/
+    expect(screen.getByText(horaRegex)).toBeInTheDocument()
   })
 })
