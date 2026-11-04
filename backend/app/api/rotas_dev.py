@@ -4,6 +4,7 @@ Na versão final cada totem tem a parada fixa na configuração. Para a
 demonstração, estas rotas deixam escolher a parada num mapa com todas as
 paradas do GTFS, sem reiniciar o backend.
 """
+
 from fastapi import APIRouter, Depends, Query, Request
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel

@@ -3,6 +3,7 @@
 Rotas de consulta delegam ao ServicoConsulta. Erros viram respostas no formato
 padrão de docs/produto/api.md (ver handlers em app/main.py).
 """
+
 from fastapi import APIRouter, Depends
 
 from app.dominio import Linha, Parada, Totem

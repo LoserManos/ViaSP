@@ -4,6 +4,7 @@
 recarrega o servidor quando o código muda. Rode de dentro de `backend/`, onde
 ficam o `.env`, o banco e o GTFS.
 """
+
 import argparse
 import os
 

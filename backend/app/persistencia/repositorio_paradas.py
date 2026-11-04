@@ -4,6 +4,7 @@ O GTFS (General Transit Feed Specification) é publicado pela SPTrans na área d
 desenvolvedor. Daqui só usamos o `stops.txt`: código, nome, referência e
 coordenadas de cada parada, que a API Olho Vivo nem sempre tem.
 """
+
 import csv
 import io
 import zipfile
@@ -107,8 +108,7 @@ class RepositorioParadas:
             if stop_times:
                 conexao.execute("DELETE FROM itinerario_gtfs")
                 conexao.executemany(
-                    "INSERT OR REPLACE INTO itinerario_gtfs (trip_id, stop_id, stop_sequence) "
-                    "VALUES (?, ?, ?)",
+                    "INSERT OR REPLACE INTO itinerario_gtfs (trip_id, stop_id, stop_sequence) VALUES (?, ?, ?)",
                     stop_times,
                 )
 
@@ -125,9 +125,7 @@ class RepositorioParadas:
             except Exception:
                 return 0
 
-    def buscar_itinerario_linha(
-        self, numero_linha: str, destino: str = "", sentido: int | None = None
-    ) -> list[Parada]:
+    def buscar_itinerario_linha(self, numero_linha: str, destino: str = "", sentido: int | None = None) -> list[Parada]:
         """Recupera a sequência ordenada de todas as paradas do itinerário da linha no GTFS."""
         numero_limpo = numero_linha.strip()
         if not numero_limpo:
@@ -184,6 +182,29 @@ class RepositorioParadas:
         with conectar(self._caminho) as conexao:
             registro = conexao.execute("SELECT * FROM parada_gtfs WHERE codigo = ?", (codigo,)).fetchone()
         return _para_parada(registro) if registro else None
+
+    def buscar_linhas_da_parada(self, codigo_parada: int) -> list[dict]:
+        """Recupera todas as rotas/linhas que atendem a parada no GTFS."""
+        with conectar(self._caminho) as conexao:
+            registros = conexao.execute(
+                """
+                SELECT DISTINCT v.route_id, v.trip_headsign, v.direction_id
+                FROM itinerario_gtfs i
+                JOIN viagem_gtfs v ON i.trip_id = v.trip_id
+                WHERE i.stop_id = ?
+                ORDER BY v.route_id, v.direction_id
+                """,
+                (codigo_parada,),
+            ).fetchall()
+
+        return [
+            {
+                "numero": r["route_id"],
+                "destino": r["trip_headsign"],
+                "sentido": 1 if r["direction_id"] == 0 else 2,
+            }
+            for r in registros
+        ]
 
     def buscar_na_area(
         self, lat_min: float, lat_max: float, lon_min: float, lon_max: float, limite: int

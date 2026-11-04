@@ -304,3 +304,25 @@
   justify-content: center;
   padding-top: var(--espacamento-md);
 }
+
+/* Totem em pé (ex.: 1080×1920): ocupar largura e altura disponíveis */
+@media (orientation: portrait) and (min-height: 1100px) {
+  .viasp-tela-inicio {
+    max-width: none;
+    flex: 1;
+  }
+
+  .viasp-tela-inicio__ponto-card {
+    flex: 1;
+  }
+
+  .viasp-tela-inicio__linhas-lista {
+    flex: 1;
+  }
+
+  .viasp-tela-inicio__linhas-lista .viasp-item-linha {
+    flex: 1;
+    min-height: 80px;
+    max-height: 112px;
+  }
+}

@@ -19,8 +19,14 @@ import './TelaInicio.css'
  * @param {(linha: object) => void} props.aoSelecionarLinha - Disparado ao selecionar uma linha.
  * @param {() => void} [props.aoAbrirDemo] - Navegação para demonstração de tokens.
  * @param {() => void} [props.aoAbrirMapa] - Ação para abrir mapa dos arredores.
+ * @param {boolean} [props.retrato=false] - Totem em pé: mostra mais linhas de início.
  */
-export function TelaInicio({ aoSelecionarLinha, aoAbrirDemo, aoAbrirMapa }) {
+export function TelaInicio({
+  aoSelecionarLinha,
+  aoAbrirDemo,
+  aoAbrirMapa,
+  retrato = false,
+}) {
   const [totem, setTotem] = useState(null)
   const [linhas, setLinhas] = useState([])
   const [previsoesPorLinha, setPrevisoesPorLinha] = useState({})
@@ -30,6 +36,7 @@ export function TelaInicio({ aoSelecionarLinha, aoAbrirDemo, aoAbrirMapa }) {
   const [ouvindoVoz, setOuvindoVoz] = useState(false)
   const [mensagemVoz, setMensagemVoz] = useState('')
   const [mostrarTodas, setMostrarTodas] = useState(false)
+  const limiteLinhas = retrato ? 6 : 5
 
   const carregarPrevisoes = async (listaLinhas) => {
     if (
@@ -357,19 +364,21 @@ export function TelaInicio({ aoSelecionarLinha, aoAbrirDemo, aoAbrirMapa }) {
           </div>
         ) : (
           <div className="viasp-tela-inicio__linhas-lista" role="list">
-            {(mostrarTodas ? linhas : linhas.slice(0, 5)).map((linha, idx) => (
-              <ItemLinha
-                key={linha.codigo || linha.numero}
-                linha={linha}
-                index={idx}
-                previsao={previsoesPorLinha[linha.codigo || linha.numero]}
-                aoSelecionar={aoSelecionarLinha}
-              />
-            ))}
+            {(mostrarTodas ? linhas : linhas.slice(0, limiteLinhas)).map(
+              (linha, idx) => (
+                <ItemLinha
+                  key={linha.codigo || linha.numero}
+                  linha={linha}
+                  index={idx}
+                  previsao={previsoesPorLinha[linha.codigo || linha.numero]}
+                  aoSelecionar={aoSelecionarLinha}
+                />
+              )
+            )}
           </div>
         )}
 
-        {linhas.length > 5 && !mostrarTodas && (
+        {linhas.length > limiteLinhas && !mostrarTodas && (
           <button
             type="button"
             className="viasp-tela-inicio__ver-todas"

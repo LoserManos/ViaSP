@@ -106,4 +106,3 @@ def test_listar_paradas_da_linha_retorna_todas_e_enriquece_gtfs(client):
     # Verifica enriquecimento com GTFS da parada sem nome (440016921)
     parada_gtfs = next(p for p in dados if p["codigo"] == 440016921)
     assert parada_gtfs["nome"] == "Av. Paulista, 2027"
-

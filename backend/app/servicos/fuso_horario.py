@@ -1,4 +1,5 @@
 """Utilitários de data e fuso horário para a aplicação."""
+
 from datetime import datetime, timedelta, timezone
 
 FUSO_SP_FALLBACK = timezone(timedelta(hours=-3))

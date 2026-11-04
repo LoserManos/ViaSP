@@ -1,4 +1,5 @@
 """SQLite local: configuração do totem e logs de uso (assíncronos via BackgroundTasks)."""
+
 import sqlite3
 from contextlib import contextmanager
 from pathlib import Path

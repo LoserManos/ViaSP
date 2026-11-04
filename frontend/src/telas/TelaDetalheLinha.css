@@ -816,6 +816,25 @@
   }
 }
 
+/* Totem em pé (ex.: 1080×1920): uma coluna, diagrama ocupa a altura */
+@media (orientation: portrait) and (min-height: 1100px) {
+  .line-body {
+    flex: 1;
+    grid-template-columns: 1fr;
+    grid-template-rows: 1fr auto;
+  }
+  .line-diagram-wrap {
+    max-height: none;
+  }
+  .line-diagram {
+    max-width: none;
+  }
+  .line-panel {
+    border-left: none;
+    border-top: 1px solid var(--line);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .line-stop.here .line-node,
   .line-bus::before {

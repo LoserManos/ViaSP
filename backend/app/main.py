@@ -60,7 +60,7 @@ async def lifespan(app: FastAPI):
     _carregar_gtfs(repositorio_paradas, settings.gtfs_caminho)
 
     app.state.repositorio_paradas = repositorio_paradas
-    app.state.servico_consulta = ServicoConsulta(cliente)
+    app.state.servico_consulta = ServicoConsulta(cliente, repositorio_paradas=repositorio_paradas)
     app.state.totem = Totem(
         identificador=settings.totem_identificador,
         parada=await _parada_do_totem(settings.parada_codigo, repositorio_paradas, cliente),
