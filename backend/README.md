@@ -79,3 +79,13 @@ Para evitar poluição visual na interface do totem público (US03), a listagem 
    - As $K - 2$ **paradas intermediárias** são selecionadas escolhendo-se uniformemente as paradas ao longo da lista. 
 
 Isso garante que o usuário tenha a noção exata da direção e das principais vias do percurso, preservando a velocidade da requisição e o layout da tela.
+
+## Cache em Memória e Proteção da API Externa
+
+Para evitar chamadas repetidas à SPTrans quando vários passageiros consultam o mesmo ponto e manter o totem útil durante oscilações da API externa, o `ServicoConsulta` mantém cache em memória configurável via variáveis de ambiente (`.env`):
+
+* `CACHE_TTL_LINHAS_SEGUNDOS` (padrão `60`): linhas com previsão no ponto (`/Previsao/Parada`).
+* `CACHE_TTL_PARADAS_SEGUNDOS` (padrão `3600`): paradas do itinerário da linha (dado quase estático).
+* `CACHE_TTL_PREVISOES_SEGUNDOS` (padrão `15`): previsões de chegada por parada e linha.
+
+Se a SPTrans falhar após o vencimento do TTL e houver um resultado válido anterior em cache, o backend devolve esse último resultado marcado como desatualizado (`desatualizado: true` em `/api/previsoes` e cabeçalho `X-Dados-Desatualizados: true` nas rotas de consulta).

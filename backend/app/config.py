@@ -14,6 +14,11 @@ class Settings(BaseSettings):
     sptrans_base_url: str = "https://api.olhovivo.sptrans.com.br/v2.1"
     sptrans_timeout_segundos: float = 10.0
 
+    # Cache em memória e proteção da API externa (ISS-11)
+    cache_ttl_linhas_segundos: float = 60.0
+    cache_ttl_paradas_segundos: float = 3600.0
+    cache_ttl_previsoes_segundos: float = 15.0
+
     # Totem / parada configurada
     totem_identificador: str = "totem-001"
     parada_codigo: int = 0
