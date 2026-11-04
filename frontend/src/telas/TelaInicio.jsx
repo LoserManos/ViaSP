@@ -17,13 +17,11 @@ import './TelaInicio.css'
  *
  * @param {object} props
  * @param {(linha: object) => void} props.aoSelecionarLinha - Disparado ao selecionar uma linha.
- * @param {() => void} [props.aoAbrirDemo] - Navegação para demonstração de tokens.
  * @param {() => void} [props.aoAbrirMapa] - Ação para abrir mapa dos arredores.
  * @param {boolean} [props.retrato=false] - Totem em pé: mostra mais linhas de início.
  */
 export function TelaInicio({
   aoSelecionarLinha,
-  aoAbrirDemo,
   aoAbrirMapa,
   retrato = false,
 }) {
@@ -388,15 +386,6 @@ export function TelaInicio({
           </button>
         )}
       </Cartao>
-
-      {/* 5. Rodapé com atalho de demonstração */}
-      {aoAbrirDemo && (
-        <footer className="viasp-tela-inicio__rodape">
-          <Botao variante="secundario" onClick={aoAbrirDemo}>
-            Ver Página de Demonstração (Design Tokens & Ergonomia)
-          </Botao>
-        </footer>
-      )}
     </div>
   )
 }

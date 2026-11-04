@@ -299,12 +299,6 @@
   gap: var(--espacamento-xs);
 }
 
-.viasp-tela-inicio__rodape {
-  display: flex;
-  justify-content: center;
-  padding-top: var(--espacamento-md);
-}
-
 /* Totem em pé (ex.: 1080×1920): ocupar largura e altura disponíveis */
 @media (orientation: portrait) and (min-height: 1100px) {
   .viasp-tela-inicio {

@@ -77,30 +77,18 @@ describe('Navegação por Estado no Totem (ISS-14.2)', () => {
     })
   })
 
-  it('navega para a tela de demonstração de tokens e retorna ao início', async () => {
+  it('não exibe atalhos para design tokens no totem público', async () => {
     render(<App />)
 
-    const btnDemo = screen.getByRole('button', {
-      name: /abrir guia de design tokens/i,
-    })
-    fireEvent.click(btnDemo)
-
-    // Verifica que está na tela de demonstração
-    await waitFor(() => {
-      expect(
-        screen.getByText('Identidade Visual e Componentes Base')
-      ).toBeInTheDocument()
-    })
-
-    // Clica em voltar
-    const btnVoltar = screen.getByRole('button', {
-      name: /voltar para a tela anterior/i,
-    })
-    fireEvent.click(btnVoltar)
-
-    // Retorna à tela inicial
-    await waitFor(() => {
-      expect(screen.getByText('Olá! Aonde vamos?')).toBeInTheDocument()
-    })
+    expect(
+      screen.queryByRole('button', {
+        name: /abrir guia de design tokens/i,
+      })
+    ).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole('button', {
+        name: /design tokens/i,
+      })
+    ).not.toBeInTheDocument()
   })
 })

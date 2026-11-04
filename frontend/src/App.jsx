@@ -3,7 +3,6 @@ import { CabecalhoTotem } from './componentes/layout/CabecalhoTotem'
 import { RodapeTotem } from './componentes/layout/RodapeTotem'
 import { TelaInicio } from './telas/TelaInicio'
 import { TelaDetalheLinha } from './telas/TelaDetalheLinha'
-import { TelaDemonstracao } from './telas/TelaDemonstracao'
 import { estaUsandoMocks, obterTotem } from './servicos/api'
 import './App.css'
 
@@ -22,7 +21,7 @@ const SeletorParada = lazy(() =>
  */
 function App() {
   const [navegacao, setNavegacao] = useState({
-    tela: 'inicio', // 'inicio' | 'detalhe' | 'demo'
+    tela: 'inicio', // 'inicio' | 'detalhe'
     params: {},
   })
   const [parada, setParada] = useState(null)
@@ -78,10 +77,6 @@ function App() {
     setNavegacao({ tela: 'detalhe', params: { linha } })
   }
 
-  const irParaDemo = () => {
-    setNavegacao({ tela: 'demo', params: {} })
-  }
-
   const trocarParada = (totem) => {
     setParada(totem.parada)
     setVersaoParada((versao) => versao + 1)
@@ -92,15 +87,12 @@ function App() {
   return (
     <>
       <div className="viasp-app">
-        {/* Cabeçalho fixo do totem com botão voltar condicional */}
+        {/* Cabeçalho fixo do totem */}
         <CabecalhoTotem
           nomeParada={
             parada && [parada.nome, parada.endereco].filter(Boolean).join(' — ')
           }
-          aoVoltar={navegacao.tela === 'demo' ? irParaInicio : undefined}
-          aoAbrirDemo={navegacao.tela !== 'demo' ? irParaDemo : undefined}
           aoEscolherParada={modoDev ? () => setSeletorAberto(true) : undefined}
-          tituloTela={navegacao.tela === 'demo' ? 'Design Tokens' : undefined}
         />
 
         {/* Conteúdo dinâmico renderizado de acordo com o estado ativo */}
@@ -110,7 +102,6 @@ function App() {
               key={versaoParada}
               retrato={retrato}
               aoSelecionarLinha={irParaDetalhe}
-              aoAbrirDemo={irParaDemo}
               aoAbrirMapa={modoDev ? () => setSeletorAberto(true) : undefined}
             />
           )}
@@ -120,10 +111,6 @@ function App() {
               linha={navegacao.params?.linha}
               aoVoltar={irParaInicio}
             />
-          )}
-
-          {navegacao.tela === 'demo' && (
-            <TelaDemonstracao aoVoltar={irParaInicio} />
           )}
         </main>
 
