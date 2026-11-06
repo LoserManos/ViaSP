@@ -1,15 +1,15 @@
 """Coordena o fluxo de consulta: parada configurada + linha/sentido."""
+
 import asyncio
 import time
 import unicodedata
 from collections.abc import Callable
-from datetime import datetime
-from zoneinfo import ZoneInfo
 
 from app.dominio import ConsultaPrevisao, EstadoConsulta, Linha, Parada
 from app.excecoes import ErroAutenticacaoSPTrans, ErroSPTrans, SPTransIndisponivel
 
 from .cliente_sptrans import ClienteSPTrans
+from .fuso_horario import agora_sao_paulo
 
 # As linhas do ponto mudam pouco; evita uma chamada à SPTrans a cada toque na tela
 TTL_LINHAS_DO_PONTO_SEGUNDOS = 60.0
@@ -22,26 +22,114 @@ def _normalizar_texto(texto: str) -> str:
     texto_sem_acento = unicodedata.normalize("NFKD", texto).encode("ASCII", "ignore").decode("ASCII")
     return texto_sem_acento.lower()
 
+
 class ServicoConsulta:
-    def __init__(self, cliente: ClienteSPTrans, relogio: Callable[[], float] = time.monotonic) -> None:
+    def __init__(
+        self,
+        cliente: ClienteSPTrans,
+        relogio: Callable[[], float] = time.monotonic,
+        repositorio_paradas: object | None = None,
+    ) -> None:
         self._cliente = cliente
         self._relogio = relogio
+        self._repositorio_paradas = repositorio_paradas
         self._cache_linhas: dict[int, tuple[float, list[Linha]]] = {}
+        self._cache_codigos_linhas: dict[str, list[Linha]] = {}
         self._trava_linhas = asyncio.Lock()
+
+    async def _obter_linha_cadastral(self, numero: str, sentido: int, destino: str) -> Linha:
+        """Localiza os metadados cadastrais da linha na SPTrans, com cache em memória."""
+        candidatas = self._cache_codigos_linhas.get(numero)
+        if candidatas is None:
+            try:
+                candidatas = await self._cliente.buscar_linhas(numero)
+            except Exception:
+                candidatas = []
+            self._cache_codigos_linhas[numero] = candidatas
+
+        destino_norm = _normalizar_texto(destino)
+        # 1. Tenta casar por sentido e destino
+        for c in candidatas:
+            if c.sentido == sentido and (
+                destino_norm in _normalizar_texto(c.destino) or _normalizar_texto(c.destino) in destino_norm
+            ):
+                return c
+
+        # 2. Tenta casar apenas por sentido
+        for c in candidatas:
+            if c.sentido == sentido:
+                return c
+
+        # 3. Tenta casar apenas por destino
+        for c in candidatas:
+            if destino_norm in _normalizar_texto(c.destino) or _normalizar_texto(c.destino) in destino_norm:
+                return c
+
+        # 4. Fallback se houver alguma candidata daquela linha
+        if candidatas:
+            return candidatas[0]
+
+        # 5. Fallback sem código cadastrado
+        return Linha(codigo=0, numero=numero, sentido=sentido, destino=destino)
 
     async def _linhas_do_ponto(self, parada: Parada) -> list[Linha]:
         """Linhas do ponto com cache em memória.
 
-        Usa `/Previsao/Parada` (Opção (a) do ADR-001): só as linhas com ônibus previsto.
-        A trava faz requisições simultâneas compartilharem uma única chamada à SPTrans.
+        Combina as linhas em tempo real da SPTrans com a malha completa do GTFS local.
+        Linhas com ônibus a caminho têm previsão ativa; linhas sem veículos em trânsito
+        permanecem na listagem com status de 'Sem previsão'.
         """
         async with self._trava_linhas:
             em_cache = self._cache_linhas.get(parada.codigo)
             if em_cache and self._relogio() - em_cache[0] < TTL_LINHAS_DO_PONTO_SEGUNDOS:
                 return em_cache[1]
-            linhas = await self._cliente.buscar_linhas_com_previsao(parada.codigo)
-            self._cache_linhas[parada.codigo] = (self._relogio(), linhas)
-            return linhas
+
+            try:
+                linhas_com_previsao = await self._cliente.buscar_linhas_com_previsao(parada.codigo)
+            except Exception:
+                linhas_com_previsao = []
+
+            if not self._repositorio_paradas:
+                self._cache_linhas[parada.codigo] = (self._relogio(), linhas_com_previsao)
+                return linhas_com_previsao
+
+            gtfs_linhas = self._repositorio_paradas.buscar_linhas_da_parada(parada.codigo)
+            if not gtfs_linhas:
+                self._cache_linhas[parada.codigo] = (self._relogio(), linhas_com_previsao)
+                return linhas_com_previsao
+
+            mapa_ativas_por_num: dict[str, Linha] = {linha.numero: linha for linha in linhas_com_previsao}
+
+            linhas_finais: list[Linha] = []
+            chaves_inseridas: set[tuple[str, int]] = set()
+
+            # 1. Insere primeiro todas as linhas que têm previsão ativa no momento
+            for linha_prev in linhas_com_previsao:
+                chave = (linha_prev.numero, linha_prev.sentido)
+                if chave not in chaves_inseridas:
+                    linhas_finais.append(linha_prev)
+                    chaves_inseridas.add(chave)
+
+            # 2. Identifica linhas do GTFS que não estão com previsão ativa
+            faltantes = []
+            for g in gtfs_linhas:
+                chave = (g["numero"], g["sentido"])
+                if chave not in chaves_inseridas and g["numero"] not in mapa_ativas_por_num:
+                    faltantes.append(g)
+
+            # 3. Resolve os metadados cadastrais das linhas faltantes
+            if faltantes:
+                linhas_resolvidas = await asyncio.gather(
+                    *(self._obter_linha_cadastral(f["numero"], f["sentido"], f["destino"]) for f in faltantes)
+                )
+                for linha_res in linhas_resolvidas:
+                    chave = (linha_res.numero, linha_res.sentido)
+                    if chave not in chaves_inseridas:
+                        linhas_finais.append(linha_res)
+                        chaves_inseridas.add(chave)
+
+            self._cache_linhas[parada.codigo] = (self._relogio(), linhas_finais)
+            return linhas_finais
 
     async def buscar_linhas(self, parada: Parada, termo: str = "") -> list[Linha]:
         """Linhas atendidas pela parada (US01), filtradas por termo (US02)."""
@@ -65,12 +153,15 @@ class ServicoConsulta:
 
         return linhas_filtradas
 
-    async def consultar_paradas(self, linha: Linha, limite_numero_paradas: int = 5) -> list[Parada]:
-        """Itinerário simplificado: paradas da linha (US03)."""
+    async def consultar_paradas(self, linha: Linha, limite_numero_paradas: int | None = None) -> list[Parada]:
+        """Itinerário: paradas da linha (todas as paradas por padrão, ou simplificado se limite informado)."""
         lista_paradas_completa = await self._cliente.buscar_paradas(linha.codigo)
 
         if not lista_paradas_completa:
             return []
+
+        if limite_numero_paradas is None:
+            return lista_paradas_completa
 
         total_paradas = len(lista_paradas_completa)
 
@@ -85,9 +176,7 @@ class ServicoConsulta:
 
         return lista_paradas_filtrada
 
-    async def consultar_previsoes(
-        self, parada: Parada, linha: Linha
-    ) -> ConsultaPrevisao:
+    async def consultar_previsoes(self, parada: Parada, linha: Linha) -> ConsultaPrevisao:
         """Previsões de chegada (US06), com horário de referência (US07)."""
         try:
             # O cliente já sabe buscar as previsões e lidar com a rede
@@ -95,13 +184,14 @@ class ServicoConsulta:
 
         except SPTransIndisponivel:
             return self._criar_consulta_falha(
-                parada, linha, "O sistema de previsão está indisponível no momento. Tente novamente em instantes.")
+                parada, linha, "O sistema de previsão está indisponível no momento. Tente novamente em instantes."
+            )
         except (ErroAutenticacaoSPTrans, ErroSPTrans):
             return self._criar_consulta_falha(
-                parada, linha, "Não foi possível obter a previsão devido a um erro de comunicação.")
+                parada, linha, "Não foi possível obter a previsão devido a um erro de comunicação."
+            )
         except Exception:
-            return self._criar_consulta_falha(
-                parada, linha, "Ocorreu um erro inesperado ao buscar a previsão.")
+            return self._criar_consulta_falha(parada, linha, "Ocorreu um erro inesperado ao buscar a previsão.")
 
         # Se a consulta foi bem-sucedida e tem veículos, ordena pelo tempo de espera (ISS-09.1)
         if consulta.estado == EstadoConsulta.SUCESSO and consulta.previsoes:
@@ -117,7 +207,7 @@ class ServicoConsulta:
         return ConsultaPrevisao(
             parada=parada,
             linha=linha,
-            horario_consulta=datetime.now(ZoneInfo("America/Sao_Paulo")),
+            horario_consulta=agora_sao_paulo(),
             estado=EstadoConsulta.FALHA,
-            mensagem_erro=mensagem
+            mensagem_erro=mensagem,
         )

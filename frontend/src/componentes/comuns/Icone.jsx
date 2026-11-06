@@ -57,6 +57,13 @@ const TRACADOS = {
       <circle cx="12" cy="14" r="8" />
     </>
   ),
+  // lucide: clock
+  relogio: (
+    <>
+      <circle cx="12" cy="12" r="10" />
+      <polyline points="12 6 12 12 16 14" />
+    </>
+  ),
   // lucide: arrow-left
   voltar: (
     <>
@@ -73,24 +80,91 @@ const TRACADOS = {
   ),
   // lucide: chevron-right
   avancar: <path d="m9 18 6-6-6-6" />,
+  // lucide: contrast / circle-half
+  contraste: (
+    <>
+      <circle cx="12" cy="12" r="10" />
+      <path d="M12 18a6 6 0 0 0 0-12v12z" fill="currentColor" />
+    </>
+  ),
+  // lucide: mic
+  microfone: (
+    <>
+      <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z" />
+      <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
+      <line x1="12" x2="12" y1="19" y2="22" />
+    </>
+  ),
+  // lucide: globe
+  globo: (
+    <>
+      <circle cx="12" cy="12" r="10" />
+      <path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20" />
+      <path d="M2 12h20" />
+    </>
+  ),
+  // lucide: route
+  route: (
+    <>
+      <circle cx="6" cy="19" r="3" />
+      <path d="M9 19h8.5a3.5 3.5 0 0 0 0-7h-11a3.5 3.5 0 0 1 0-7H15" />
+      <circle cx="18" cy="5" r="3" />
+    </>
+  ),
+  // lucide: accessibility
+  accessibility: (
+    <>
+      <circle cx="16" cy="4" r="1" />
+      <path d="m18 19 1-7-6 1" />
+      <path d="m5 8 3-3 5.5 3-2.36 3.5" />
+      <path d="M4.24 14.5a5 5 0 0 0 6.88 6" />
+      <path d="M13.76 17.5a5 5 0 0 0-6.88-6" />
+    </>
+  ),
+  // lucide: arrow-left / arrow
+  arrow: (
+    <>
+      <path d="m12 19-7-7 7-7" />
+      <path d="M19 12H5" />
+    </>
+  ),
 }
+
+// Aliases para máxima compatibilidade com componentes existentes
+TRACADOS.bus = TRACADOS.onibus
+TRACADOS.rota = TRACADOS.route
+TRACADOS.acessibilidade = TRACADOS.accessibility
+TRACADOS.clock = TRACADOS.relogio
 
 /**
  * Ícone SVG do totem. O projeto não usa emoji como ícone: a aparência do emoji
  * muda de um sistema para outro e não segue as cores do tema.
  *
  * @param {object} props
- * @param {keyof typeof TRACADOS} props.nome - Qual ícone desenhar.
- * @param {string} [props.tamanho='1em'] - Largura e altura (herda o tamanho do texto por padrão).
+ * @param {keyof typeof TRACADOS} [props.nome] - Qual ícone desenhar.
+ * @param {string} [props.name] - Alias para nome.
+ * @param {string | number} [props.tamanho='1em'] - Largura e altura.
+ * @param {string | number} [props.size] - Alias para tamanho.
  * @param {string} [props.className] - Classes CSS complementares.
  */
-export function Icone({ nome, tamanho = '1em', className = '' }) {
+export function Icone({
+  nome,
+  name,
+  tamanho,
+  size,
+  className = '',
+  ...outrasProps
+}) {
+  const chave = nome || name || 'onibus'
+  const dim =
+    tamanho || (typeof size === 'number' ? `${size}px` : size) || '1em'
+
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
       viewBox="0 0 24 24"
-      width={tamanho}
-      height={tamanho}
+      width={dim}
+      height={dim}
       fill="none"
       stroke="currentColor"
       strokeWidth="2"
@@ -99,9 +173,13 @@ export function Icone({ nome, tamanho = '1em', className = '' }) {
       className={`viasp-icone ${className}`.trim()}
       aria-hidden="true"
       focusable="false"
-      data-icone={nome}
+      data-icone={chave}
+      {...outrasProps}
     >
-      {TRACADOS[nome]}
+      {TRACADOS[chave] || TRACADOS.onibus}
     </svg>
   )
 }
+
+// Exporta Icon como alias de Icone
+export const Icon = Icone

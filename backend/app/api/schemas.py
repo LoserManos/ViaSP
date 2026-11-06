@@ -1,4 +1,5 @@
 """Modelos de resposta da API (o que o frontend recebe)."""
+
 from datetime import datetime
 
 from pydantic import BaseModel, ConfigDict

@@ -1,5 +1,9 @@
 .viasp-app {
-  min-height: 100vh;
+  /* Escala definida em App.jsx conforme a resolução (1 = layout de referência) */
+  zoom: var(--ui-escala);
+  /* O zoom também multiplica vh/dvh, por isso a divisão */
+  min-height: calc(100vh / var(--ui-escala));
+  min-height: calc(100dvh / var(--ui-escala));
   display: flex;
   flex-direction: column;
 }
@@ -8,4 +12,22 @@
   flex: 1;
   display: flex;
   flex-direction: column;
+}
+
+@media print {
+  .viasp-app {
+    min-height: auto;
+    display: block;
+  }
+  .viasp-cabecalho-totem {
+    position: static !important;
+  }
+}
+
+/* Totem em pé (ex.: 1080×1920): botões e rodapé sem quebra de linha */
+@media (orientation: portrait) and (min-height: 1100px) {
+  .viasp-cabecalho-totem__btn-util,
+  .viasp-rodape-totem span {
+    white-space: nowrap;
+  }
 }

@@ -5,6 +5,8 @@ import {
   listarParadasDaLinha,
   obterPrevisoes,
   definirModoMock,
+  calcularTempoEsperaMinutos,
+  formatarPrevisao,
 } from '../src/servicos/api'
 import { ErroViaSP, normalizarErro } from '../src/servicos/erro'
 
@@ -86,5 +88,39 @@ describe('Tratamento de Erros Padronizado (US08 / ISS-13.2)', () => {
     expect(normalizado.codigo).toBe('SPTRANS_INDISPONIVEL')
     expect(normalizado.mensagem).toBe('A SPTrans está indisponível no momento.')
     expect(normalizado.tentar_novamente).toBe(true)
+  })
+})
+
+describe('Cálculo Dinâmico de Previsão de Chegada (US01 / US06)', () => {
+  it('calcula a diferença de tempo corretamente em minutos', () => {
+    expect(calcularTempoEsperaMinutos('19:48', '19:45')).toBe(3)
+    expect(calcularTempoEsperaMinutos('19:45', '19:45')).toBe(0)
+    expect(calcularTempoEsperaMinutos('20:10', '19:45')).toBe(25)
+  })
+
+  it('trata virada de meia-noite', () => {
+    expect(calcularTempoEsperaMinutos('00:03', '23:58')).toBe(5)
+  })
+
+  it('retorna 0 para previsões no passado imediato', () => {
+    expect(calcularTempoEsperaMinutos('14:05', '14:10')).toBe(0)
+  })
+
+  it('formata status e rótulo de tempo dinamicamente', () => {
+    const p1 = formatarPrevisao('19:48', '19:45')
+    expect(p1.minutos).toBe(3)
+    expect(p1.tempo).toBe('3 min')
+    expect(p1.status).toBe('Chegando')
+    expect(p1.ehDestaque).toBe(true)
+
+    const p2 = formatarPrevisao('19:53', '19:45')
+    expect(p2.minutos).toBe(8)
+    expect(p2.tempo).toBe('8 min')
+    expect(p2.status).toBe('No horário')
+    expect(p2.ehDestaque).toBe(false)
+
+    const pVazia = formatarPrevisao(null)
+    expect(pVazia.tempo).toBe('Sem previsão')
+    expect(pVazia.status).toBe('Sem previsão')
   })
 })

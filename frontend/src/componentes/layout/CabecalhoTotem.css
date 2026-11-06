@@ -4,8 +4,8 @@
   align-items: center;
   padding: var(--espacamento-sm) var(--espacamento-md);
   background-color: var(--cor-superficie);
-  border-bottom: 2px solid var(--cor-borda);
-  box-shadow: var(--sombra-card);
+  border-bottom: 1px solid var(--cor-borda);
+  box-shadow: none;
   min-height: 76px;
   position: sticky;
   top: 0;
