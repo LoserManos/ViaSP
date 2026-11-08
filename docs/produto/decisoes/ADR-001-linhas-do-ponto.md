@@ -1,7 +1,7 @@
 # ADR-001: Estratégia de Listagem de Linhas do Ponto
 
 **Data:** 27 de outubro de 2026  
-**Status:** Aceito; revisado em 02/11/2026 (Opção (c) substituída pela Opção (a), ver seção 6)  
+**Status:** Aceito; revisado em 04/11/2026 (Abordagem híbrida GTFS + Previsão Olho Vivo, ver seção 7)  
 **Contexto:** Tarefa ISS-03.3 (US01 - Exibir linhas disponíveis no totem)
 
 ## 1. Contexto e Problema
@@ -76,3 +76,18 @@ A **Opção (a)** passa a ser a definitiva: `/api/linhas` lista as linhas com ô
 - Teste em 01/11/2026 às 23:58 (domingo), parada `120010351` (Cidade Universitária): o GTFS da SPTrans lista 11 linhas para o ponto, e `/Previsao/Parada` não devolveu nenhuma: parte delas só roda em dia útil (ex.: 177H-10, 701U-10) e outras passam de hora em hora de madrugada (ex.: 8022-10).
 - A ISS-11 (#67) não precisa mais de armazenamento local de linhas nem de sincronização periódica; o cache de 60 s cobre a proteção da API externa para esta rota.
 - Nome e coordenadas da parada, que a Olho Vivo não tem para `440016921`, vêm do GTFS da SPTrans (PR #97).
+
+## 7. Evolução Definitiva: Abordagem Híbrida GTFS + Previsão em Tempo Real (04/11/2026)
+
+### Contexto
+Com a importação completa do GTFS no banco SQLite local (`totem.db`) contendo mais de 22 mil paradas e 99 mil itinerários, o totem passou a ter acesso instantâneo (< 1 ms) à malha completa de linhas atendidas em qualquer parada física da cidade.
+
+### Decisão
+Adota-se a **solução híbrida**:
+1. **Malha Completa (GTFS local):** O backend lê todas as rotas que atendem a parada fisicamente no banco SQLite local (`itinerario_gtfs` + `viagem_gtfs`).
+2. **Enriquecimento em Tempo Real (SPTrans Olho Vivo):** Cruza com `/Previsao/Parada` em tempo real (mantendo cache de 60 s).
+3. **UX Clara:**
+   - As linhas com veículos a caminho recebem a previsão de chegada calculada em minutos e vão para o topo da listagem.
+   - As linhas sem veículos em trânsito no momento (ex.: 8084-10 em momentos de intervalo ou finais de semana) **não desaparecem**: continuam listadas normalmente, posicionadas ao final com o status e tempo exibindo **"Sem previsão"**.
+   - O passageiro pode tocar em qualquer linha (com ou sem previsão) para ver seu itinerário completo com todas as paradas importadas do GTFS.
+

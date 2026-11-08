@@ -19,9 +19,9 @@ async def test_consultar_previsoes_sucesso_e_ordenacao():
         parada=Parada(codigo=123),
         linha=Linha(codigo=1, numero="8000", sentido=1),
         horario_consulta=datetime.now(),
-        horario_referencia="12:00", # Referência para o cálculo
+        horario_referencia="12:00",  # Referência para o cálculo
         estado=EstadoConsulta.SUCESSO,
-        previsoes=previsoes_desordenadas
+        previsoes=previsoes_desordenadas,
     )
 
     # Mock do cliente retornando a consulta

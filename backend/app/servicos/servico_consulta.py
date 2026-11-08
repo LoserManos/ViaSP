@@ -1,17 +1,17 @@
 """Coordena o fluxo de consulta: parada configurada + linha/sentido."""
+
 import asyncio
 import time
 import unicodedata
 from collections.abc import Callable, Iterable
 from dataclasses import replace
-from datetime import datetime
 from typing import TypeVar
-from zoneinfo import ZoneInfo
 
 from app.dominio import ConsultaPrevisao, EstadoConsulta, Linha, Parada
 from app.excecoes import ErroAutenticacaoSPTrans, ErroSPTrans, SPTransIndisponivel
 
 from .cliente_sptrans import ClienteSPTrans
+from .fuso_horario import agora_sao_paulo
 
 # As linhas do ponto vêm de /Previsao/Parada (ADR-001) e mudam conforme os ônibus circulam
 TTL_LINHAS_DO_PONTO_SEGUNDOS = 60.0
@@ -44,6 +44,7 @@ class ServicoConsulta:
         self,
         cliente: ClienteSPTrans,
         relogio: Callable[[], float] = time.monotonic,
+        repositorio_paradas: object | None = None,
         *,
         ttl_linhas_segundos: float = TTL_LINHAS_DO_PONTO_SEGUNDOS,
         ttl_paradas_segundos: float = TTL_PARADAS_DA_LINHA_SEGUNDOS,
@@ -51,6 +52,7 @@ class ServicoConsulta:
     ) -> None:
         self._cliente = cliente
         self._relogio = relogio
+        self._repositorio_paradas = repositorio_paradas
         self._ttl_linhas_segundos = ttl_linhas_segundos
         self._ttl_paradas_segundos = ttl_paradas_segundos
         self._ttl_previsoes_segundos = ttl_previsoes_segundos
@@ -58,16 +60,53 @@ class ServicoConsulta:
         self._cache_linhas: dict[int, tuple[float, list[Linha]]] = {}
         self._cache_paradas: dict[int, tuple[float, list[Parada]]] = {}
         self._cache_previsoes: dict[tuple[int, int], tuple[float, ConsultaPrevisao]] = {}
+        self._cache_codigos_linhas: dict[str, list[Linha]] = {}
 
         self._trava_linhas = asyncio.Lock()
         self._trava_paradas = asyncio.Lock()
         self._trava_previsoes = asyncio.Lock()
 
+    async def _obter_linha_cadastral(self, numero: str, sentido: int, destino: str) -> Linha:
+        """Localiza os metadados cadastrais da linha na SPTrans, com cache em memória."""
+        candidatas = self._cache_codigos_linhas.get(numero)
+        if candidatas is None:
+            try:
+                candidatas = await self._cliente.buscar_linhas(numero)
+            except Exception:
+                candidatas = []
+            self._cache_codigos_linhas[numero] = candidatas
+
+        destino_norm = _normalizar_texto(destino)
+        # 1. Tenta casar por sentido e destino
+        for c in candidatas:
+            if c.sentido == sentido and (
+                destino_norm in _normalizar_texto(c.destino) or _normalizar_texto(c.destino) in destino_norm
+            ):
+                return c
+
+        # 2. Tenta casar apenas por sentido
+        for c in candidatas:
+            if c.sentido == sentido:
+                return c
+
+        # 3. Tenta casar apenas por destino
+        for c in candidatas:
+            if destino_norm in _normalizar_texto(c.destino) or _normalizar_texto(c.destino) in destino_norm:
+                return c
+
+        # 4. Fallback se houver alguma candidata daquela linha
+        if candidatas:
+            return candidatas[0]
+
+        # 5. Fallback sem código cadastrado
+        return Linha(codigo=0, numero=numero, sentido=sentido, destino=destino)
+
     async def _linhas_do_ponto(self, parada: Parada) -> ListaCacheada[Linha]:
         """Linhas do ponto com cache em memória e fallback em caso de falha.
 
-        Usa `/Previsao/Parada` (Opção (a) do ADR-001): só as linhas com ônibus previsto.
-        A trava faz requisições simultâneas compartilharem uma única chamada à SPTrans.
+        Combina as linhas em tempo real da SPTrans com a malha completa do GTFS local.
+        Linhas com ônibus a caminho têm previsão ativa; linhas sem veículos em trânsito
+        permanecem na listagem com status de 'Sem previsão'.
         """
         async with self._trava_linhas:
             em_cache = self._cache_linhas.get(parada.codigo)
@@ -75,14 +114,55 @@ class ServicoConsulta:
                 return ListaCacheada(em_cache[1], desatualizado=False)
 
             try:
-                linhas = list(await self._cliente.buscar_linhas_com_previsao(parada.codigo))
+                linhas_com_previsao = list(await self._cliente.buscar_linhas_com_previsao(parada.codigo))
             except Exception:
                 if em_cache is not None:
                     return ListaCacheada(em_cache[1], desatualizado=True)
-                raise
+                if not self._repositorio_paradas:
+                    raise
+                linhas_com_previsao = []
 
-            self._cache_linhas[parada.codigo] = (self._relogio(), linhas)
-            return ListaCacheada(linhas, desatualizado=False)
+            if not self._repositorio_paradas:
+                self._cache_linhas[parada.codigo] = (self._relogio(), linhas_com_previsao)
+                return ListaCacheada(linhas_com_previsao, desatualizado=False)
+
+            gtfs_linhas = self._repositorio_paradas.buscar_linhas_da_parada(parada.codigo)
+            if not gtfs_linhas:
+                self._cache_linhas[parada.codigo] = (self._relogio(), linhas_com_previsao)
+                return ListaCacheada(linhas_com_previsao, desatualizado=False)
+
+            mapa_ativas_por_num: dict[str, Linha] = {linha.numero: linha for linha in linhas_com_previsao}
+
+            linhas_finais: list[Linha] = []
+            chaves_inseridas: set[tuple[str, int]] = set()
+
+            # 1. Insere primeiro todas as linhas que têm previsão ativa no momento
+            for linha_prev in linhas_com_previsao:
+                chave = (linha_prev.numero, linha_prev.sentido)
+                if chave not in chaves_inseridas:
+                    linhas_finais.append(linha_prev)
+                    chaves_inseridas.add(chave)
+
+            # 2. Identifica linhas do GTFS que não estão com previsão ativa
+            faltantes = []
+            for g in gtfs_linhas:
+                chave = (g["numero"], g["sentido"])
+                if chave not in chaves_inseridas and g["numero"] not in mapa_ativas_por_num:
+                    faltantes.append(g)
+
+            # 3. Resolve os metadados cadastrais das linhas faltantes
+            if faltantes:
+                linhas_resolvidas = await asyncio.gather(
+                    *(self._obter_linha_cadastral(f["numero"], f["sentido"], f["destino"]) for f in faltantes)
+                )
+                for linha_res in linhas_resolvidas:
+                    chave = (linha_res.numero, linha_res.sentido)
+                    if chave not in chaves_inseridas:
+                        linhas_finais.append(linha_res)
+                        chaves_inseridas.add(chave)
+
+            self._cache_linhas[parada.codigo] = (self._relogio(), linhas_finais)
+            return ListaCacheada(linhas_finais, desatualizado=False)
 
     async def buscar_linhas(self, parada: Parada, termo: str = "") -> ListaCacheada[Linha]:
         """Linhas atendidas pela parada (US01), filtradas por termo (US02)."""
@@ -123,13 +203,16 @@ class ServicoConsulta:
             self._cache_paradas[codigo_linha] = (self._relogio(), paradas)
             return ListaCacheada(paradas, desatualizado=False)
 
-    async def consultar_paradas(self, linha: Linha, limite_numero_paradas: int = 5) -> ListaCacheada[Parada]:
-        """Itinerário simplificado: paradas da linha (US03)."""
+    async def consultar_paradas(self, linha: Linha, limite_numero_paradas: int | None = None) -> ListaCacheada[Parada]:
+        """Itinerário: paradas da linha (todas as paradas por padrão, ou simplificado se limite informado)."""
         lista_paradas_completa = await self._paradas_da_linha(linha.codigo)
         desatualizado = lista_paradas_completa.desatualizado
 
         if not lista_paradas_completa:
             return ListaCacheada(desatualizado=desatualizado)
+
+        if limite_numero_paradas is None:
+            return ListaCacheada(lista_paradas_completa, desatualizado=desatualizado)
 
         total_paradas = len(lista_paradas_completa)
 
@@ -144,9 +227,7 @@ class ServicoConsulta:
 
         return ListaCacheada(lista_paradas_filtrada, desatualizado=desatualizado)
 
-    async def consultar_previsoes(
-        self, parada: Parada, linha: Linha
-    ) -> ConsultaPrevisao:
+    async def consultar_previsoes(self, parada: Parada, linha: Linha) -> ConsultaPrevisao:
         """Previsões de chegada (US06), com horário de referência (US07)."""
         chave = (parada.codigo, linha.codigo)
         async with self._trava_previsoes:
@@ -213,7 +294,7 @@ class ServicoConsulta:
         return ConsultaPrevisao(
             parada=parada,
             linha=linha,
-            horario_consulta=datetime.now(ZoneInfo("America/Sao_Paulo")),
+            horario_consulta=agora_sao_paulo(),
             estado=EstadoConsulta.FALHA,
             mensagem_erro=mensagem,
         )

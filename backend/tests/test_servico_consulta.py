@@ -17,6 +17,7 @@ FIXTURES_DIR = Path(__file__).parent / "fixtures"
 
 class FakeClienteSPTrans:
     """Cliente falso para testes unitários do ServicoConsulta (ISS-08)."""
+
     def __init__(self, linhas_retorno: list[Linha]):
         self._linhas_retorno = linhas_retorno
         self.chamadas = 0
@@ -54,6 +55,7 @@ def servico(mock_cliente: AsyncMock) -> ServicoConsulta:
 # ==========================================
 # ISS-08: Buscar Linhas do Ponto
 # ==========================================
+
 
 @pytest.mark.asyncio
 async def test_buscar_linhas_sem_termo_retorna_todas():
@@ -120,6 +122,7 @@ async def test_buscar_linhas_termo_sem_resultado_retorna_lista_vazia():
 # ==========================================
 # ISS-10: Consultar Paradas (Itinerário)
 # ==========================================
+
 
 @pytest.mark.asyncio
 async def test_consultar_paradas_linha_sem_paradas(servico: ServicoConsulta, mock_cliente: AsyncMock):
@@ -603,3 +606,42 @@ async def test_consultar_previsoes_sem_cache_anterior_retorna_estado_falha_e_nao
     assert mock_cliente.obter_previsoes.await_count == 2
     assert sucesso.estado == EstadoConsulta.SUCESSO
     assert sucesso.desatualizado is False
+
+
+class FakeRepositorioParadas:
+    def __init__(self, linhas: list[dict]):
+        self._linhas = linhas
+
+    def buscar_linhas_da_parada(self, codigo_parada: int) -> list[dict]:
+        return self._linhas
+
+
+@pytest.mark.asyncio
+async def test_buscar_linhas_hibrido_gtfs_com_previsao_e_sem_previsao():
+    linhas_com_previsao = [
+        Linha(codigo=101, numero="702U-10", sentido=2, origem="Cid. Universitária", destino="Term. Pq. D. Pedro II")
+    ]
+    linhas_gtfs = [
+        {"numero": "702U-10", "sentido": 2, "destino": "Term. Pq. D. Pedro II"},
+        {"numero": "8084-10", "sentido": 1, "destino": "Cid. Universitária"},
+    ]
+    cliente_fake = FakeClienteSPTrans(linhas_com_previsao)
+    cliente_fake.buscar_linhas = AsyncMock(
+        return_value=[
+            Linha(codigo=2607, numero="8084-10", sentido=1, origem="Metrô Butantã", destino="Cid. Universitária")
+        ]
+    )
+
+    repo_fake = FakeRepositorioParadas(linhas_gtfs)
+    servico = ServicoConsulta(cliente_fake, repositorio_paradas=repo_fake)  # type: ignore
+    parada = Parada(codigo=120010351)
+
+    resultado = await servico.buscar_linhas(parada)
+
+    assert len(resultado) == 2
+    # Linha com previsão vem primeiro
+    assert resultado[0].numero == "702U-10"
+    assert resultado[0].codigo == 101
+    # Linha sem previsão do GTFS vem depois
+    assert resultado[1].numero == "8084-10"
+    assert resultado[1].codigo == 2607

@@ -1,6 +1,8 @@
 import { render, screen, fireEvent } from '@testing-library/react'
 import { describe, it, expect, vi } from 'vitest'
 import { Botao, Cartao, TextoGrande } from '../src/componentes/base'
+import { CabecalhoTotem } from '../src/componentes/layout/CabecalhoTotem'
+import { RodapeTotem } from '../src/componentes/layout/RodapeTotem'
 import { ItemLinha } from '../src/componentes/totem/ItemLinha'
 import { TOKENS } from '../src/tokens'
 
@@ -140,5 +142,56 @@ describe('Componente: ItemLinha (ISS-15.1)', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /8012-10/ }))
     expect(aoSelecionar).toHaveBeenCalledWith(linha)
+  })
+
+  it('exibe origem → destino mesmo quando linha.sentido for um número (evita exibir o dígito 2)', () => {
+    const linhaComSentidoNumerico = {
+      codigo: 1004,
+      numero: '917H-10',
+      sentido: 2,
+      origem: 'Terminal Sacomã',
+      destino: 'Terminal Pirituba',
+    }
+    render(
+      <ItemLinha linha={linhaComSentidoNumerico} aoSelecionar={() => {}} />
+    )
+
+    expect(
+      screen.getByText('Sentido: Terminal Sacomã → Terminal Pirituba')
+    ).toBeInTheDocument()
+    // Garante que o número 2 do sentido não é exibido isolado
+    expect(screen.queryByText(/^2$/)).not.toBeInTheDocument()
+  })
+})
+
+describe('Componente: CabecalhoTotem', () => {
+  it('exibe o nome da parada e botões de apoio quando fornecidos', () => {
+    const mockEscolher = vi.fn()
+    render(
+      <CabecalhoTotem
+        nomeParada="Parada MASP"
+        aoEscolherParada={mockEscolher}
+      />
+    )
+
+    expect(screen.getByText(/Parada MASP/i)).toBeInTheDocument()
+    const btnParada = screen.getByRole('button', {
+      name: /escolher a parada do totem/i,
+    })
+    expect(btnParada).toBeInTheDocument()
+    fireEvent.click(btnParada)
+    expect(mockEscolher).toHaveBeenCalledTimes(1)
+  })
+})
+
+describe('Componente: RodapeTotem', () => {
+  it('exibe o relógio e a indicação de dados em tempo real da SPTrans', () => {
+    render(<RodapeTotem />)
+
+    expect(screen.getByText('Dados em tempo real')).toBeInTheDocument()
+    expect(screen.getByText('SPTrans')).toBeInTheDocument()
+    // O relógio exibe o horário formatado (ex: HH:MM)
+    const horaRegex = /^\d{2}:\d{2}$/
+    expect(screen.getByText(horaRegex)).toBeInTheDocument()
   })
 })

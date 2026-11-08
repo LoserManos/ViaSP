@@ -8,11 +8,12 @@
   gap: var(--espacamento-md);
 }
 
+/* 1. Hero */
 .viasp-tela-inicio__hero {
   display: flex;
   flex-direction: column;
   gap: 6px;
-  padding-top: var(--espacamento-xs);
+  padding: var(--espacamento-xs) 0;
 }
 
 .viasp-tela-inicio__tag {
@@ -22,12 +23,16 @@
   letter-spacing: 0.08em;
 }
 
-/* Barra de Busca */
-.viasp-tela-inicio__busca-box {
+/* 2. Barra de Busca e Botão de Voz */
+.viasp-tela-inicio__busca-row {
+  display: flex;
+  align-items: center;
+  gap: var(--espacamento-sm);
   width: 100%;
 }
 
-.viasp-tela-inicio__busca-campo-wrapper {
+.viasp-tela-inicio__busca-input-box {
+  flex: 1;
   background-color: var(--cor-superficie);
   border: 2px solid var(--cor-borda);
   border-radius: var(--raio-borda-full);
@@ -37,56 +42,158 @@
   align-items: center;
   gap: var(--espacamento-sm);
   box-shadow: var(--sombra-card);
-  transition: border-color 0.15s ease;
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
 }
 
-.viasp-tela-inicio__busca-campo-wrapper:focus-within {
+.viasp-tela-inicio__busca-input-box:focus-within {
   border-color: var(--cor-marca);
-  outline: 4px solid rgba(229, 34, 58, 0.2);
+  box-shadow: 0 0 0 4px rgba(229, 39, 63, 0.15);
 }
 
 .viasp-tela-inicio__busca-icone {
-  color: var(--cor-texto-secundario);
+  color: var(--cor-texto-muted);
+  font-size: 1.25rem;
 }
 
-.viasp-tela-inicio__busca-input {
+.viasp-tela-inicio__busca-campo {
   flex: 1;
   border: none;
   outline: none;
-  background: transparent;
-  font-family: var(--fonte-padrao);
   font-size: var(--tamanho-texto-destaque);
   color: var(--cor-texto-principal);
+  background: transparent;
+  font-family: var(--fonte-padrao);
 }
 
-.viasp-tela-inicio__busca-limpar {
-  background: transparent;
+.viasp-tela-inicio__busca-campo::placeholder {
+  color: var(--cor-texto-muted);
+}
+
+.viasp-tela-inicio__busca-btn-acao {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background-color: #0f172a;
+  color: #ffffff;
   border: none;
-  font-size: 1.25rem;
-  color: var(--cor-texto-secundario);
+  display: flex;
+  align-items: center;
+  justify-content: center;
   cursor: pointer;
-  padding: 8px;
-  min-width: 44px;
-  min-height: 44px;
+  transition: background-color 0.15s ease;
+}
+
+.viasp-tela-inicio__busca-btn-acao:hover {
+  background-color: #1e293b;
+}
+
+.viasp-tela-inicio__btn-voz {
+  border-radius: var(--raio-borda-lg) !important;
+  box-shadow: 0 4px 14px rgba(229, 39, 63, 0.35);
+  font-size: var(--tamanho-texto-destaque) !important;
+  white-space: nowrap;
+}
+
+.viasp-tela-inicio__btn-voz--ativo {
+  background-color: #b31a2e !important;
+  animation: viasp-pulso-voz 1.5s infinite;
+}
+
+@keyframes viasp-pulso-voz {
+  0% {
+    box-shadow: 0 0 0 0 rgba(229, 39, 63, 0.7);
+  }
+  70% {
+    box-shadow: 0 0 0 14px rgba(229, 39, 63, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(229, 39, 63, 0);
+  }
+}
+
+.viasp-tela-inicio__aviso-voz {
+  background-color: var(--cor-marca-fundo);
+  color: var(--cor-marca);
+  border: 1px solid var(--cor-marca);
+  border-radius: var(--raio-borda-md);
+  padding: var(--espacamento-sm) var(--espacamento-md);
+  text-align: center;
+}
+
+/* 3. Banner "Ver Mapa" */
+.viasp-tela-inicio__mapa-banner {
+  background-color: var(--cor-superficie);
+  border: 1px solid var(--cor-borda);
+  border-radius: var(--raio-borda-lg);
+  padding: var(--espacamento-sm) var(--espacamento-md);
+  display: flex;
+  align-items: center;
+  gap: var(--espacamento-sm);
+  cursor: pointer;
+  box-shadow: var(--sombra-card);
+  transition:
+    transform 0.1s ease,
+    border-color 0.15s ease;
+}
+
+.viasp-tela-inicio__mapa-banner:hover {
+  border-color: #2563eb;
+  transform: translateY(-1px);
+}
+
+.viasp-tela-inicio__mapa-banner-icone {
+  width: 48px;
+  height: 48px;
+  border-radius: var(--raio-borda-md);
+  background-color: #eff6ff;
+  color: #2563eb;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
-/* Cartão da Parada */
-.viasp-tela-inicio__card-parada {
+.viasp-tela-inicio__mapa-banner-texto {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.viasp-tela-inicio__mapa-banner-texto strong {
+  font-size: var(--tamanho-texto-destaque);
+  color: var(--cor-texto-principal);
+}
+
+.viasp-tela-inicio__mapa-banner-texto span {
+  font-size: var(--tamanho-texto-pequeno);
+  color: var(--cor-texto-secundario);
+}
+
+.viasp-tela-inicio__mapa-banner-seta {
+  font-size: 1.75rem;
+  color: var(--cor-texto-muted);
+}
+
+/* 4. Cartão Principal do Ponto */
+.viasp-tela-inicio__ponto-card {
   border-radius: var(--raio-borda-card) !important;
+  padding: var(--espacamento-lg) !important;
+  display: flex;
+  flex-direction: column;
+  gap: var(--espacamento-md);
   background-color: var(--cor-superficie) !important;
 }
 
-.viasp-tela-inicio__card-topo {
+.viasp-tela-inicio__ponto-header {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  gap: var(--espacamento-md);
+  padding-bottom: var(--espacamento-sm);
+  border-bottom: 1px solid var(--cor-borda);
 }
 
-.viasp-tela-inicio__tag-local {
+.viasp-tela-inicio__ponto-tag {
   display: flex;
   align-items: center;
   gap: 6px;
@@ -97,14 +204,14 @@
   margin-bottom: 4px;
 }
 
-.viasp-tela-inicio__dot-local {
+.viasp-tela-inicio__ponto-dot {
   width: 8px;
   height: 8px;
   background-color: var(--cor-marca);
   border-radius: 50%;
 }
 
-.viasp-tela-inicio__badge-status {
+.viasp-tela-inicio__ponto-status {
   background-color: var(--cor-sucesso-fundo);
   color: var(--cor-sucesso-texto);
   font-size: 0.9rem;
@@ -117,31 +224,47 @@
   flex-shrink: 0;
 }
 
-.viasp-tela-inicio__dot-verde {
+.viasp-tela-inicio__ponto-status-dot {
   width: 8px;
   height: 8px;
   background-color: var(--cor-sucesso);
   border-radius: 50%;
 }
 
-/* Lista de Linhas */
-.viasp-tela-inicio__secao-linhas {
-  display: flex;
-  flex-direction: column;
-  gap: var(--espacamento-sm);
-}
-
-.viasp-tela-inicio__cabecalho-lista {
+/* Tabela de Linhas */
+.viasp-tela-inicio__tabela-topo {
   display: flex;
   justify-content: space-between;
-  align-items: baseline;
+  font-size: 0.85rem;
+  font-weight: var(--peso-bold);
+  color: var(--cor-texto-muted);
+  letter-spacing: 0.05em;
   padding: 0 var(--espacamento-xs);
 }
 
-.viasp-tela-inicio__grade-linhas {
+.viasp-tela-inicio__linhas-lista {
   display: flex;
   flex-direction: column;
   gap: var(--espacamento-xs);
+}
+
+.viasp-tela-inicio__ver-todas {
+  background: transparent;
+  border: none;
+  color: var(--cor-marca);
+  font-size: var(--tamanho-texto-destaque);
+  font-weight: var(--peso-bold);
+  cursor: pointer;
+  padding: var(--espacamento-sm) 0;
+  text-align: center;
+  border-top: 1px solid var(--cor-borda);
+  margin-top: var(--espacamento-xs);
+  transition: color 0.15s ease;
+}
+
+.viasp-tela-inicio__ver-todas:hover {
+  text-decoration: underline;
+  color: var(--cor-marca-hover);
 }
 
 /* Spinner e Carregando */
@@ -169,8 +292,31 @@
   }
 }
 
-.viasp-tela-inicio__rodape {
+.viasp-tela-inicio__vazio {
+  padding: var(--espacamento-lg) var(--espacamento-sm);
   display: flex;
-  justify-content: center;
-  padding-top: var(--espacamento-md);
+  flex-direction: column;
+  gap: var(--espacamento-xs);
+}
+
+/* Totem em pé (ex.: 1080×1920): ocupar largura e altura disponíveis */
+@media (orientation: portrait) and (min-height: 1100px) {
+  .viasp-tela-inicio {
+    max-width: none;
+    flex: 1;
+  }
+
+  .viasp-tela-inicio__ponto-card {
+    flex: 1;
+  }
+
+  .viasp-tela-inicio__linhas-lista {
+    flex: 1;
+  }
+
+  .viasp-tela-inicio__linhas-lista .viasp-item-linha {
+    flex: 1;
+    min-height: 80px;
+    max-height: 112px;
+  }
 }

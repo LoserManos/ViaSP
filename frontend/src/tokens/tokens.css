@@ -1,4 +1,7 @@
 :root {
+  /* Escala global da interface, atualizada em App.jsx conforme a tela */
+  --ui-escala: 1;
+
   /* Alvo de toque mínimo ergonômico para totem público (WCAG / ISS-14.4) */
   --alvo-toque-minimo: 64px;
 

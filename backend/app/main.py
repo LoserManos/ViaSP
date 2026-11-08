@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 
 def _carregar_gtfs(repositorio: RepositorioParadas, caminho: str) -> None:
     """Importa as paradas do GTFS na primeira subida (ou depois de apagar o banco)."""
-    if repositorio.contar() > 0:
+    if repositorio.contar() > 0 and repositorio.contar_viagens() > 0:
         return
     try:
         total = repositorio.importar_gtfs(caminho)
@@ -62,6 +62,7 @@ async def lifespan(app: FastAPI):
     app.state.repositorio_paradas = repositorio_paradas
     app.state.servico_consulta = ServicoConsulta(
         cliente,
+        repositorio_paradas=repositorio_paradas,
         ttl_linhas_segundos=settings.cache_ttl_linhas_segundos,
         ttl_paradas_segundos=settings.cache_ttl_paradas_segundos,
         ttl_previsoes_segundos=settings.cache_ttl_previsoes_segundos,

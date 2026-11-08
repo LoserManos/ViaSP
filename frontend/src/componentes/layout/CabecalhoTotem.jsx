@@ -10,21 +10,19 @@ import './CabecalhoTotem.css'
  * @param {string} [props.nomeParada] - Nome do ponto de ônibus onde o totem está instalado
  *   (vem de `/api/totem`); sem ele, o logo mostra o subtítulo padrão.
  * @param {() => void} [props.aoVoltar] - Se presente, exibe o botão de voltar sempre visível (ISS-14.2).
- * @param {() => void} [props.aoAbrirDemo] - Acessar a tela de demonstração dos tokens.
  * @param {() => void} [props.aoEscolherParada] - Modo dev: abre o mapa para escolher a parada.
  * @param {string} [props.tituloTela] - Título opcional da tela atual.
  */
 export function CabecalhoTotem({
   nomeParada,
   aoVoltar,
-  aoAbrirDemo,
   aoEscolherParada,
   tituloTela,
 }) {
   return (
     <header className="viasp-cabecalho-totem">
       <div className="viasp-cabecalho-totem__esquerda">
-        {aoVoltar ? (
+        {aoVoltar && (
           <Botao
             variante="voltar"
             onClick={aoVoltar}
@@ -33,11 +31,11 @@ export function CabecalhoTotem({
           >
             Voltar
           </Botao>
-        ) : (
-          <LogoViaSP
-            {...(nomeParada && { subtituloPersonalizado: nomeParada })}
-          />
         )}
+
+        <LogoViaSP
+          {...(nomeParada && { subtituloPersonalizado: nomeParada })}
+        />
 
         {tituloTela && (
           <div className="viasp-cabecalho-totem__titulo-tela">
@@ -58,17 +56,6 @@ export function CabecalhoTotem({
           >
             <Icone nome="mapa" />
             <span>Escolher parada</span>
-          </button>
-        )}
-        {aoAbrirDemo && (
-          <button
-            type="button"
-            onClick={aoAbrirDemo}
-            className="viasp-cabecalho-totem__btn-util"
-            aria-label="Abrir guia de design tokens e componentes"
-          >
-            <Icone nome="paleta" />
-            <span>Design Tokens</span>
           </button>
         )}
       </div>
