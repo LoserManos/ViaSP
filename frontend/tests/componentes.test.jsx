@@ -4,6 +4,7 @@ import { Botao, Cartao, TextoGrande } from '../src/componentes/base'
 import { CabecalhoTotem } from '../src/componentes/layout/CabecalhoTotem'
 import { RodapeTotem } from '../src/componentes/layout/RodapeTotem'
 import { ItemLinha } from '../src/componentes/totem/ItemLinha'
+import { Icone } from '../src/componentes/comuns/Icone'
 import { TOKENS } from '../src/tokens'
 
 describe('Design Tokens & Ergonomia (ISS-14.4)', () => {
@@ -193,5 +194,42 @@ describe('Componente: RodapeTotem', () => {
     // O relógio exibe o horário formatado (ex: HH:MM)
     const horaRegex = /^\d{2}:\d{2}$/
     expect(screen.getByText(horaRegex)).toBeInTheDocument()
+  })
+})
+
+describe('Componente: Icone', () => {
+  it('renderiza os ícones do teclado virtual com viewBox 24x24', () => {
+    const { container, rerender } = render(<Icone nome="teclado" />)
+    const svgTeclado = container.querySelector('svg')
+    expect(svgTeclado).toHaveAttribute('data-icone', 'teclado')
+    expect(svgTeclado).toHaveAttribute('viewBox', '0 0 24 24')
+
+    rerender(<Icone nome="apagar" />)
+    const svgApagar = container.querySelector('svg')
+    expect(svgApagar).toHaveAttribute('data-icone', 'apagar')
+
+    rerender(<Icone nome="recolher" />)
+    const svgRecolher = container.querySelector('svg')
+    expect(svgRecolher).toHaveAttribute('data-icone', 'recolher')
+  })
+
+  it('suporta aliases em inglês para compatibilidade', () => {
+    const { container, rerender } = render(<Icone nome="keyboard" />)
+    expect(container.querySelector('svg')).toHaveAttribute(
+      'data-icone',
+      'keyboard'
+    )
+
+    rerender(<Icone nome="delete" />)
+    expect(container.querySelector('svg')).toHaveAttribute(
+      'data-icone',
+      'delete'
+    )
+
+    rerender(<Icone nome="backspace" />)
+    expect(container.querySelector('svg')).toHaveAttribute(
+      'data-icone',
+      'backspace'
+    )
   })
 })
