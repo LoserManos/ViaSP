@@ -24,6 +24,7 @@ export function TelaInicio({
   aoSelecionarLinha,
   aoAbrirMapa,
   retrato = false,
+  intervaloPollingMs = 30000,
 }) {
   const [totem, setTotem] = useState(null)
   const [linhas, setLinhas] = useState([])
@@ -133,7 +134,11 @@ export function TelaInicio({
   useEffect(() => {
     let ativo = true
 
-    async function buscar() {
+    async function buscar(mostrarLoading = false) {
+      if (mostrarLoading) {
+        setCarregando(true)
+        setErro(null)
+      }
       try {
         const [dadosTotem, dadosLinhas] = await Promise.all([
           obterTotem(),
@@ -166,22 +171,30 @@ export function TelaInicio({
           setLinhas(linhasOrdenadas)
         }
       } catch (err) {
-        if (ativo) {
+        if (ativo && mostrarLoading) {
           setErro(err.mensagem || 'Falha ao carregar as linhas da parada.')
         }
       } finally {
-        if (ativo) {
+        if (ativo && mostrarLoading) {
           setCarregando(false)
         }
       }
     }
 
-    buscar()
+    buscar(true)
+
+    let timerId = null
+    if (intervaloPollingMs && intervaloPollingMs > 0) {
+      timerId = setInterval(() => {
+        buscar(false)
+      }, intervaloPollingMs)
+    }
 
     return () => {
       ativo = false
+      if (timerId) clearInterval(timerId)
     }
-  }, [termoBusca])
+  }, [termoBusca, intervaloPollingMs])
 
   const iniciarBuscaVoz = () => {
     const SpeechRecognition =
