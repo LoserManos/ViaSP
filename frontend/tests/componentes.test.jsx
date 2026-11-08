@@ -177,6 +177,14 @@ describe('Componente: CabecalhoTotem', () => {
     fireEvent.click(btnVoltar)
     expect(mockVoltar).toHaveBeenCalledTimes(1)
   })
+
+  it('exibe o relógio com o horário atual ou fornecido no cabeçalho', () => {
+    render(<CabecalhoTotem horario="17:21" />)
+    expect(screen.getByText('17:21')).toBeInTheDocument()
+    expect(
+      screen.getByRole('status', { name: /horário atual: 17:21/i })
+    ).toBeInTheDocument()
+  })
 })
 
 describe('Componente: RodapeTotem', () => {
