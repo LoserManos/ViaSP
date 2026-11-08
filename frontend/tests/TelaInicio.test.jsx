@@ -113,7 +113,7 @@ describe('TelaInicial alinhada ao protótipo Figma', () => {
     expect(
       screen.getByText('Parada MASP — Sentido Consolação')
     ).toBeInTheDocument()
-    expect(screen.getByText('Atualizado agora')).toBeInTheDocument()
+    expect(screen.getByText(/Atualizado em\s*:/i)).toBeInTheDocument()
 
     // Tabela com colunas
     expect(screen.getByText('LINHAS POR CHEGADA')).toBeInTheDocument()
