@@ -1,0 +1,148 @@
+.viasp-teclado {
+  background-color: var(--cor-superficie, #ffffff);
+  border: 1px solid var(--cor-borda, #e2e8f0);
+  border-radius: var(--raio-borda-card, 20px);
+  box-shadow: var(--sombra-elevada, 0 10px 25px -5px rgba(0, 0, 0, 0.08));
+  padding: var(--espacamento-md, 24px) var(--espacamento-sm, 16px);
+  width: 100%;
+  max-width: 900px;
+  margin: 0 auto;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.viasp-teclado__linhas {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+}
+
+.viasp-teclado__linha {
+  display: flex;
+  justify-content: center;
+  align-items: stretch;
+  gap: 8px;
+  width: 100%;
+}
+
+.viasp-teclado__tecla {
+  flex: 1;
+  min-height: var(--alvo-toque-minimo, 64px);
+  height: 64px;
+  background-color: var(--cor-superficie, #ffffff);
+  color: var(--cor-texto-principal, #0f172a);
+  border: 2px solid var(--cor-borda-forte, #cbd5e1);
+  border-radius: var(--raio-borda-md, 12px);
+  font-family: var(--fonte-padrao);
+  font-size: 1.375rem;
+  font-weight: var(--peso-bold, 700);
+  cursor: pointer;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  touch-action: manipulation;
+  transition:
+    background-color 0.1s ease,
+    border-color 0.1s ease,
+    transform 0.08s ease,
+    box-shadow 0.08s ease;
+  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.04);
+}
+
+.viasp-teclado__tecla:hover {
+  background-color: var(--cor-superficie-hover, #f1f5f9);
+  border-color: #94a3b8;
+}
+
+.viasp-teclado__tecla:active {
+  background-color: #e2e8f0;
+  border-color: #64748b;
+  transform: translateY(2px) scale(0.98);
+  box-shadow: none;
+}
+
+.viasp-teclado__tecla:focus-visible {
+  outline: 3px solid var(--cor-foco, #2563eb);
+  outline-offset: 2px;
+}
+
+/* Teclas alfanuméricas */
+.viasp-teclado__tecla--caractere {
+  max-width: 80px;
+}
+
+/* Linha de ações inferiores */
+.viasp-teclado__linha--acoes {
+  margin-top: 4px;
+}
+
+.viasp-teclado__tecla--acao {
+  font-size: 1.125rem;
+  font-weight: var(--peso-semibold, 600);
+  gap: 8px;
+  padding: 0 var(--espacamento-sm, 16px);
+}
+
+.viasp-teclado__tecla--limpar {
+  flex: 1.2;
+  color: var(--cor-erro, #dc2626);
+  border-color: #fca5a5;
+  background-color: #fef2f2;
+}
+
+.viasp-teclado__tecla--limpar:hover {
+  background-color: #fee2e2;
+  border-color: #f87171;
+}
+
+.viasp-teclado__tecla--limpar:active {
+  background-color: #fecaca;
+}
+
+.viasp-teclado__tecla--espaco {
+  flex: 3;
+  font-size: 1.125rem;
+  font-weight: var(--peso-medium, 500);
+  color: var(--cor-texto-secundario, #64748b);
+}
+
+.viasp-teclado__tecla--apagar {
+  flex: 1.4;
+  background-color: #f8fafc;
+}
+
+.viasp-teclado__tecla--fechar {
+  flex: 1.2;
+  background-color: #f8fafc;
+  color: var(--cor-texto-secundario, #64748b);
+}
+
+/* Ajuste de responsividade para telas estreitas */
+@media (max-width: 640px) {
+  .viasp-teclado {
+    padding: var(--espacamento-sm, 16px) 8px;
+  }
+
+  .viasp-teclado__linhas {
+    gap: 6px;
+  }
+
+  .viasp-teclado__linha {
+    gap: 4px;
+  }
+
+  .viasp-teclado__tecla {
+    min-height: 56px;
+    height: 56px;
+    font-size: 1.125rem;
+    border-radius: var(--raio-borda-sm, 8px);
+  }
+
+  .viasp-teclado__tecla--acao {
+    font-size: 0.95rem;
+    padding: 0 8px;
+    gap: 4px;
+  }
+}
