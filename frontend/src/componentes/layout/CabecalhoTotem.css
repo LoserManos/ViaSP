@@ -56,10 +56,23 @@
   padding-left: var(--espacamento-md);
 }
 
-.viasp-cabecalho-totem__direita {
+.viasp-cabecalho-totem__relogio {
   display: flex;
   align-items: center;
-  gap: var(--espacamento-sm);
+  gap: var(--espacamento-xs);
+  color: var(--cor-texto-principal);
+  font-family: var(--fonte-padrao);
+  font-weight: var(--peso-bold);
+  user-select: none;
+}
+
+.viasp-cabecalho-totem__relogio-icone {
+  color: var(--cor-texto-secundario);
+}
+
+.viasp-cabecalho-totem__relogio-hora {
+  font-size: 1.25rem;
+  letter-spacing: -0.2px;
 }
 
 .viasp-cabecalho-totem__btn-util {

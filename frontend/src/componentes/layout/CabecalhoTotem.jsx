@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react'
 import { Botao, TextoGrande } from '../base'
 import { Icone } from '../comuns/Icone'
 import { LogoViaSP } from '../comuns/LogoViaSP'
@@ -10,15 +11,35 @@ import './CabecalhoTotem.css'
  * @param {string} [props.nomeParada] - Nome do ponto de ônibus onde o totem está instalado
  *   (vem de `/api/totem`); sem ele, o logo mostra o subtítulo padrão.
  * @param {() => void} [props.aoVoltar] - Se presente, exibe o botão de voltar sempre visível (ISS-14.2).
- * @param {() => void} [props.aoEscolherParada] - Modo dev: abre o mapa para escolher a parada.
  * @param {string} [props.tituloTela] - Título opcional da tela atual.
+ * @param {string} [props.horario] - Horário opcional para sobrescrever o relógio dinâmico (útil em testes).
  */
-export function CabecalhoTotem({
-  nomeParada,
-  aoVoltar,
-  aoEscolherParada,
-  tituloTela,
-}) {
+export function CabecalhoTotem({ nomeParada, aoVoltar, tituloTela, horario }) {
+  const [horaAtual, setHoraAtual] = useState(() =>
+    new Date().toLocaleTimeString('pt-BR', {
+      hour: '2-digit',
+      minute: '2-digit',
+    })
+  )
+
+  useEffect(() => {
+    if (horario) return
+
+    const atualizar = () => {
+      setHoraAtual(
+        new Date().toLocaleTimeString('pt-BR', {
+          hour: '2-digit',
+          minute: '2-digit',
+        })
+      )
+    }
+
+    const timer = setInterval(atualizar, 1000)
+    return () => clearInterval(timer)
+  }, [horario])
+
+  const horarioExibicao = horario || horaAtual
+
   return (
     <header className="viasp-cabecalho-totem">
       <div className="viasp-cabecalho-totem__esquerda">
@@ -46,18 +67,19 @@ export function CabecalhoTotem({
         )}
       </div>
 
-      <div className="viasp-cabecalho-totem__direita">
-        {aoEscolherParada && (
-          <button
-            type="button"
-            onClick={aoEscolherParada}
-            className="viasp-cabecalho-totem__btn-util"
-            aria-label="Escolher a parada do totem no mapa (modo dev)"
-          >
-            <Icone nome="mapa" />
-            <span>Escolher parada</span>
-          </button>
-        )}
+      <div
+        className="viasp-cabecalho-totem__relogio"
+        role="status"
+        aria-label={`Horário atual: ${horarioExibicao}`}
+      >
+        <Icone
+          nome="relogio"
+          tamanho="1.25rem"
+          className="viasp-cabecalho-totem__relogio-icone"
+        />
+        <span className="viasp-cabecalho-totem__relogio-hora">
+          {horarioExibicao}
+        </span>
       </div>
     </header>
   )

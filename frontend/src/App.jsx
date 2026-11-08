@@ -92,7 +92,6 @@ function App() {
           nomeParada={
             parada && [parada.nome, parada.endereco].filter(Boolean).join(' — ')
           }
-          aoEscolherParada={modoDev ? () => setSeletorAberto(true) : undefined}
         />
 
         {/* Conteúdo dinâmico renderizado de acordo com o estado ativo */}

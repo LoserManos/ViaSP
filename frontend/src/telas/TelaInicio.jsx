@@ -26,6 +26,7 @@ export function TelaInicio({
   aoSelecionarLinha,
   aoAbrirMapa,
   retrato = false,
+  intervaloPollingMs = 30000,
 }) {
   const [totem, setTotem] = useState(null)
   const [linhas, setLinhas] = useState([])
@@ -38,6 +39,7 @@ export function TelaInicio({
   const [ouvindoVoz, setOuvindoVoz] = useState(false)
   const [mensagemVoz, setMensagemVoz] = useState('')
   const [mostrarTodas, setMostrarTodas] = useState(false)
+  const [horarioAtualizacao, setHorarioAtualizacao] = useState('')
   const limiteLinhas = retrato ? 6 : 5
 
   const carregarPrevisoes = async (listaLinhas) => {
@@ -46,9 +48,10 @@ export function TelaInicio({
       listaLinhas.length === 0 ||
       typeof obterPrevisoes !== 'function'
     ) {
-      return {}
+      return { mapa: {}, horarioRef: null }
     }
     const mapa = {}
+    let horarioRef = null
     await Promise.all(
       listaLinhas.map(async (l) => {
         const idLinha = l.codigo || l.numero
@@ -63,6 +66,9 @@ export function TelaInicio({
         }
         try {
           const dados = await obterPrevisoes(l.codigo)
+          if (dados?.horario_referencia && !horarioRef) {
+            horarioRef = dados.horario_referencia
+          }
           const primeira = dados?.previsoes?.[0]
           if (primeira?.horario_previsto) {
             mapa[idLinha] = formatarPrevisao(
@@ -87,7 +93,7 @@ export function TelaInicio({
         }
       })
     )
-    return mapa
+    return { mapa, horarioRef }
   }
 
   const carregarDados = async (termo = '') => {
@@ -98,9 +104,20 @@ export function TelaInicio({
         obterTotem(),
         listarLinhas(termo),
       ])
-      const mapaPrevisoes = await carregarPrevisoes(dadosLinhas)
+      const { mapa: mapaPrevisoes, horarioRef } =
+        await carregarPrevisoes(dadosLinhas)
       setTotem(dadosTotem)
       setPrevisoesPorLinha(mapaPrevisoes)
+      if (horarioRef) {
+        setHorarioAtualizacao(horarioRef)
+      } else {
+        setHorarioAtualizacao(
+          new Date().toLocaleTimeString('pt-BR', {
+            hour: '2-digit',
+            minute: '2-digit',
+          })
+        )
+      }
 
       const linhasOrdenadas = [...(dadosLinhas || [])].sort((a, b) => {
         const idA = a.codigo || a.numero
@@ -121,16 +138,31 @@ export function TelaInicio({
   useEffect(() => {
     let ativo = true
 
-    async function buscar() {
+    async function buscar(mostrarLoading = false) {
+      if (mostrarLoading) {
+        setCarregando(true)
+        setErro(null)
+      }
       try {
         const [dadosTotem, dadosLinhas] = await Promise.all([
           obterTotem(),
           listarLinhas(termoDebounced),
         ])
-        const mapaPrevisoes = await carregarPrevisoes(dadosLinhas)
+        const { mapa: mapaPrevisoes, horarioRef } =
+          await carregarPrevisoes(dadosLinhas)
         if (ativo) {
           setTotem(dadosTotem)
           setPrevisoesPorLinha(mapaPrevisoes)
+          if (horarioRef) {
+            setHorarioAtualizacao(horarioRef)
+          } else {
+            setHorarioAtualizacao(
+              new Date().toLocaleTimeString('pt-BR', {
+                hour: '2-digit',
+                minute: '2-digit',
+              })
+            )
+          }
 
           const linhasOrdenadas = [...(dadosLinhas || [])].sort((a, b) => {
             const idA = a.codigo || a.numero
@@ -143,22 +175,30 @@ export function TelaInicio({
           setLinhas(linhasOrdenadas)
         }
       } catch (err) {
-        if (ativo) {
+        if (ativo && mostrarLoading) {
           setErro(err.mensagem || 'Falha ao carregar as linhas da parada.')
         }
       } finally {
-        if (ativo) {
+        if (ativo && mostrarLoading) {
           setCarregando(false)
         }
       }
     }
 
-    buscar()
+    buscar(true)
+
+    let timerId = null
+    if (intervaloPollingMs && intervaloPollingMs > 0) {
+      timerId = setInterval(() => {
+        buscar(false)
+      }, intervaloPollingMs)
+    }
 
     return () => {
       ativo = false
+      if (timerId) clearInterval(timerId)
     }
-  }, [termoDebounced])
+  }, [termoDebounced, intervaloPollingMs])
 
   const iniciarBuscaVoz = () => {
     const SpeechRecognition =
@@ -218,8 +258,8 @@ export function TelaInicio({
           Olá! Aonde vamos?
         </TextoGrande>
         <TextoGrande variante="corpo" cor="secundario">
-          Pesquise uma linha ou veja as previsões em tempo real para este ponto
-          a seguir:
+          Encontre a melhor linha, veja horários em tempo real ou explore o
+          mapa.
         </TextoGrande>
       </section>
 
@@ -337,7 +377,7 @@ export function TelaInicio({
 
           <div className="viasp-tela-inicio__ponto-status">
             <span className="viasp-tela-inicio__ponto-status-dot" />
-            <span>Atualizado agora</span>
+            <span>Atualizado em : {horarioAtualizacao || '--:--'}</span>
           </div>
         </div>
 

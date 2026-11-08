@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Icon } from '../componentes/comuns/Icone'
 import {
   obterPrevisoes,
@@ -50,6 +50,8 @@ export function TelaDetalheLinha({
   onBack,
   aoAbrirMapa,
   onMap,
+  intervaloPollingMs = 30000,
+  limiteDesatualizadoMs = 300000,
 }) {
   const handlerBack = aoVoltar || onBack || (() => {})
   const handlerMap = aoAbrirMapa || onMap || (() => {})
@@ -74,6 +76,20 @@ export function TelaDetalheLinha({
   const [consultaPrevisao, setConsultaPrevisao] = useState(null)
   const [carregandoPrevisao, setCarregandoPrevisao] = useState(true)
   const [erroPrevisao, setErroPrevisao] = useState(null)
+  const [agora, setAgora] = useState(() => Date.now())
+  const [timestampPrevisao, setTimestampPrevisao] = useState(() => Date.now())
+  const ultimaPrevisaoRef = useRef(null)
+
+  // Timer de contagem regressiva local (ISS-18.3)
+  useEffect(() => {
+    const tickId = setInterval(() => {
+      setAgora(Date.now())
+    }, 1000)
+
+    return () => {
+      clearInterval(tickId)
+    }
+  }, [])
 
   const carregarPrevisoes = async () => {
     if (!linhaAtiva?.codigo) return
@@ -81,7 +97,9 @@ export function TelaDetalheLinha({
     setErroPrevisao(null)
     try {
       const dados = await obterPrevisoes(linhaAtiva.codigo)
+      ultimaPrevisaoRef.current = dados
       setConsultaPrevisao(dados)
+      setTimestampPrevisao(Date.now())
     } catch (err) {
       setErroPrevisao(err.mensagem || 'Falha ao conectar com o servidor.')
     } finally {
@@ -159,7 +177,9 @@ export function TelaDetalheLinha({
     obterPrevisoes(linhaAtiva.codigo)
       .then((dados) => {
         if (ativo) {
+          ultimaPrevisaoRef.current = dados
           setConsultaPrevisao(dados)
+          setTimestampPrevisao(Date.now())
           setCarregandoPrevisao(false)
         }
       })
@@ -179,6 +199,49 @@ export function TelaDetalheLinha({
     linhaAtiva?.numero,
     linhaAtiva?.sentido,
   ])
+
+  // Atualização periódica automática (polling) das previsões (ISS-18.2)
+  useEffect(() => {
+    if (!linhaAtiva?.codigo || !intervaloPollingMs || intervaloPollingMs <= 0) {
+      return
+    }
+
+    let ativo = true
+    const timerId = setInterval(async () => {
+      try {
+        const dados = await obterPrevisoes(linhaAtiva.codigo)
+        if (ativo) {
+          const anterior = ultimaPrevisaoRef.current
+          const refAntiga = anterior?.horario_referencia
+          const refNova = dados?.horario_referencia
+          const prevAntigas = (anterior?.previsoes || [])
+            .map((p) => p.horario_previsto)
+            .join(',')
+          const prevNovas = (dados?.previsoes || [])
+            .map((p) => p.horario_previsto)
+            .join(',')
+          const mudou =
+            !anterior ||
+            refAntiga !== refNova ||
+            prevAntigas !== prevNovas ||
+            dados?.desatualizado !== anterior?.desatualizado
+
+          if (mudou) {
+            setTimestampPrevisao(Date.now())
+          }
+          ultimaPrevisaoRef.current = dados
+          setConsultaPrevisao(dados)
+        }
+      } catch {
+        // Falha transitória em segundo plano: mantém a previsão anterior na tela
+      }
+    }, intervaloPollingMs)
+
+    return () => {
+      ativo = false
+      clearInterval(timerId)
+    }
+  }, [linhaAtiva?.codigo, intervaloPollingMs])
 
   if (!linha && !propCode) {
     return (
@@ -244,15 +307,28 @@ export function TelaDetalheLinha({
       ? `var(--cor-linha-${linhaAtiva.corBadge})`
       : '#e5223a')
 
-  // Processa as previsões reais vindas da SPTrans
+  // Processa as previsões reais vindas da SPTrans com contagem regressiva local (ISS-18.3)
+  const minutosDecorridos = Math.max(
+    0,
+    Math.floor((agora - timestampPrevisao) / 60000)
+  )
+
+  // Verificação de dado desatualizado (ISS-18.4)
+  const dadoDesatualizado = Boolean(
+    consultaPrevisao?.desatualizado ||
+    (timestampPrevisao && agora - timestampPrevisao > limiteDesatualizadoMs)
+  )
   const previsoesProcessadas = (consultaPrevisao?.previsoes || []).map((p) => {
-    const minutos = calcularTempoEsperaMinutos(
+    const minutosBase = calcularTempoEsperaMinutos(
       p.horario_previsto,
       consultaPrevisao?.horario_referencia
     )
+    const minutosAjustados =
+      minutosBase !== null ? Math.max(0, minutosBase - minutosDecorridos) : null
+
     return {
       ...p,
-      minutos: minutos ?? 0,
+      minutos: minutosAjustados ?? 0,
     }
   })
 
@@ -347,7 +423,10 @@ export function TelaDetalheLinha({
               {stops.length} paradas · {stops[0]?.name} → {towards}
             </span>
             <span className="updated">
-              <span /> Posição ao vivo
+              <span />{' '}
+              {consultaPrevisao?.horario_referencia
+                ? `Atualizado às ${consultaPrevisao.horario_referencia}`
+                : 'Posição ao vivo'}
             </span>
           </div>
 
@@ -456,8 +535,29 @@ export function TelaDetalheLinha({
 
         {/* Painel Lateral com Próximas Chegadas */}
         <aside className="map-detail line-panel" aria-live="polite">
+          {dadoDesatualizado && (
+            <div className="line-stale-alert" role="alert">
+              <Icon name="alerta" size={20} />
+              <div className="line-stale-alert-text">
+                <strong>Previsão desatualizada</strong>
+                <p>
+                  As informações de chegada podem não refletir o momento real.
+                </p>
+              </div>
+            </div>
+          )}
+
           <div className="line-next">
-            <span className="line-next-label">Próximo ônibus nesta parada</span>
+            <div className="line-next-top">
+              <span className="line-next-label">
+                Próximo ônibus nesta parada
+              </span>
+              {consultaPrevisao?.horario_referencia && (
+                <span className="line-update-badge">
+                  Atualizado às {consultaPrevisao.horario_referencia}
+                </span>
+              )}
+            </div>
             {firstEta !== null ? (
               <>
                 <strong className={firstEta <= 3 ? 'soon' : ''}>
@@ -471,7 +571,7 @@ export function TelaDetalheLinha({
             ) : carregandoPrevisao ? (
               <span>Carregando previsão...</span>
             ) : (
-              <span>Nenhum veículo a caminho</span>
+              <span>Sem previsão no momento</span>
             )}
           </div>
 

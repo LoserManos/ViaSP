@@ -166,22 +166,25 @@ describe('Componente: ItemLinha (ISS-15.1)', () => {
 })
 
 describe('Componente: CabecalhoTotem', () => {
-  it('exibe o nome da parada e botões de apoio quando fornecidos', () => {
-    const mockEscolher = vi.fn()
-    render(
-      <CabecalhoTotem
-        nomeParada="Parada MASP"
-        aoEscolherParada={mockEscolher}
-      />
-    )
+  it('exibe o nome da parada e botão de voltar quando fornecido', () => {
+    const mockVoltar = vi.fn()
+    render(<CabecalhoTotem nomeParada="Parada MASP" aoVoltar={mockVoltar} />)
 
     expect(screen.getByText(/Parada MASP/i)).toBeInTheDocument()
-    const btnParada = screen.getByRole('button', {
-      name: /escolher a parada do totem/i,
+    const btnVoltar = screen.getByRole('button', {
+      name: /voltar para a tela anterior/i,
     })
-    expect(btnParada).toBeInTheDocument()
-    fireEvent.click(btnParada)
-    expect(mockEscolher).toHaveBeenCalledTimes(1)
+    expect(btnVoltar).toBeInTheDocument()
+    fireEvent.click(btnVoltar)
+    expect(mockVoltar).toHaveBeenCalledTimes(1)
+  })
+
+  it('exibe o relógio com o horário atual ou fornecido no cabeçalho', () => {
+    render(<CabecalhoTotem horario="17:21" />)
+    expect(screen.getByText('17:21')).toBeInTheDocument()
+    expect(
+      screen.getByRole('status', { name: /horário atual: 17:21/i })
+    ).toBeInTheDocument()
   })
 })
 

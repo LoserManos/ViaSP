@@ -222,17 +222,215 @@ describe('TelaDetalheLinha (ISS-17 / US06 / US07)', () => {
     expect(spy).toHaveBeenCalledTimes(2)
   })
 
-  it('exibe mensagem amigável quando a consulta de previsões vier vazia e não exibe veículos em circulação', async () => {
+  it('exibe Sem previsão no momento quando a consulta de previsões vier vazia (ISS-18.1)', async () => {
     vi.spyOn(api, 'obterPrevisoes').mockResolvedValue({ previsoes: [] })
 
     render(<TelaDetalheLinha linha={linhaExemplo} aoVoltar={vi.fn()} />)
 
     await waitFor(() => {
-      expect(screen.getByText('Nenhum veículo a caminho')).toBeInTheDocument()
+      expect(screen.getByText('Sem previsão no momento')).toBeInTheDocument()
     })
     expect(
       screen.queryByText(/veículos em circulação/i)
     ).not.toBeInTheDocument()
+  })
+
+  it('atualiza as previsões automaticamente via polling periódico (ISS-18.2)', async () => {
+    vi.useFakeTimers()
+    const spy = vi
+      .spyOn(api, 'obterPrevisoes')
+      .mockResolvedValue(previsoesExemplo)
+
+    render(
+      <TelaDetalheLinha
+        linha={linhaExemplo}
+        aoVoltar={vi.fn()}
+        intervaloPollingMs={10000}
+      />
+    )
+
+    // Chamada inicial
+    expect(spy).toHaveBeenCalledTimes(1)
+
+    // Avança 10 segundos -> segundo ciclo de polling
+    await vi.advanceTimersByTimeAsync(10000)
+    expect(spy).toHaveBeenCalledTimes(2)
+
+    // Avança mais 10 segundos -> terceiro ciclo de polling
+    await vi.advanceTimersByTimeAsync(10000)
+    expect(spy).toHaveBeenCalledTimes(3)
+
+    vi.useRealTimers()
+  })
+
+  it('cancela o polling ao desmontar a tela (ISS-18.2)', async () => {
+    vi.useFakeTimers()
+    const spy = vi
+      .spyOn(api, 'obterPrevisoes')
+      .mockResolvedValue(previsoesExemplo)
+
+    const { unmount } = render(
+      <TelaDetalheLinha
+        linha={linhaExemplo}
+        aoVoltar={vi.fn()}
+        intervaloPollingMs={10000}
+      />
+    )
+
+    expect(spy).toHaveBeenCalledTimes(1)
+
+    // Desmonta a tela (usuário voltou para a tela inicial)
+    unmount()
+
+    // Avança 30 segundos no tempo
+    await vi.advanceTimersByTimeAsync(30000)
+
+    // Nenhuma chamada adicional deve ter ocorrido
+    expect(spy).toHaveBeenCalledTimes(1)
+
+    vi.useRealTimers()
+  })
+
+  it('executa contagem regressiva local diminuindo os minutos sem nova chamada e corrigindo na resposta (ISS-18.3)', async () => {
+    vi.useFakeTimers()
+    const spy = vi
+      .spyOn(api, 'obterPrevisoes')
+      .mockResolvedValueOnce(previsoesExemplo)
+      .mockResolvedValueOnce({
+        horario_referencia: '14:32',
+        previsoes: [
+          {
+            horario_previsto: '14:38',
+            veiculo: { prefixo: '12345' },
+          },
+        ],
+      })
+
+    // Intervalo de polling de 5 minutos para isolar a contagem regressiva
+    render(
+      <TelaDetalheLinha
+        linha={linhaExemplo}
+        aoVoltar={vi.fn()}
+        intervaloPollingMs={300000}
+      />
+    )
+
+    // Aguarda a resolução da promessa inicial
+    await vi.advanceTimersByTimeAsync(50)
+
+    // Valor inicial com base em 14:35 - 14:30 = 5 min
+    expect(screen.getByText('5')).toBeInTheDocument()
+    expect(spy).toHaveBeenCalledTimes(1)
+
+    // Avança 60 segundos -> 1 minuto decorrido localmente
+    await vi.advanceTimersByTimeAsync(60000)
+
+    // O tempo diminuiu para 4 min sem nova chamada da API
+    expect(screen.getByText('4')).toBeInTheDocument()
+    expect(spy).toHaveBeenCalledTimes(1)
+
+    // Avança mais 60 segundos -> 2 minutos decorridos localmente
+    await vi.advanceTimersByTimeAsync(60000)
+
+    // O tempo diminuiu para 3 min sem nova chamada da API
+    expect(screen.getByText('3')).toBeInTheDocument()
+    expect(spy).toHaveBeenCalledTimes(1)
+
+    // Avança até o próximo ciclo de polling (faltam 180s para completar 300s)
+    await vi.advanceTimersByTimeAsync(180000)
+    expect(spy).toHaveBeenCalledTimes(2)
+
+    // O valor foi corrigido com a nova resposta da API: 14:38 - 14:32 = 6 min
+    expect(screen.getByText('6')).toBeInTheDocument()
+
+    vi.useRealTimers()
+  })
+
+  it('mantém contagem regressiva ativa mesmo com ciclos de polling a cada 30s que retornam os mesmos horários (ISS-18.3)', async () => {
+    vi.useFakeTimers()
+    const spy = vi
+      .spyOn(api, 'obterPrevisoes')
+      .mockResolvedValue(previsoesExemplo)
+
+    render(
+      <TelaDetalheLinha
+        linha={linhaExemplo}
+        aoVoltar={vi.fn()}
+        intervaloPollingMs={30000}
+      />
+    )
+
+    await vi.advanceTimersByTimeAsync(50)
+    expect(screen.getByText('5')).toBeInTheDocument()
+    expect(spy).toHaveBeenCalledTimes(1)
+
+    // Avança 30 segundos: polling roda e retorna o mesmo payload
+    await vi.advanceTimersByTimeAsync(30000)
+    expect(spy).toHaveBeenCalledTimes(2)
+
+    // Avança mais 30 segundos (total 60s): deve decrementar para 4 min localmente
+    await vi.advanceTimersByTimeAsync(30000)
+    expect(screen.getByText('4')).toBeInTheDocument()
+
+    // Avança mais 60 segundos (total 120s): deve decrementar para 3 min localmente
+    await vi.advanceTimersByTimeAsync(60000)
+    expect(screen.getByText('3')).toBeInTheDocument()
+
+    vi.useRealTimers()
+  })
+
+  it('exibe o horário de referência da última atualização na interface (ISS-18.4)', async () => {
+    vi.spyOn(api, 'obterPrevisoes').mockResolvedValue(previsoesExemplo)
+
+    render(<TelaDetalheLinha linha={linhaExemplo} aoVoltar={vi.fn()} />)
+
+    await waitFor(() => {
+      expect(
+        screen.getAllByText(/Atualizado às 14:30/i).length
+      ).toBeGreaterThanOrEqual(1)
+    })
+  })
+
+  it('exibe alerta de previsão desatualizada quando o payload indicar desatualizado=true (ISS-18.4)', async () => {
+    vi.spyOn(api, 'obterPrevisoes').mockResolvedValue({
+      ...previsoesExemplo,
+      desatualizado: true,
+    })
+
+    render(<TelaDetalheLinha linha={linhaExemplo} aoVoltar={vi.fn()} />)
+
+    await waitFor(() => {
+      const alerta = screen.getByRole('alert')
+      expect(alerta).toBeInTheDocument()
+      expect(alerta).toHaveTextContent(/Previsão desatualizada/i)
+      expect(alerta).toHaveTextContent(/não refletir o momento real/i)
+    })
+  })
+
+  it('exibe alerta de previsão desatualizada quando o tempo sem atualização ultrapassar o limite (ISS-18.4)', async () => {
+    vi.useFakeTimers()
+    vi.spyOn(api, 'obterPrevisoes').mockResolvedValue(previsoesExemplo)
+
+    render(
+      <TelaDetalheLinha
+        linha={linhaExemplo}
+        aoVoltar={vi.fn()}
+        intervaloPollingMs={0}
+        limiteDesatualizadoMs={60000}
+      />
+    )
+
+    await vi.advanceTimersByTimeAsync(50)
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+
+    // Avança 61 segundos (passa do limite de 60s)
+    await vi.advanceTimersByTimeAsync(61000)
+
+    const alerta = screen.getByRole('alert')
+    expect(alerta).toBeInTheDocument()
+    expect(alerta).toHaveTextContent(/Previsão desatualizada/i)
+
+    vi.useRealTimers()
   })
 
   it('trata caso em que nenhuma linha é fornecida exibindo aviso e botão de voltar', () => {

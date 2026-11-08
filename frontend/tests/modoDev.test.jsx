@@ -1,6 +1,4 @@
-import { render, screen, fireEvent } from '@testing-library/react'
 import { describe, it, expect, afterEach, vi } from 'vitest'
-import { CabecalhoTotem } from '../src/componentes/layout/CabecalhoTotem'
 import { escolherParada, listarParadasNaArea } from '../src/servicos/api'
 
 function respostaJson(status, corpo) {
@@ -15,18 +13,6 @@ function respostaJson(status, corpo) {
 describe('Modo dev: escolher a parada no mapa', () => {
   afterEach(() => {
     vi.restoreAllMocks()
-  })
-
-  it('o cabeçalho só mostra o botão quando recebe aoEscolherParada', () => {
-    const { rerender } = render(<CabecalhoTotem />)
-    expect(
-      screen.queryByRole('button', { name: /escolher a parada/i })
-    ).not.toBeInTheDocument()
-
-    const aoEscolherParada = vi.fn()
-    rerender(<CabecalhoTotem aoEscolherParada={aoEscolherParada} />)
-    fireEvent.click(screen.getByRole('button', { name: /escolher a parada/i }))
-    expect(aoEscolherParada).toHaveBeenCalledTimes(1)
   })
 
   it('listarParadasNaArea envia a área visível do mapa', async () => {

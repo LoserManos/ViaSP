@@ -113,7 +113,7 @@ describe('TelaInicial alinhada ao protótipo Figma', () => {
     expect(
       screen.getByText('Parada MASP — Sentido Consolação')
     ).toBeInTheDocument()
-    expect(screen.getByText('Atualizado agora')).toBeInTheDocument()
+    expect(screen.getByText(/Atualizado em\s*:/i)).toBeInTheDocument()
 
     // Tabela com colunas
     expect(screen.getByText('LINHAS POR CHEGADA')).toBeInTheDocument()
@@ -201,6 +201,80 @@ describe('TelaInicial alinhada ao protótipo Figma', () => {
       await screen.findByText('Nenhuma linha encontrada')
     ).toBeInTheDocument()
     expect(screen.getByText('Limpar busca')).toBeInTheDocument()
+  })
+
+  it('atualiza periodicamente as previsões e o horário de atualização via polling (ISS-18.2)', async () => {
+    vi.useFakeTimers()
+    vi.mocked(obterPrevisoes).mockImplementation((codigo) => {
+      if (codigo === 1001) {
+        return Promise.resolve({
+          horario_referencia: '19:45',
+          estado: 'sucesso',
+          previsoes: [
+            { horario_previsto: '19:48', veiculo: { prefixo: '12845' } },
+          ],
+        })
+      }
+      return Promise.resolve({
+        horario_referencia: '19:45',
+        estado: 'sem_previsao',
+        previsoes: [],
+      })
+    })
+
+    render(
+      <TelaInicio aoSelecionarLinha={() => {}} intervaloPollingMs={30000} />
+    )
+
+    await vi.advanceTimersByTimeAsync(50)
+    await vi.advanceTimersByTimeAsync(50)
+    await vi.advanceTimersByTimeAsync(50)
+    expect(screen.getByText('Atualizado em : 19:45')).toBeInTheDocument()
+
+    // Atualiza o mock para o próximo ciclo de polling
+    vi.mocked(obterPrevisoes).mockImplementation((codigo) => {
+      if (codigo === 1001) {
+        return Promise.resolve({
+          horario_referencia: '19:46',
+          estado: 'sucesso',
+          previsoes: [
+            { horario_previsto: '19:47', veiculo: { prefixo: '12845' } },
+          ],
+        })
+      }
+      return Promise.resolve({
+        horario_referencia: '19:46',
+        estado: 'sem_previsao',
+        previsoes: [],
+      })
+    })
+
+    // Dispara o ciclo de polling aos 30s
+    await vi.advanceTimersByTimeAsync(30000)
+    await vi.advanceTimersByTimeAsync(50)
+    await vi.advanceTimersByTimeAsync(50)
+
+    expect(screen.getByText('Atualizado em : 19:46')).toBeInTheDocument()
+    vi.useRealTimers()
+  })
+
+  it('cancela o polling na tela inicial ao desmontar o componente', async () => {
+    vi.useFakeTimers()
+    const { unmount } = render(
+      <TelaInicio aoSelecionarLinha={() => {}} intervaloPollingMs={30000} />
+    )
+
+    await vi.advanceTimersByTimeAsync(50)
+    const chamadasIniciais = vi.mocked(obterPrevisoes).mock.calls.length
+
+    unmount()
+
+    // Avança 60s após o unmount
+    await vi.advanceTimersByTimeAsync(60000)
+
+    // Nenhuma chamada adicional deve ter ocorrido
+    expect(vi.mocked(obterPrevisoes).mock.calls.length).toBe(chamadasIniciais)
+    vi.useRealTimers()
   })
 
   it('abre e fecha o teclado virtual através do botão de alternância e foco no input (ISS-16.1)', async () => {
