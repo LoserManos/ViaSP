@@ -128,6 +128,30 @@ const TRACADOS = {
       <path d="M19 12H5" />
     </>
   ),
+  // lucide: keyboard
+  teclado: (
+    <>
+      <path d="M10 8h.01" />
+      <path d="M12 12h.01" />
+      <path d="M14 8h.01" />
+      <path d="M16 12h.01" />
+      <path d="M18 8h.01" />
+      <path d="M6 8h.01" />
+      <path d="M7 16h10" />
+      <path d="M8 12h.01" />
+      <rect width="20" height="16" x="2" y="4" rx="2" />
+    </>
+  ),
+  // lucide: delete (backspace)
+  apagar: (
+    <>
+      <path d="M10 5a2 2 0 0 0-1.344.519l-6.328 5.74a1 1 0 0 0 0 1.481l6.328 5.741A2 2 0 0 0 10 19h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2z" />
+      <path d="m12 9 6 6" />
+      <path d="m18 9-6 6" />
+    </>
+  ),
+  // lucide: chevron-down
+  recolher: <path d="m6 9 6 6 6-6" />,
 }
 
 // Aliases para máxima compatibilidade com componentes existentes
@@ -135,6 +159,9 @@ TRACADOS.bus = TRACADOS.onibus
 TRACADOS.rota = TRACADOS.route
 TRACADOS.acessibilidade = TRACADOS.accessibility
 TRACADOS.clock = TRACADOS.relogio
+TRACADOS.keyboard = TRACADOS.teclado
+TRACADOS.delete = TRACADOS.apagar
+TRACADOS.backspace = TRACADOS.apagar
 
 /**
  * Ícone SVG do totem. O projeto não usa emoji como ícone: a aparência do emoji

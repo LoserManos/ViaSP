@@ -202,4 +202,90 @@ describe('TelaInicial alinhada ao protótipo Figma', () => {
     ).toBeInTheDocument()
     expect(screen.getByText('Limpar busca')).toBeInTheDocument()
   })
+
+  it('abre e fecha o teclado virtual através do botão de alternância e foco no input (ISS-16.1)', async () => {
+    render(<TelaInicio aoSelecionarLinha={() => {}} />)
+
+    // Inicialmente o teclado virtual está fechado
+    expect(
+      screen.queryByRole('region', { name: /teclado virtual do totem/i })
+    ).not.toBeInTheDocument()
+
+    // Clica no botão de alternar teclado
+    const btnTeclado = screen.getByRole('button', {
+      name: /abrir teclado virtual/i,
+    })
+    fireEvent.click(btnTeclado)
+
+    expect(
+      screen.getByRole('region', { name: /teclado virtual do totem/i })
+    ).toBeInTheDocument()
+
+    // Clica novamente para fechar
+    fireEvent.click(
+      screen.getByRole('button', { name: /ocultar teclado virtual/i })
+    )
+    expect(
+      screen.queryByRole('region', { name: /teclado virtual do totem/i })
+    ).not.toBeInTheDocument()
+
+    // Foca no input de busca para reabrir
+    const campoBusca = screen.getByLabelText(/buscar linha/i)
+    fireEvent.focus(campoBusca)
+    expect(
+      screen.getByRole('region', { name: /teclado virtual do totem/i })
+    ).toBeInTheDocument()
+
+    // Fecha usando o botão 'Ocultar' de dentro do próprio teclado
+    fireEvent.click(screen.getByRole('button', { name: /^ocultar teclado$/i }))
+    expect(
+      screen.queryByRole('region', { name: /teclado virtual do totem/i })
+    ).not.toBeInTheDocument()
+  })
+
+  it('permite digitar, apagar e limpar busca via teclado virtual (ISS-16.1 / ISS-16.3)', async () => {
+    render(<TelaInicio aoSelecionarLinha={() => {}} />)
+
+    const campoBusca = screen.getByLabelText(/buscar linha/i)
+    fireEvent.focus(campoBusca)
+
+    // Digita '8', '0', '1', '2'
+    fireEvent.click(screen.getByRole('button', { name: 'Tecla 8' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Tecla 0' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Tecla 1' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Tecla 2' }))
+
+    expect(campoBusca.value).toBe('8012')
+
+    // Apaga o último dígito ('2')
+    fireEvent.click(screen.getByRole('button', { name: /apagar caractere/i }))
+    expect(campoBusca.value).toBe('801')
+
+    // Limpa toda a busca
+    fireEvent.click(screen.getByRole('button', { name: /limpar busca/i }))
+    expect(campoBusca.value).toBe('')
+  })
+
+  it('fecha o teclado virtual e navega ao selecionar uma linha (ISS-16.3)', async () => {
+    const mockSelecionar = vi.fn()
+    render(<TelaInicio aoSelecionarLinha={mockSelecionar} />)
+
+    // Abre o teclado virtual
+    fireEvent.focus(screen.getByLabelText(/buscar linha/i))
+    expect(
+      screen.getByRole('region', { name: /teclado virtual do totem/i })
+    ).toBeInTheDocument()
+
+    // Seleciona a linha dos resultados
+    const btnLinha = await screen.findByRole('button', {
+      name: /Ver detalhes da linha 8012-10/i,
+    })
+    fireEvent.click(btnLinha)
+
+    expect(mockSelecionar).toHaveBeenCalledWith(linhasExemplo[0])
+    // O teclado foi automaticamente recolhido para a próxima tela
+    expect(
+      screen.queryByRole('region', { name: /teclado virtual do totem/i })
+    ).not.toBeInTheDocument()
+  })
 })
