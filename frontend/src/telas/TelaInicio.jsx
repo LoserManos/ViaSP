@@ -3,6 +3,8 @@ import { Botao, Cartao, TextoGrande } from '../componentes/base'
 import { Icone } from '../componentes/comuns/Icone'
 import { MensagemErro } from '../componentes/feedback/MensagemErro'
 import { ItemLinha } from '../componentes/totem/ItemLinha'
+import { TecladoVirtual } from '../componentes/totem/TecladoVirtual'
+import { useDebounce } from '../hooks/useDebounce'
 import {
   obterTotem,
   listarLinhas,
@@ -30,6 +32,8 @@ export function TelaInicio({
   const [linhas, setLinhas] = useState([])
   const [previsoesPorLinha, setPrevisoesPorLinha] = useState({})
   const [termoBusca, setTermoBusca] = useState('')
+  const [tecladoAberto, setTecladoAberto] = useState(false)
+  const termoDebounced = useDebounce(termoBusca, 300)
   const [carregando, setCarregando] = useState(true)
   const [erro, setErro] = useState(null)
   const [ouvindoVoz, setOuvindoVoz] = useState(false)
@@ -142,7 +146,7 @@ export function TelaInicio({
       try {
         const [dadosTotem, dadosLinhas] = await Promise.all([
           obterTotem(),
-          listarLinhas(termoBusca),
+          listarLinhas(termoDebounced),
         ])
         const { mapa: mapaPrevisoes, horarioRef } =
           await carregarPrevisoes(dadosLinhas)
@@ -194,7 +198,7 @@ export function TelaInicio({
       ativo = false
       if (timerId) clearInterval(timerId)
     }
-  }, [termoBusca, intervaloPollingMs])
+  }, [termoDebounced, intervaloPollingMs])
 
   const iniciarBuscaVoz = () => {
     const SpeechRecognition =
@@ -269,27 +273,25 @@ export function TelaInicio({
             placeholder="Qual linha você procura?"
             value={termoBusca}
             onChange={(e) => setTermoBusca(e.target.value)}
+            onFocus={() => setTecladoAberto(true)}
+            onClick={() => setTecladoAberto(true)}
             aria-label="Buscar linha por número ou destino"
           />
-          {termoBusca ? (
-            <button
-              type="button"
-              className="viasp-tela-inicio__busca-btn-acao"
-              onClick={() => setTermoBusca('')}
-              aria-label="Limpar busca"
-            >
-              <Icone nome="fechar" />
-            </button>
-          ) : (
-            <button
-              type="button"
-              className="viasp-tela-inicio__busca-btn-acao"
-              aria-label="Pesquisar"
-              onClick={() => carregarDados(termoBusca)}
-            >
-              <Icone nome="avancar" />
-            </button>
-          )}
+          <button
+            type="button"
+            className={`viasp-tela-inicio__busca-btn-teclado ${
+              tecladoAberto ? 'viasp-tela-inicio__busca-btn-teclado--ativo' : ''
+            }`}
+            onClick={() => setTecladoAberto((prev) => !prev)}
+            aria-label={
+              tecladoAberto
+                ? 'Ocultar teclado virtual'
+                : 'Abrir teclado virtual'
+            }
+            title={tecladoAberto ? 'Ocultar teclado' : 'Abrir teclado'}
+          >
+            <Icone nome="teclado" />
+          </button>
         </div>
 
         <Botao
@@ -303,6 +305,18 @@ export function TelaInicio({
           <span>{ouvindoVoz ? 'Ouvindo...' : 'Falar destino'}</span>
         </Botao>
       </section>
+
+      {/* Teclado Virtual por Toque (ISS-16.1 / US02) */}
+      {tecladoAberto && (
+        <div className="viasp-tela-inicio__teclado-container">
+          <TecladoVirtual
+            aoDigitar={(char) => setTermoBusca((prev) => prev + char)}
+            aoApagar={() => setTermoBusca((prev) => prev.slice(0, -1))}
+            aoLimpar={() => setTermoBusca('')}
+            aoFechar={() => setTecladoAberto(false)}
+          />
+        </div>
+      )}
 
       {/* Feedback de voz acessível */}
       {mensagemVoz && (
@@ -409,7 +423,10 @@ export function TelaInicio({
                   linha={linha}
                   index={idx}
                   previsao={previsoesPorLinha[linha.codigo || linha.numero]}
-                  aoSelecionar={aoSelecionarLinha}
+                  aoSelecionar={(linhaSelecionada) => {
+                    setTecladoAberto(false)
+                    aoSelecionarLinha(linhaSelecionada)
+                  }}
                 />
               )
             )}
