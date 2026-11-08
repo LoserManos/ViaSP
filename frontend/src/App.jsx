@@ -1,6 +1,7 @@
-import { lazy, Suspense, useEffect, useState } from 'react'
+import { lazy, Suspense, useEffect, useRef, useState } from 'react'
 import { CabecalhoTotem } from './componentes/layout/CabecalhoTotem'
 import { RodapeTotem } from './componentes/layout/RodapeTotem'
+import { MapaDoPonto } from './componentes/totem/MapaDoPonto'
 import { TelaInicio } from './telas/TelaInicio'
 import { TelaDetalheLinha } from './telas/TelaDetalheLinha'
 import { estaUsandoMocks, obterTotem } from './servicos/api'
@@ -26,6 +27,8 @@ function App() {
   })
   const [parada, setParada] = useState(null)
   const [seletorAberto, setSeletorAberto] = useState(false)
+  const [mapaExpandido, setMapaExpandido] = useState(false)
+  const containerMapaRef = useRef(null)
   // Muda quando a parada é trocada no modo dev, para a tela inicial recarregar as linhas
   const [versaoParada, setVersaoParada] = useState(0)
   const modoDev = import.meta.env.DEV && !estaUsandoMocks()
@@ -84,6 +87,14 @@ function App() {
     irParaInicio()
   }
 
+  const focarMapaDoPonto = () => {
+    setMapaExpandido(true)
+    containerMapaRef.current?.scrollIntoView?.({
+      behavior: 'smooth',
+      block: 'center',
+    })
+  }
+
   return (
     <>
       <div className="viasp-app">
@@ -101,7 +112,7 @@ function App() {
               key={versaoParada}
               retrato={retrato}
               aoSelecionarLinha={irParaDetalhe}
-              aoAbrirMapa={modoDev ? () => setSeletorAberto(true) : undefined}
+              aoAbrirMapa={focarMapaDoPonto}
             />
           )}
 
@@ -109,8 +120,21 @@ function App() {
             <TelaDetalheLinha
               linha={navegacao.params?.linha}
               aoVoltar={irParaInicio}
+              aoAbrirMapa={focarMapaDoPonto}
             />
           )}
+
+          {/* Faixa contínua de localização do ponto visível nas telas principais (ISS-19) */}
+          <div ref={containerMapaRef} className="viasp-app__faixa-mapa">
+            <MapaDoPonto
+              parada={parada}
+              expandido={mapaExpandido}
+              aoAlternarExpandido={() => setMapaExpandido((prev) => !prev)}
+              aoAbrirSeletorDev={
+                modoDev ? () => setSeletorAberto(true) : undefined
+              }
+            />
+          </div>
         </main>
 
         {/* Rodapé fixo com horário e dados em tempo real SPTrans */}
