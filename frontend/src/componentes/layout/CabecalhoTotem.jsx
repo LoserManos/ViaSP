@@ -1,5 +1,4 @@
 import { Botao, TextoGrande } from '../base'
-import { Icone } from '../comuns/Icone'
 import { LogoViaSP } from '../comuns/LogoViaSP'
 import './CabecalhoTotem.css'
 
@@ -10,15 +9,9 @@ import './CabecalhoTotem.css'
  * @param {string} [props.nomeParada] - Nome do ponto de ônibus onde o totem está instalado
  *   (vem de `/api/totem`); sem ele, o logo mostra o subtítulo padrão.
  * @param {() => void} [props.aoVoltar] - Se presente, exibe o botão de voltar sempre visível (ISS-14.2).
- * @param {() => void} [props.aoEscolherParada] - Modo dev: abre o mapa para escolher a parada.
  * @param {string} [props.tituloTela] - Título opcional da tela atual.
  */
-export function CabecalhoTotem({
-  nomeParada,
-  aoVoltar,
-  aoEscolherParada,
-  tituloTela,
-}) {
+export function CabecalhoTotem({ nomeParada, aoVoltar, tituloTela }) {
   return (
     <header className="viasp-cabecalho-totem">
       <div className="viasp-cabecalho-totem__esquerda">
@@ -43,20 +36,6 @@ export function CabecalhoTotem({
               {tituloTela}
             </TextoGrande>
           </div>
-        )}
-      </div>
-
-      <div className="viasp-cabecalho-totem__direita">
-        {aoEscolherParada && (
-          <button
-            type="button"
-            onClick={aoEscolherParada}
-            className="viasp-cabecalho-totem__btn-util"
-            aria-label="Escolher a parada do totem no mapa (modo dev)"
-          >
-            <Icone nome="mapa" />
-            <span>Escolher parada</span>
-          </button>
         )}
       </div>
     </header>
