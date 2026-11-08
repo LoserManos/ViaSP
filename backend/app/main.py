@@ -6,7 +6,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from app.api.rotas import router
+from app.api.rotas import CABECALHO_DESATUALIZADO, router
 from app.api.rotas_dev import router_dev
 from app.config import get_settings
 from app.dominio import Parada, Totem
@@ -60,7 +60,13 @@ async def lifespan(app: FastAPI):
     _carregar_gtfs(repositorio_paradas, settings.gtfs_caminho)
 
     app.state.repositorio_paradas = repositorio_paradas
-    app.state.servico_consulta = ServicoConsulta(cliente, repositorio_paradas=repositorio_paradas)
+    app.state.servico_consulta = ServicoConsulta(
+        cliente,
+        repositorio_paradas=repositorio_paradas,
+        ttl_linhas_segundos=settings.cache_ttl_linhas_segundos,
+        ttl_paradas_segundos=settings.cache_ttl_paradas_segundos,
+        ttl_previsoes_segundos=settings.cache_ttl_previsoes_segundos,
+    )
     app.state.totem = Totem(
         identificador=settings.totem_identificador,
         parada=await _parada_do_totem(settings.parada_codigo, repositorio_paradas, cliente),
@@ -85,6 +91,7 @@ def criar_app() -> FastAPI:
         allow_origins=settings.cors_origens,
         allow_methods=["GET", "PUT"],
         allow_headers=["*"],
+        expose_headers=[CABECALHO_DESATUALIZADO],
     )
     app.include_router(router)
     if settings.modo_dev:
