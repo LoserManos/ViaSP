@@ -71,22 +71,58 @@
   color: var(--cor-texto-muted);
 }
 
-.viasp-tela-inicio__busca-btn-acao {
+.viasp-tela-inicio__busca-btn-teclado {
   width: 44px;
   height: 44px;
   border-radius: 50%;
-  background-color: #0f172a;
-  color: #ffffff;
-  border: none;
+  background-color: var(--cor-superficie-hover, #f1f5f9);
+  color: var(--cor-texto-principal, #0f172a);
+  border: 2px solid var(--cor-borda);
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: background-color 0.15s ease;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease,
+    transform 0.08s ease;
 }
 
-.viasp-tela-inicio__busca-btn-acao:hover {
-  background-color: #1e293b;
+.viasp-tela-inicio__busca-btn-teclado:hover {
+  background-color: #e2e8f0;
+  border-color: #cbd5e1;
+}
+
+.viasp-tela-inicio__busca-btn-teclado:active {
+  transform: scale(0.95);
+}
+
+.viasp-tela-inicio__busca-btn-teclado--ativo {
+  background-color: var(--cor-primaria, #e5273f);
+  color: #ffffff;
+  border-color: var(--cor-primaria, #e5273f);
+}
+
+.viasp-tela-inicio__busca-btn-teclado--ativo:hover {
+  background-color: var(--cor-primaria-hover, #cc1f34);
+  border-color: var(--cor-primaria-hover, #cc1f34);
+}
+
+.viasp-tela-inicio__teclado-container {
+  width: 100%;
+  animation: viaspFadeInTeclado 0.2s ease-out;
+}
+
+@keyframes viaspFadeInTeclado {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .viasp-tela-inicio__btn-voz {
