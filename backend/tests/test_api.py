@@ -4,9 +4,10 @@ from zoneinfo import ZoneInfo
 
 import pytest
 
-from app.api.dependencias import get_servico_consulta
+from app.api.dependencias import get_repositorio_logs, get_servico_consulta
 from app.dominio import ConsultaPrevisao, EstadoConsulta, Linha, Parada, PrevisaoChegada, Veiculo
 from app.excecoes import ErroAutenticacaoSPTrans, ErroSPTrans, SPTransIndisponivel
+from app.persistencia import RepositorioLogs, conectar
 from app.servicos.cliente_sptrans import ClienteSPTrans
 from app.servicos.servico_consulta import ServicoConsulta
 
@@ -194,3 +195,76 @@ def test_listar_paradas_da_linha_retorna_todas_e_enriquece_gtfs(client):
     # Verifica enriquecimento com GTFS da parada sem nome (440016921)
     parada_gtfs = next(p for p in dados if p["codigo"] == 440016921)
     assert parada_gtfs["nome"] == "Av. Paulista, 2027"
+
+
+def test_consultar_previsoes_grava_log_em_segundo_plano(criar_client, tmp_path):
+    caminho_banco = str(tmp_path / "logs_api.db")
+    client = criar_client(BANCO_CAMINHO=caminho_banco)
+
+    agora = [500.0]
+    parada = Parada(codigo=440016921, nome="Av. Paulista, 2027")
+    linha = Linha(codigo=2506, numero="8000-10", sentido=1)
+
+    async def obter_com_latencia(_cp: int, _cl: int) -> ConsultaPrevisao:
+        agora[0] += 0.085  # 85 ms
+        return ConsultaPrevisao(
+            parada=parada,
+            linha=linha,
+            horario_consulta=datetime(2026, 11, 8, 18, 0, tzinfo=ZoneInfo("America/Sao_Paulo")),
+            horario_referencia="18:00",
+            estado=EstadoConsulta.SUCESSO,
+            previsoes=[PrevisaoChegada(horario_previsto="18:05", veiculo=Veiculo(prefixo="81506"))],
+        )
+
+    mock_cliente = AsyncMock(spec=ClienteSPTrans)
+    mock_cliente.obter_previsoes.side_effect = obter_com_latencia
+    servico = ServicoConsulta(mock_cliente, relogio=lambda: agora[0])
+    client.app.dependency_overrides[get_servico_consulta] = lambda: servico
+
+    resposta = client.get("/api/previsoes", params={"codigo_linha": 2506})
+
+    assert resposta.status_code == 200
+    with conectar(caminho_banco) as c:
+        registros = c.execute("SELECT * FROM log_consulta").fetchall()
+
+    assert len(registros) == 1
+    log = registros[0]
+    assert log["totem_id"] == "totem-teste"
+    assert log["codigo_parada"] == 440016921
+    assert log["codigo_linha"] == 2506
+    assert log["estado"] == "sucesso"
+    assert log["latencia_ms"] == 85
+    assert log["erro"] is None
+
+
+def test_consultar_previsoes_devolve_resposta_mesmo_com_banco_indisponivel(client, tmp_path):
+    parada = Parada(codigo=440016921, nome="Av. Paulista, 2027")
+    linha = Linha(codigo=2506, numero="8000-10", sentido=1)
+
+    mock_cliente = AsyncMock(spec=ClienteSPTrans)
+    mock_cliente.obter_previsoes.return_value = ConsultaPrevisao(
+        parada=parada,
+        linha=linha,
+        horario_consulta=datetime(2026, 11, 8, 18, 0, tzinfo=ZoneInfo("America/Sao_Paulo")),
+        horario_referencia="18:00",
+        estado=EstadoConsulta.SUCESSO,
+        previsoes=[PrevisaoChegada(horario_previsto="18:05", veiculo=Veiculo(prefixo="81506"))],
+    )
+    servico = ServicoConsulta(mock_cliente, ttl_previsoes_segundos=0.0)
+    client.app.dependency_overrides[get_servico_consulta] = lambda: servico
+
+    # Caso 1: caminho do banco aponta para um diretório (SQLite indisponível)
+    client.app.dependency_overrides[get_repositorio_logs] = lambda: RepositorioLogs(str(tmp_path))
+    resposta_1 = client.get("/api/previsoes", params={"codigo_linha": 2506})
+    assert resposta_1.status_code == 200
+    assert resposta_1.json()["estado"] == "sucesso"
+
+    # Caso 2: repositório levanta uma exceção inesperada em segundo plano
+    class _RepositorioQuebrado:
+        def registrar_consulta(self, *args, **kwargs):
+            raise RuntimeError("Falha catastrófica no disco")
+
+    client.app.dependency_overrides[get_repositorio_logs] = lambda: _RepositorioQuebrado()
+    resposta_2 = client.get("/api/previsoes", params={"codigo_linha": 2506})
+    assert resposta_2.status_code == 200
+    assert resposta_2.json()["estado"] == "sucesso"

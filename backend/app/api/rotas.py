@@ -4,19 +4,23 @@ Rotas de consulta delegam ao ServicoConsulta. Erros viram respostas no formato
 padrão de docs/produto/api.md (ver handlers em app/main.py).
 """
 
-from fastapi import APIRouter, Depends, Response
+import logging
 
-from app.dominio import Linha, Parada, Totem
-from app.persistencia import RepositorioParadas
+from fastapi import APIRouter, BackgroundTasks, Depends, Response
+
+from app.dominio import ConsultaPrevisao, Linha, Parada, Totem
+from app.persistencia import RepositorioLogs, RepositorioParadas
 from app.servicos import ServicoConsulta
 
-from .dependencias import get_repositorio_paradas, get_servico_consulta, get_totem
+from .dependencias import get_repositorio_logs, get_repositorio_paradas, get_servico_consulta, get_totem
 from .schemas import (
     ConsultaPrevisaoSchema,
     LinhaSchema,
     ParadaSchema,
     TotemSchema,
 )
+
+logger = logging.getLogger(__name__)
 
 CABECALHO_DESATUALIZADO = "X-Dados-Desatualizados"
 
@@ -25,6 +29,23 @@ router = APIRouter(prefix="/api")
 
 def _marcar_cabecalho_desatualizado(response: Response, resultado: object) -> None:
     response.headers[CABECALHO_DESATUALIZADO] = "true" if getattr(resultado, "desatualizado", False) else "false"
+
+
+def _registrar_log_consulta(
+    repositorio_logs: RepositorioLogs,
+    totem_id: str,
+    consulta: ConsultaPrevisao,
+) -> None:
+    """Executa o registro do log em segundo plano sem propagar falhas do banco."""
+    try:
+        repositorio_logs.registrar_consulta(
+            totem_id=totem_id,
+            consulta=consulta,
+            latencia_ms=consulta.latencia_ms,
+            erro=consulta.mensagem_erro or None,
+        )
+    except Exception as exc:
+        logger.warning("Falha ao registrar log de consulta em segundo plano: %s", exc)
 
 
 @router.get("/saude")
@@ -94,11 +115,14 @@ async def listar_paradas_da_linha(
 async def consultar_previsoes(
     codigo_linha: int,
     response: Response,
+    background_tasks: BackgroundTasks,
     totem: Totem = Depends(get_totem),
     servico: ServicoConsulta = Depends(get_servico_consulta),
+    repositorio_logs: RepositorioLogs = Depends(get_repositorio_logs),
 ):
     """US06 / US07 / US08: previsão para a parada do totem e a linha escolhida."""
     linha = Linha(codigo=codigo_linha, numero="", sentido=1)
     consulta = await servico.consultar_previsoes(totem.parada, linha)
     _marcar_cabecalho_desatualizado(response, consulta)
+    background_tasks.add_task(_registrar_log_consulta, repositorio_logs, totem.identificador, consulta)
     return consulta

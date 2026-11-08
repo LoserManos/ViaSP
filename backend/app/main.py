@@ -11,7 +11,7 @@ from app.api.rotas_dev import router_dev
 from app.config import get_settings
 from app.dominio import Parada, Totem
 from app.excecoes import ErroAutenticacaoSPTrans, ErroSPTrans, SPTransIndisponivel
-from app.persistencia import RepositorioParadas, inicializar_banco
+from app.persistencia import RepositorioLogs, RepositorioParadas, inicializar_banco
 from app.servicos import ClienteSPTrans, ServicoConsulta
 
 logger = logging.getLogger(__name__)
@@ -57,9 +57,11 @@ async def lifespan(app: FastAPI):
     )
 
     repositorio_paradas = RepositorioParadas(settings.banco_caminho)
+    repositorio_logs = RepositorioLogs(settings.banco_caminho)
     _carregar_gtfs(repositorio_paradas, settings.gtfs_caminho)
 
     app.state.repositorio_paradas = repositorio_paradas
+    app.state.repositorio_logs = repositorio_logs
     app.state.servico_consulta = ServicoConsulta(
         cliente,
         repositorio_paradas=repositorio_paradas,

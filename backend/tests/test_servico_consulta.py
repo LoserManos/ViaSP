@@ -645,3 +645,44 @@ async def test_buscar_linhas_hibrido_gtfs_com_previsao_e_sem_previsao():
     # Linha sem previsão do GTFS vem depois
     assert resultado[1].numero == "8084-10"
     assert resultado[1].codigo == 2607
+
+
+# ==========================================
+# ISS-12.2: Medição de Latência da SPTrans
+# ==========================================
+
+
+@pytest.mark.asyncio
+async def test_consultar_previsoes_mede_latencia_ms_no_sucesso_e_na_falha(mock_cliente: AsyncMock):
+    agora = [1000.0]
+    parada = Parada(codigo=440016921)
+    linha = Linha(codigo=2506, numero="8000-10", sentido=1)
+
+    async def obter_com_atraso(_cp: int, _cl: int) -> ConsultaPrevisao:
+        agora[0] += 0.135  # 135 ms simulados
+        return ConsultaPrevisao(
+            parada=parada,
+            linha=linha,
+            horario_consulta=datetime(2026, 11, 8, 18, 0, tzinfo=ZoneInfo("America/Sao_Paulo")),
+            horario_referencia="18:00",
+            estado=EstadoConsulta.SUCESSO,
+            previsoes=[PrevisaoChegada(horario_previsto="18:05", veiculo=Veiculo(prefixo="81506"))],
+        )
+
+    mock_cliente.obter_previsoes.side_effect = obter_com_atraso
+    servico = ServicoConsulta(mock_cliente, relogio=lambda: agora[0], ttl_previsoes_segundos=15.0)
+
+    resultado_sucesso = await servico.consultar_previsoes(parada, linha)
+    assert resultado_sucesso.latencia_ms == 135
+
+    # Simula expiração do cache e falha após 280 ms
+    agora[0] += 20.0
+
+    async def falhar_com_atraso(_cp: int, _cl: int) -> ConsultaPrevisao:
+        agora[0] += 0.280
+        raise SPTransIndisponivel("Timeout")
+
+    mock_cliente.obter_previsoes.side_effect = falhar_com_atraso
+    resultado_queda = await servico.consultar_previsoes(parada, linha)
+    assert resultado_queda.desatualizado is True
+    assert resultado_queda.latencia_ms == 280
