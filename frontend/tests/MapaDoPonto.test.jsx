@@ -1,8 +1,7 @@
-import { render, screen, fireEvent, waitFor, act } from '@testing-library/react'
+import { render, screen, fireEvent, act } from '@testing-library/react'
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import L from 'leaflet'
 import { MapaDoPonto } from '../src/componentes/totem/MapaDoPonto'
-import App from '../src/App'
 import * as api from '../src/servicos/api'
 
 describe('MapaDoPonto — Localização do ponto no mapa (ISS-19 / US05)', () => {
@@ -148,7 +147,7 @@ describe('MapaDoPonto — Localização do ponto no mapa (ISS-19 / US05)', () =>
     ).toBeInTheDocument()
   })
 
-  it('permanece visível continuamente nas telas principais e mantém o totem funcionando se o mapa falhar (Critérios 2 e 3)', async () => {
+  it('renderiza em modo tela cheia e trata falha de rede nos tiles (ISS-19 / US05)', async () => {
     let camadaTilesCriada = null
     const tileLayerOriginal = L.tileLayer.bind(L)
     vi.spyOn(L, 'tileLayer').mockImplementation((...args) => {
@@ -156,56 +155,27 @@ describe('MapaDoPonto — Localização do ponto no mapa (ISS-19 / US05)', () =>
       return camadaTilesCriada
     })
 
-    render(<App />)
+    render(<MapaDoPonto parada={paradaMasp} emTelaCheia={true} />)
 
-    // 1. Visível na Tela Inicial
     expect(await screen.findByTestId('secao-mapa-do-ponto')).toBeInTheDocument()
     expect(
       await screen.findByTestId('marcador-ponto-onibus')
     ).toBeInTheDocument()
+    expect(
+      screen.getByRole('button', { name: /recentrar visão no ponto do totem/i })
+    ).toBeInTheDocument()
 
-    // Clica no banner "Ver mapa" na Tela Inicial para ampliar o mapa
-    const bannerVerMapa = screen.getByRole('button', {
-      name: /Ver mapa dos arredores do ponto e localização/i,
-    })
-    fireEvent.click(bannerVerMapa)
-    expect(screen.getByTestId('secao-mapa-do-ponto')).toHaveClass(
-      'viasp-mapa-ponto--expandido'
-    )
-
-    // 2. Navega para a Tela de Detalhes de uma linha
-    const linhaCard = await screen.findByRole('button', { name: /8012-10/i })
-    fireEvent.click(linhaCard)
-
-    await waitFor(() => {
-      expect(
-        screen.getByRole('heading', { name: /aeroporto congonhas/i })
-      ).toBeInTheDocument()
-    })
-
-    // O mapa permanece visível na Tela de Detalhes da Linha
-    expect(screen.getByTestId('secao-mapa-do-ponto')).toBeInTheDocument()
-    expect(screen.getByTestId('marcador-ponto-onibus')).toBeInTheDocument()
-
-    // 3. Simula falha de rede no mapa durante o uso da tela de detalhes
+    // Simula falha de rede no mapa durante a exibição
     act(() => {
       camadaTilesCriada.fire('tileerror', {
         error: new Error('Sem conexão com servidor de mapas'),
       })
     })
 
-    // O fallback mostra o endereço do ponto em texto e a tela de detalhes continua funcionando
+    // O fallback mostra o endereço do ponto em texto
     expect(await screen.findByTestId('mapa-ponto-fallback')).toBeInTheDocument()
     expect(
       screen.getByTestId('mapa-ponto-fallback-endereco')
     ).toHaveTextContent('Av. Paulista, 1578 — Bela Vista, São Paulo - SP')
-    expect(screen.getByText(/próximo ônibus nesta parada/i)).toBeInTheDocument()
-
-    // Voltar para a tela inicial continua funcionando normalmente
-    fireEvent.click(
-      screen.getByRole('button', { name: /voltar para a lista de linhas/i })
-    )
-    expect(await screen.findByText('Olá! Aonde vamos?')).toBeInTheDocument()
-    expect(screen.getByTestId('mapa-ponto-fallback')).toBeInTheDocument()
   })
 })

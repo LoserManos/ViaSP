@@ -51,6 +51,7 @@ function escaparHtml(texto = '') {
  * @param {object} props
  * @param {{codigo?: number, nome?: string, endereco?: string, latitude?: number, longitude?: number} | null} [props.parada]
  * @param {boolean} [props.expandido=false] - Exibe o mapa com área ampliada.
+ * @param {boolean} [props.emTelaCheia=false] - Exibe o mapa ocupando a tela inteira (TelaMapa).
  * @param {() => void} [props.aoAlternarExpandido] - Alterna entre visualização compacta e ampliada.
  * @param {() => void} [props.aoAbrirSeletorDev] - Atalho opcional para o seletor de parada no modo dev.
  * @param {boolean} [props.forcarFalhaMapa=false] - Permite simular falha de carregamento do mapa.
@@ -58,6 +59,7 @@ function escaparHtml(texto = '') {
 export function MapaDoPonto({
   parada: paradaProp,
   expandido = false,
+  emTelaCheia = false,
   aoAlternarExpandido,
   aoAbrirSeletorDev,
   forcarFalhaMapa = false,
@@ -189,7 +191,12 @@ export function MapaDoPonto({
 
     instanciaMapaRef.current = mapa
 
+    const timerId = setTimeout(() => {
+      mapa.invalidateSize?.()
+    }, 60)
+
     return () => {
+      clearTimeout(timerId)
       mapa.remove()
       instanciaMapaRef.current = null
     }
@@ -202,7 +209,7 @@ export function MapaDoPonto({
     tentativa,
   ])
 
-  // Redimensiona o canvas do Leaflet quando o estado expandido muda
+  // Redimensiona o canvas do Leaflet quando o estado expandido ou tela cheia muda
   useEffect(() => {
     if (instanciaMapaRef.current && coordenadasOk && !exibirFallback) {
       instanciaMapaRef.current.invalidateSize?.()
@@ -210,7 +217,23 @@ export function MapaDoPonto({
         animate: false,
       })
     }
-  }, [expandido, coordenadasOk, exibirFallback, latitude, longitude])
+  }, [
+    expandido,
+    emTelaCheia,
+    coordenadasOk,
+    exibirFallback,
+    latitude,
+    longitude,
+  ])
+
+  const recentrarMapa = () => {
+    if (instanciaMapaRef.current && coordenadasOk) {
+      instanciaMapaRef.current.invalidateSize?.()
+      instanciaMapaRef.current.setView([latitude, longitude], ZOOM_FIXO_PONTO, {
+        animate: true,
+      })
+    }
+  }
 
   const tentarNovamente = () => {
     setFalhaMapa(false)
@@ -227,63 +250,67 @@ export function MapaDoPonto({
 
   return (
     <section
-      className={`viasp-mapa-ponto ${expandido ? 'viasp-mapa-ponto--expandido' : ''}`}
+      className={`viasp-mapa-ponto ${expandido ? 'viasp-mapa-ponto--expandido' : ''} ${
+        emTelaCheia ? 'viasp-mapa-ponto--tela-cheia' : ''
+      }`}
       aria-label="Mapa com a localização do ponto de ônibus"
       data-testid="secao-mapa-do-ponto"
     >
       <Cartao className="viasp-mapa-ponto__cartao">
-        <div className="viasp-mapa-ponto__cabecalho">
-          <div className="viasp-mapa-ponto__cabecalho-info">
-            <div className="viasp-mapa-ponto__icone-box" aria-hidden="true">
-              <Icone nome="mapa" tamanho="1.5rem" />
-            </div>
-            <div>
-              <div className="viasp-mapa-ponto__eyebrow">
-                <span className="viasp-mapa-ponto__eyebrow-dot" />
-                <span>LOCALIZAÇÃO DO PONTO • ARREDORES</span>
+        {!emTelaCheia && (
+          <div className="viasp-mapa-ponto__cabecalho">
+            <div className="viasp-mapa-ponto__cabecalho-info">
+              <div className="viasp-mapa-ponto__icone-box" aria-hidden="true">
+                <Icone nome="mapa" tamanho="1.5rem" />
               </div>
-              <TextoGrande as="h2" variante="subtitulo" peso="bold">
-                Mapa dos arredores deste ponto
-              </TextoGrande>
+              <div>
+                <div className="viasp-mapa-ponto__eyebrow">
+                  <span className="viasp-mapa-ponto__eyebrow-dot" />
+                  <span>LOCALIZAÇÃO DO PONTO • ARREDORES</span>
+                </div>
+                <TextoGrande as="h2" variante="subtitulo" peso="bold">
+                  Mapa dos arredores deste ponto
+                </TextoGrande>
+              </div>
+            </div>
+
+            <div className="viasp-mapa-ponto__acoes">
+              <span
+                className="viasp-mapa-ponto__badge-fixo"
+                title="Visão travada no ponto de ônibus"
+              >
+                Visão fixa no ponto
+              </span>
+
+              {aoAbrirSeletorDev && (
+                <button
+                  type="button"
+                  className="viasp-mapa-ponto__btn-acao viasp-mapa-ponto__btn-dev"
+                  onClick={aoAbrirSeletorDev}
+                  aria-label="Trocar parada do totem no modo desenvolvedor"
+                >
+                  Trocar parada (Dev)
+                </button>
+              )}
+
+              {aoAlternarExpandido && (
+                <button
+                  type="button"
+                  className="viasp-mapa-ponto__btn-acao"
+                  onClick={aoAlternarExpandido}
+                  aria-expanded={expandido}
+                  aria-label={
+                    expandido
+                      ? 'Reduzir visualização do mapa'
+                      : 'Ampliar visualização do mapa'
+                  }
+                >
+                  {expandido ? 'Reduzir mapa' : 'Ampliar mapa'}
+                </button>
+              )}
             </div>
           </div>
-
-          <div className="viasp-mapa-ponto__acoes">
-            <span
-              className="viasp-mapa-ponto__badge-fixo"
-              title="Visão travada no ponto de ônibus"
-            >
-              Visão fixa no ponto
-            </span>
-
-            {aoAbrirSeletorDev && (
-              <button
-                type="button"
-                className="viasp-mapa-ponto__btn-acao viasp-mapa-ponto__btn-dev"
-                onClick={aoAbrirSeletorDev}
-                aria-label="Trocar parada do totem no modo desenvolvedor"
-              >
-                Trocar parada (Dev)
-              </button>
-            )}
-
-            {aoAlternarExpandido && (
-              <button
-                type="button"
-                className="viasp-mapa-ponto__btn-acao"
-                onClick={aoAlternarExpandido}
-                aria-expanded={expandido}
-                aria-label={
-                  expandido
-                    ? 'Reduzir visualização do mapa'
-                    : 'Ampliar visualização do mapa'
-                }
-              >
-                {expandido ? 'Reduzir mapa' : 'Ampliar mapa'}
-              </button>
-            )}
-          </div>
-        </div>
+        )}
 
         {exibirFallback ? (
           <div
@@ -331,29 +358,43 @@ export function MapaDoPonto({
           </div>
         ) : (
           <div className="viasp-mapa-ponto__moldura">
+            {emTelaCheia && coordenadasOk && !exibirFallback && (
+              <button
+                type="button"
+                className="viasp-mapa-ponto__btn-recentrar"
+                onClick={recentrarMapa}
+                title="Recentrar visão no ponto do totem"
+                aria-label="Recentrar visão no ponto do totem"
+              >
+                <Icone nome="localizacao" tamanho="1.1rem" />
+                <span>Recentrar no totem</span>
+              </button>
+            )}
             <div
               ref={elementoMapa}
               className="viasp-mapa-ponto__canvas"
               data-testid="mapa-ponto-canvas"
               aria-label={`Mapa centrado no ponto ${paradaAtiva?.nome || ''}`}
             />
-            <div className="viasp-mapa-ponto__legenda-rodape">
-              <div className="viasp-mapa-ponto__legenda-item">
-                <span
-                  className="viasp-mapa-ponto__legenda-pino"
-                  aria-hidden="true"
-                />
-                <span>
-                  <strong>Ponto atual:</strong>{' '}
-                  {paradaAtiva?.endereco || paradaAtiva?.nome}
-                </span>
+            {!emTelaCheia && (
+              <div className="viasp-mapa-ponto__legenda-rodape">
+                <div className="viasp-mapa-ponto__legenda-item">
+                  <span
+                    className="viasp-mapa-ponto__legenda-pino"
+                    aria-hidden="true"
+                  />
+                  <span>
+                    <strong>Ponto atual:</strong>{' '}
+                    {paradaAtiva?.endereco || paradaAtiva?.nome}
+                  </span>
+                </div>
+                {coordenadasOk && (
+                  <span className="viasp-mapa-ponto__coordenadas">
+                    {latitude.toFixed(5)}, {longitude.toFixed(5)}
+                  </span>
+                )}
               </div>
-              {coordenadasOk && (
-                <span className="viasp-mapa-ponto__coordenadas">
-                  {latitude.toFixed(5)}, {longitude.toFixed(5)}
-                </span>
-              )}
-            </div>
+            )}
           </div>
         )}
       </Cartao>

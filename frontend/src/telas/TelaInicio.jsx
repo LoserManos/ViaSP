@@ -346,7 +346,7 @@ export function TelaInicio({
         </div>
         <div className="viasp-tela-inicio__mapa-banner-texto">
           <strong>Ver mapa</strong>
-          <span>Arredores do ponto e localização</span>
+          <span>Explore a região</span>
         </div>
         <Icone nome="avancar" className="viasp-tela-inicio__mapa-banner-seta" />
       </div>
