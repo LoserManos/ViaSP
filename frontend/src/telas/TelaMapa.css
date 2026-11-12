@@ -1,0 +1,373 @@
+.map-section.tela-mapa {
+  min-height: calc(100dvh / var(--ui-escala, var(--ui-scale, 1)) - 144px);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--paper, #ffffff);
+  width: 100%;
+  flex: 1;
+}
+
+/* 1. Cabeçalho alinhado ao protótipo Figma */
+.mapa-header {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 16px 24px;
+  border-bottom: 1px solid var(--line, #e2e8f0);
+  background: var(--paper, #ffffff);
+}
+
+.mapa-header .back-button:hover {
+  background: #e2e8f0;
+}
+
+.mapa-header .back-icon {
+  display: flex;
+}
+
+.mapa-header .line-title-group {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.mapa-header .section-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  color: var(--blue, #2563eb);
+  letter-spacing: 0.06em;
+  margin-bottom: 2px;
+}
+
+.mapa-header h2 {
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: var(--ink, #0f172a);
+  letter-spacing: -0.02em;
+  margin: 0;
+  line-height: 1.2;
+}
+
+.map-header-subtitulo {
+  color: var(--muted, #64748b);
+  font-size: 0.9rem;
+  margin: 2px 0 0;
+}
+
+/* 2. Corpo da tela em 2 colunas */
+.tela-mapa__body {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 1fr 340px;
+  background: var(--paper, #ffffff);
+  min-height: 520px;
+}
+
+.tela-mapa__canvas {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  background: transparent;
+  overflow: hidden;
+}
+
+.tela-mapa__canvas .viasp-mapa-ponto {
+  width: 100%;
+  height: 100%;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  margin: 0;
+  background: transparent;
+}
+
+.tela-mapa__canvas .viasp-mapa-ponto__cartao {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  border: none !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  background: transparent !important;
+}
+
+.tela-mapa__canvas .viasp-mapa-ponto__moldura {
+  flex: 1;
+  height: 100%;
+  min-height: 500px;
+  border: none !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+/* 3. Painel lateral com dados reais */
+.tela-mapa__painel {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 20px 22px;
+  border-left: 1px solid var(--line, #e2e8f0);
+  background: var(--paper, #ffffff);
+  overflow-y: auto;
+}
+
+/* 4. Bloco de Linhas Reais que passam aqui */
+.tela-mapa__linhas-bloco {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.stop-routes-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.stop-routes-head h4 {
+  margin: 0;
+  font:
+    800 14px 'Manrope',
+    system-ui,
+    sans-serif;
+  color: var(--ink, #0f172a);
+}
+
+.show-all-lines {
+  border: 0;
+  background: none;
+  padding: 4px 0;
+  color: var(--brand-dark, #b31a2e);
+  font:
+    800 12px 'Manrope',
+    system-ui,
+    sans-serif;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.tela-mapa__linhas-carregando,
+.tela-mapa__linhas-vazio {
+  padding: 14px 12px;
+  font-size: 0.88rem;
+  color: var(--muted, #64748b);
+  background: var(--canvas, #f3f5f7);
+  border-radius: 10px;
+  border: 1px solid var(--line, #e2e8f0);
+  text-align: center;
+}
+
+.tela-mapa__linhas-lista {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  max-height: 380px;
+  overflow-y: auto;
+  border: 1px solid var(--line, #e2e8f0);
+  border-radius: 12px;
+  scroll-behavior: smooth;
+}
+
+.tela-mapa__linhas-lista li {
+  padding: 0;
+  border-top: 1px solid var(--line, #e2e8f0);
+}
+
+.tela-mapa__linhas-lista li:first-child {
+  border-top: 0;
+}
+
+.route-item {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 16px;
+  min-height: 64px;
+  border: 0;
+  background: none;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  transition:
+    background 0.15s,
+    opacity 0.15s;
+}
+
+.route-item:hover {
+  background: var(--canvas, #f3f5f7);
+}
+
+.route-item.active {
+  background: var(--soft-red, #fef2f2);
+  box-shadow: inset 4px 0 0 var(--brand, #e5273f);
+}
+
+.route-item.dimmed {
+  opacity: 0.5;
+}
+
+.route-item:focus-visible {
+  outline: 3px solid var(--brand, #e5273f);
+  outline-offset: -3px;
+}
+
+.route-text {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 3px;
+  min-width: 0;
+}
+
+.tela-mapa__linha-badge {
+  font-size: 0.85rem;
+  font-weight: 800;
+  padding: 4px 10px;
+  border-radius: 6px;
+  color: #ffffff !important;
+  background-color: var(--cor-marca, #e5273f);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  line-height: 1.2;
+}
+
+.tela-mapa__linha-badge--vermelha {
+  background-color: var(--cor-linha-vermelha, #e5223a);
+  color: #ffffff !important;
+}
+
+.tela-mapa__linha-badge--azul {
+  background-color: var(--cor-linha-azul, #2563eb);
+  color: #ffffff !important;
+}
+
+.tela-mapa__linha-badge--verde {
+  background-color: var(--cor-linha-verde, #059669);
+  color: #ffffff !important;
+}
+
+.tela-mapa__linha-badge--laranja {
+  background-color: var(--cor-linha-laranja, #d97706);
+  color: #ffffff !important;
+}
+
+.route-sentido {
+  color: var(--muted, #64748b);
+  font-size: 0.82rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.route-eta {
+  flex-shrink: 0;
+  color: var(--ink, #0f172a);
+  font:
+    800 16px 'Manrope',
+    system-ui,
+    sans-serif;
+  white-space: nowrap;
+}
+
+.route-eta.soon {
+  color: var(--brand, #e5273f);
+}
+
+/* 5. Ações e acessibilidade */
+.detail-note {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  font-size: 13px;
+  color: var(--ink, #0f172a);
+  line-height: 1.4;
+  margin-top: 4px;
+}
+
+.detail-cta {
+  margin-top: 10px;
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 0;
+  border-radius: 12px;
+  background: var(--brand, #e5273f);
+  color: #fff;
+  font:
+    800 15px 'Manrope',
+    system-ui,
+    sans-serif;
+  cursor: pointer;
+  transition: background 0.15s;
+  width: 100%;
+}
+
+.detail-cta:hover {
+  background: var(--brand-dark, #b31a2e);
+}
+
+.detail-cta__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transform: rotate(180deg);
+}
+
+.map-dev-btn {
+  margin-top: 4px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  border: 1px dashed var(--line, #e2e8f0);
+  background: var(--canvas, #f3f5f7);
+  color: var(--muted, #64748b);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.map-dev-btn:hover {
+  background: var(--paper, #ffffff);
+  color: var(--ink, #0f172a);
+  border-color: var(--brand, #e5273f);
+}
+
+/* 6. Responsividade consistente */
+@media (max-width: 860px) {
+  .tela-mapa__body {
+    grid-template-columns: 1fr;
+  }
+  .tela-mapa__painel {
+    border-left: none;
+    border-top: 1px solid var(--line, #e2e8f0);
+  }
+}
+
+@media (orientation: portrait) and (min-height: 1100px) {
+  .tela-mapa__body {
+    grid-template-columns: 1fr;
+    grid-template-rows: 1fr auto;
+  }
+  .tela-mapa__painel {
+    border-left: none;
+    border-top: 1px solid var(--line, #e2e8f0);
+  }
+}

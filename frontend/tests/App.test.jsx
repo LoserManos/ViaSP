@@ -77,6 +77,65 @@ describe('Navegação por Estado no Totem (ISS-14.2)', () => {
     })
   })
 
+  it('navega para a Tela do Mapa ao tocar no banner de mapa e retorna ao início ao tocar em voltar', async () => {
+    render(<App />)
+
+    // Clica no banner "Ver mapa"
+    const bannerMapa = await screen.findByRole('button', {
+      name: /Ver mapa dos arredores do ponto e localização/i,
+    })
+    fireEvent.click(bannerMapa)
+
+    // Verifica que mudou para a tela de mapa
+    await waitFor(() => {
+      expect(screen.getByTestId('secao-mapa-tela')).toBeInTheDocument()
+      expect(screen.getByText('Mapa da região')).toBeInTheDocument()
+    })
+
+    // Clica no botão de voltar da tela de mapa
+    const btnVoltar = screen.getByRole('button', {
+      name: /voltar para a tela anterior/i,
+    })
+    fireEvent.click(btnVoltar)
+
+    // Verifica que voltou para a tela inicial
+    await waitFor(() => {
+      expect(screen.getByText('Olá! Aonde vamos?')).toBeInTheDocument()
+    })
+  })
+
+  it('navega da Tela de Detalhes para a Tela do Mapa e retorna para os detalhes ao tocar em voltar', async () => {
+    render(<App />)
+
+    // Aguarda e clica em uma linha
+    const linhaCard = await screen.findByRole('button', { name: /8012-10/i })
+    fireEvent.click(linhaCard)
+
+    // Na tela de detalhes, clica em "Ver linha no mapa"
+    const btnVerNoMapa = await screen.findByRole('button', {
+      name: /ver linha no mapa/i,
+    })
+    fireEvent.click(btnVerNoMapa)
+
+    // Verifica que abriu a tela de mapa
+    await waitFor(() => {
+      expect(screen.getByTestId('secao-mapa-tela')).toBeInTheDocument()
+    })
+
+    // Clica no botão de voltar
+    const btnVoltar = screen.getByRole('button', {
+      name: /voltar para a tela anterior/i,
+    })
+    fireEvent.click(btnVoltar)
+
+    // Deve retornar para a tela de detalhes da linha
+    await waitFor(() => {
+      expect(
+        screen.getByRole('heading', { name: /aeroporto congonhas/i })
+      ).toBeInTheDocument()
+    })
+  })
+
   it('não exibe atalhos para design tokens no totem público', async () => {
     render(<App />)
 

@@ -12,6 +12,10 @@ Este documento estabelece a base tecnológica para o desenvolvimento do Totem In
 
 ### Frontend
 * **React / Javascript:** Biblioteca principal para a construção da interface de usuário do totem, permitindo uma atualização reativa dos componentes (como a contagem regressiva dos ônibus) sem recarregar a página.
+* **Leaflet + OpenStreetMap (ISS-19.1 / US05):**
+  * **Biblioteca de Mapa:** **Leaflet (`^1.9.4`)**, licenciada sob **BSD-2-Clause** (software livre e permissivo, sem custos ou restrições comerciais/acadêmicas).
+  * **Provedor de Tiles:** **OpenStreetMap Standard Tile Layer** (`https://tile.openstreetmap.org/{z}/{x}/{y}.png`), sob licença **ODbL (Open Database License)** com atribuição visível (`© OpenStreetMap`).
+  * **Limites de Uso e Adequação ao Totem:** A política de uso de tiles da OpenStreetMap Foundation proíbe downloads em massa (scraping) e exige cache de navegador e User-Agent/Referer válidos. Como o componente `MapaDoPonto` opera centrado nas coordenadas fixas da parada (`/api/totem`) com **zoom travado (`zoom: 17`) e gestos de arraste/zoom desabilitados**, cada totem requisita apenas ~4 a 9 blocos de imagem estáticos na inicialização, que permanecem em cache HTTP local pelo navegador em modo quiosque, gerando tráfego mínimo e dentro dos limites de uso.
 * **Web Audio API:** Interface nativa dos navegadores utilizada para capturar o áudio do usuário diretamente pelo microfone do hardware.
 
 ### Ambiente de Execução (Hardware)

@@ -103,9 +103,7 @@ describe('TelaInicial alinhada ao protótipo Figma', () => {
 
     // Banner de mapa
     expect(screen.getByText('Ver mapa')).toBeInTheDocument()
-    expect(
-      screen.getByText('Arredores do ponto e localização')
-    ).toBeInTheDocument()
+    expect(screen.getByText('Explore a região')).toBeInTheDocument()
 
     // Cartão unificado do ponto
     expect(await screen.findByText('VOCÊ ESTÁ EM')).toBeInTheDocument()

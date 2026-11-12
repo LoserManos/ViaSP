@@ -162,6 +162,10 @@ TRACADOS.clock = TRACADOS.relogio
 TRACADOS.keyboard = TRACADOS.teclado
 TRACADOS.delete = TRACADOS.apagar
 TRACADOS.backspace = TRACADOS.apagar
+TRACADOS.localizacao = TRACADOS.mapa
+TRACADOS.location = TRACADOS.mapa
+TRACADOS.map = TRACADOS.mapa
+TRACADOS.arrow = TRACADOS.voltar
 
 /**
  * Ícone SVG do totem. O projeto não usa emoji como ícone: a aparência do emoji

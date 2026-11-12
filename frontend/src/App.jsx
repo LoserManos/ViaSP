@@ -3,6 +3,7 @@ import { CabecalhoTotem } from './componentes/layout/CabecalhoTotem'
 import { RodapeTotem } from './componentes/layout/RodapeTotem'
 import { TelaInicio } from './telas/TelaInicio'
 import { TelaDetalheLinha } from './telas/TelaDetalheLinha'
+import { TelaMapa } from './telas/TelaMapa'
 import { estaUsandoMocks, obterTotem } from './servicos/api'
 import './App.css'
 
@@ -20,9 +21,11 @@ const SeletorParada = lazy(() =>
  * botão de voltar sempre acessível.
  */
 function App() {
-  const [navegacao, setNavegacao] = useState({
-    tela: 'inicio', // 'inicio' | 'detalhe'
-    params: {},
+  const [navegacao, setNavegacao] = useState(() => {
+    if (typeof window !== 'undefined' && window.location.hash === '#mapa') {
+      return { tela: 'mapa', params: {} }
+    }
+    return { tela: 'inicio', params: {} }
   })
   const [parada, setParada] = useState(null)
   const [seletorAberto, setSeletorAberto] = useState(false)
@@ -77,6 +80,24 @@ function App() {
     setNavegacao({ tela: 'detalhe', params: { linha } })
   }
 
+  const irParaMapa = (origem = 'inicio') => {
+    setNavegacao({
+      tela: 'mapa',
+      params: {
+        origem,
+        linha: navegacao.params?.linha,
+      },
+    })
+  }
+
+  const voltarDoMapa = () => {
+    if (navegacao.params?.origem === 'detalhe' && navegacao.params?.linha) {
+      irParaDetalhe(navegacao.params.linha)
+    } else {
+      irParaInicio()
+    }
+  }
+
   const trocarParada = (totem) => {
     setParada(totem.parada)
     setVersaoParada((versao) => versao + 1)
@@ -101,7 +122,7 @@ function App() {
               key={versaoParada}
               retrato={retrato}
               aoSelecionarLinha={irParaDetalhe}
-              aoAbrirMapa={modoDev ? () => setSeletorAberto(true) : undefined}
+              aoAbrirMapa={() => irParaMapa('inicio')}
             />
           )}
 
@@ -109,6 +130,30 @@ function App() {
             <TelaDetalheLinha
               linha={navegacao.params?.linha}
               aoVoltar={irParaInicio}
+              aoAbrirMapa={() => irParaMapa('detalhe')}
+            />
+          )}
+
+          {navegacao.tela === 'mapa' && (
+            <TelaMapa
+              parada={parada}
+              linha={navegacao.params?.linha}
+              initialLine={
+                navegacao.params?.linha?.numero || navegacao.params?.initialLine
+              }
+              aoVoltar={voltarDoMapa}
+              onBack={voltarDoMapa}
+              onOpenLine={(code) =>
+                irParaDetalhe(
+                  typeof code === 'string'
+                    ? { numero: code, codigo: code }
+                    : code
+                )
+              }
+              aoSelecionarLinha={(linha) => irParaDetalhe(linha)}
+              aoAbrirSeletorDev={
+                modoDev ? () => setSeletorAberto(true) : undefined
+              }
             />
           )}
         </main>
