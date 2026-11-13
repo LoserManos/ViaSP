@@ -25,6 +25,7 @@ class ConsultaPrevisao:
     previsoes: list[PrevisaoChegada] = field(default_factory=list)
     mensagem_erro: str = ""
     desatualizado: bool = False
+    latencia_ms: int | None = None
 
     def foi_bem_sucedida(self) -> bool:
         return self.estado in (EstadoConsulta.SUCESSO, EstadoConsulta.SEM_PREVISAO)

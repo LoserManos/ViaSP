@@ -1,7 +1,7 @@
 from fastapi import Request
 
 from app.dominio import Totem
-from app.persistencia import RepositorioParadas
+from app.persistencia import RepositorioLogs, RepositorioParadas
 from app.servicos import ServicoConsulta
 
 
@@ -15,3 +15,7 @@ def get_totem(request: Request) -> Totem:
 
 def get_repositorio_paradas(request: Request) -> RepositorioParadas:
     return request.app.state.repositorio_paradas
+
+
+def get_repositorio_logs(request: Request) -> RepositorioLogs:
+    return request.app.state.repositorio_logs

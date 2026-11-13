@@ -235,6 +235,7 @@ class ServicoConsulta:
             if em_cache is not None and self._relogio() - em_cache[0] < self._ttl_previsoes_segundos:
                 return self._copiar_consulta(em_cache[1], desatualizado=False)
 
+            inicio = self._relogio()
             mensagem_falha: str | None = None
             try:
                 # O cliente já sabe buscar as previsões e lidar com a rede
@@ -245,6 +246,7 @@ class ServicoConsulta:
                 mensagem_falha = "Não foi possível obter a previsão devido a um erro de comunicação."
             except Exception:
                 mensagem_falha = "Ocorreu um erro inesperado ao buscar a previsão."
+            latencia_ms = max(0, round((self._relogio() - inicio) * 1000))
 
             if mensagem_falha is not None:
                 if em_cache is not None:
@@ -252,8 +254,16 @@ class ServicoConsulta:
                         em_cache[1],
                         desatualizado=True,
                         mensagem_erro=mensagem_falha,
+                        latencia_ms=latencia_ms,
                     )
-                return self._criar_consulta_falha(parada, linha, mensagem_falha)
+                return self._criar_consulta_falha(
+                    parada,
+                    linha,
+                    mensagem_falha,
+                    latencia_ms=latencia_ms,
+                )
+
+            consulta.latencia_ms = latencia_ms
 
             # Se a consulta foi bem-sucedida e tem veículos, ordena pelo tempo de espera (ISS-09.1)
             if consulta.estado == EstadoConsulta.SUCESSO and consulta.previsoes:
@@ -262,7 +272,12 @@ class ServicoConsulta:
                 consulta.previsoes.sort(key=lambda p: p.calcular_tempo_de_espera(referencia))
 
             if consulta.foi_bem_sucedida():
-                consulta_armazenada = self._copiar_consulta(consulta, desatualizado=False, mensagem_erro="")
+                consulta_armazenada = self._copiar_consulta(
+                    consulta,
+                    desatualizado=False,
+                    mensagem_erro="",
+                    latencia_ms=latencia_ms,
+                )
                 self._cache_previsoes[chave] = (self._relogio(), consulta_armazenada)
                 return self._copiar_consulta(consulta_armazenada, desatualizado=False)
 
@@ -271,6 +286,7 @@ class ServicoConsulta:
                     em_cache[1],
                     desatualizado=True,
                     mensagem_erro=consulta.mensagem_erro,
+                    latencia_ms=latencia_ms,
                 )
             return consulta
 
@@ -280,15 +296,24 @@ class ServicoConsulta:
         *,
         desatualizado: bool,
         mensagem_erro: str | None = None,
+        latencia_ms: int | None = None,
     ) -> ConsultaPrevisao:
         return replace(
             consulta,
             previsoes=list(consulta.previsoes),
             desatualizado=desatualizado,
             mensagem_erro=consulta.mensagem_erro if mensagem_erro is None else mensagem_erro,
+            latencia_ms=consulta.latencia_ms if latencia_ms is None else latencia_ms,
         )
 
-    def _criar_consulta_falha(self, parada: Parada, linha: Linha, mensagem: str) -> ConsultaPrevisao:
+    def _criar_consulta_falha(
+        self,
+        parada: Parada,
+        linha: Linha,
+        mensagem: str,
+        *,
+        latencia_ms: int | None = None,
+    ) -> ConsultaPrevisao:
         """Método auxiliar para padronizar a criação de uma consulta com falha."""
 
         return ConsultaPrevisao(
@@ -297,4 +322,5 @@ class ServicoConsulta:
             horario_consulta=agora_sao_paulo(),
             estado=EstadoConsulta.FALHA,
             mensagem_erro=mensagem,
+            latencia_ms=latencia_ms,
         )
